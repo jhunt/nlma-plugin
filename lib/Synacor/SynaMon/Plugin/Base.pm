@@ -558,7 +558,7 @@ requesting HTTP".
 
 =head2 stop_timeout
 
-Clears the currently active timouet timeout.
+Clears the currently active timeout timeout.
 
 =head2 state_file_path
 
