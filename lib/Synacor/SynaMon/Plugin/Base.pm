@@ -96,6 +96,10 @@ sub option
 {
 	my ($self, $spec, %opts) = @_;
 	if ($spec) {
+		if ($spec eq "timeout|t=i") {
+			$self->{legacy}{opts}{timeout} = $opts{default} if $opts{default};
+			return;
+		}
 		if (exists $opts{usage}) {
 			push @{$self->{usage_list}}, _spec2usage($opts{usage}, $opts{required});
 
