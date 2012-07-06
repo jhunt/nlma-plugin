@@ -1,0 +1,12 @@
+---
+db:
+  username: dbuser
+  password: dbpass
+passonly:
+  password: secret
+useronly:
+  username: monitor_rw
+
+corrupt:
+  stuff: not a username
+  other: not a password
