@@ -364,6 +364,41 @@ sub credentials
 	return ($yaml->{$name}{username}, $yaml->{$name}{password});
 }
 
+sub run
+{
+	my ($self, $command, %opts) = @_;
+	my $bin = $command;
+	$bin =~ s/\s+.*//;
+
+	# Command to run, minus volatile "|" character,
+	# which has special meaning to Nagios.
+	my $safe = $command;
+	$safe =~ s/\s*\|.*/ .../;
+
+	$self->debug("Running `$command`\nCommand is '$bin'");
+	# If $bin is a path, check that it exists and is executable
+	if ($bin =~ m|/|) {
+		$self->bail(NAGIOS_UNKNOWN, "$bin: no such file")   unless -f $bin;
+		$self->bail(NAGIOS_UNKNOWN, "$bin: not executable") unless -x $bin;
+	}
+
+	open my $pipe, "$command|";
+	if (!$pipe) {
+		$self->bail(NAGIOS_UNKNOWN, "Failed to run $bin");
+	}
+
+	my @lines = <$pipe>;
+	close $pipe;
+	my $rc = $?;
+
+	unless ($rc == 0 || $opts{failok}) { # caller expects command to exit 0
+		# FIXME: handle termination, signal or plain old exit.
+		$self->CRITICAL("Command $safe exited $rc");
+	}
+
+	return wantarray ? @lines : join("\n", @lines)."\n";
+}
+
 "YAY!";
 
 =head1 NAME
@@ -634,6 +669,31 @@ In this example, the check looks for credentials specific to this
 $host, and if that fails, looks for the defaults.  Since the second
 call does not specify the I<fail silently> argument, the plugin
 will either retrieve credentials or trigger an UNKNOWN.
+
+=head2 run
+
+Run a command (or a command pipeline) and retrieve the output.  Some
+internal sanity tests will be performed on the command to be runned.
+
+Output will be returned as a list of lines (without the trailing '\n')
+in list context, or a string containing newline-separated lines in
+scalar context.  The scalar context string will also have a single
+newline tacked onto the end.
+
+  my $scalar = $plugin->run("echo 'test'");
+  # value returned will be "test\n"
+
+  my @list = $plugin->run("echo 'test'");
+  # value returned will be ("test")
+
+  my ($line) = $plugin->run("echo 'test'");
+  # $line will be just 'test', without the newline.
+
+Depending on how the command is given, the framework will perform
+some sanity checks on it.  If the command is an absolute path to
+an executable or script, the framework will check that the file
+exists and is actually executable.  If these tests fail, the whole
+check will be aborted as an UNKNOWN.
 
 =head1 AUTHOR
 

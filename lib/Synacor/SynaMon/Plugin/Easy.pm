@@ -22,6 +22,8 @@ our @EXPORT = qw/
 
 	STORE RETRIEVE CREDENTIALS
 
+	RUN
+
 	DEBUG DUMP
 /;
 
@@ -52,6 +54,8 @@ sub STOP_TIMEOUT  { $plugin->stop_timeout(@_); }
 sub STORE { $plugin->store(@_); }
 sub RETRIEVE { $plugin->retrieve(@_); }
 sub CREDENTIALS { $plugin->credentials(@_); }
+
+sub RUN { $plugin->run(@_); }
 
 sub DEBUG { $plugin->debug(@_); }
 sub DUMP  { $plugin->dump(@_); }
@@ -161,6 +165,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::retrieve>.
 =head2 CREDENTIALS
 
 Wrapper around B<Synacor::SynaMon::Plugin::credentials>.
+
+=head2 RUN
+
+Wrapper around B<Synacor::SynaMon::Plugin::run>.
 
 =head2 DEBUG
 

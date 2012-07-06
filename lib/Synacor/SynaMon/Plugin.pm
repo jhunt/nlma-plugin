@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.0";
+our $VERSION = "1.01";
 
 use Exporter;
 use base qw(Exporter);
@@ -17,9 +17,13 @@ sub import {
 
 	my %tags = map { $_ => 1 } @_;
 	if (exists $tags{':easy'}) {
+		delete $tags{':easy'};
 		use Synacor::SynaMon::Plugin::Easy;
 		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
 	}
+
+	my $callpkg = caller;
+	Exporter::export '', $callpkg, keys %tags;
 }
 
 "Make your time...";
