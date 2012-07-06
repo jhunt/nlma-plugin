@@ -144,13 +144,14 @@ sub bail
 	$self->{legacy}->nagios_exit($status, $message);
 }
 
-sub alert
+sub evaluate
 {
 	my ($self, $status, @message) = @_;
-	return unless $status;
+	return unless defined $status;
 	my $code = $STATUS_CODES{$status};
 
-	return unless $code;
+	return unless defined $code;
+	$self->{did_stuff}++;
 	return if $code == NAGIOS_OK;
 
 	$self->status($status, @message);

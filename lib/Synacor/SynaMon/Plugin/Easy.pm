@@ -32,7 +32,7 @@ sub OPTION  { $plugin->option(@_); }
 
 sub STATUS   { $plugin->status(@_); }
 sub BAIL     { $plugin->bail(@_); }
-sub ALERT    { $plugin->alert(@_); }
+sub EVALUATE { $plugin->evaluate(@_); }
 
 sub OK       { $plugin->OK(@_); }
 sub WARNING  { $plugin->WARNING(@_); }
@@ -102,9 +102,9 @@ Wrapper around B<Synacor::SynaMon::Plugin::status>.
 
 Wrapper around B<Synacor::SynaMon::Plugin::bail>.
 
-=head2 ALERT
+=head2 EVALUATE
 
-Wrapper around B<Synacor::SynaMon::Plugin::alert>.
+Wrapper around B<Synacor::SynaMon::Plugin::evaluate>.
 
 =head2 OK
 
@@ -124,9 +124,7 @@ Wrapper around B<Synacor::SynaMon::Plugin::UNKNOWN>.
 
 =head2 CHECK_VALUE
 
-=head2 EVALUATE
-
-Wrapper around B<Synacor::SynaMon::Plugin::evaluate>.
+Wrapper around B<Synacor::SynaMon::Plugin::check_value>.
 
 =head2 TRACK_VALUE
 

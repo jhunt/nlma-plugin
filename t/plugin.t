@@ -213,21 +213,21 @@ ok_plugin(2, "BAIL CRITICAL - bail early", undef, "Bail early", sub {
 
 ###################################################################
 
-ok_plugin(0, "ALERT OK - good", undef, "alert test", sub {
+ok_plugin(0, "EVAL OK - good", undef, "evaluate test", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
-	PLUGIN name => "alert";
+	PLUGIN name => "eval";
 	START;
-	ALERT 0,    "never triggered";
-	ALERT "OK", "also never triggered";
+	EVALUATE 0,    "never triggered";
+	EVALUATE "OK", "also never triggered";
 	OK "good";
 	DONE;
 });
 
-ok_plugin(2, "ALERT CRITICAL - triggered", undef, "alert test with non-OK", sub {
+ok_plugin(2, "EVAL CRITICAL - triggered", undef, "evaluate test with non-OK", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
-	PLUGIN name => "alert";
+	PLUGIN name => "eval";
 	START;
-	ALERT "CRITICAL", "triggered";
+	EVALUATE "CRITICAL", "triggered";
 	DONE;
 });
 
