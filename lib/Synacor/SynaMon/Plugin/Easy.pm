@@ -57,7 +57,7 @@ sub DEBUG { $plugin->debug(@_); }
 sub DUMP  { $plugin->dump(@_); }
 
 END {
-	$plugin->done if $plugin && $? == 0 && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
+	$plugin->done if $plugin && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
 }
 
 "Booyah!";

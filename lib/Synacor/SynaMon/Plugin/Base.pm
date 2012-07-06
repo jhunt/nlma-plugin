@@ -53,6 +53,7 @@ sub new
 {
 	my ($class, %options) = @_;
 
+	$ALL_DONE = 0;
 	my $bin = do{my $n=$0;$n=~s|.*/||;$n};
 
 	# Play nice with Nagios::Plugin
@@ -212,7 +213,11 @@ sub UNKNOWN
 sub start
 {
 	my ($self, %opts) = @_;
+
+	$ALL_DONE = 1; # in case we bomb out in getopts
 	$self->getopts;
+	$ALL_DONE = 0;
+
 	$self->{debug} = $self->option->{debug};
 	$self->debug("Starting plugin execution");
 
