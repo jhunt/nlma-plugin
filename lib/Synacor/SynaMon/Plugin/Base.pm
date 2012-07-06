@@ -53,8 +53,10 @@ sub new
 {
 	my ($class, %options) = @_;
 
+	my $bin = do{my $n=$0;$n=~s|.*/||;$n};
+
 	# Play nice with Nagios::Plugin
-	$options{shortname} = uc($options{name} || do{my $n=$0;$n=~s|.*/||;$n});
+	$options{shortname} = uc($options{name} || $bin);
 	delete $options{name};
 
 	if (exists $options{summary}) {
@@ -71,17 +73,23 @@ sub new
 			NAGIOS_CRITICAL => [],
 			NAGIOS_UNKNOWN  => [],
 		},
-		did_stuff => 0, # ticked for ever STATUS message
+		name => $bin,
+		usage_list => [],
+		did_stuff => 0, # ticked for every STATUS message
 		options => {},
 		legacy => Nagios::Plugin->new(%options),
 	};
 
-	$self = bless($self, $class);
-	$self->option("debug|D",
-		usage => "--debug, -D",
-		help  => "Turn on debug mode"
-	);
-	$self;
+	bless($self, $class);
+}
+
+sub _spec2usage
+{
+	my ($usage, $required) = @_;
+	return unless $required;
+
+	$usage =~ s/,\s+/|/;
+	$usage;
 }
 
 sub option
@@ -89,7 +97,12 @@ sub option
 	my ($self, $spec, %opts) = @_;
 	if ($spec) {
 		if (exists $opts{usage}) {
-			$opts{help} = $opts{usage} . (exists $opts{help} ? "\n\t" . $opts{help} : "");
+			push @{$self->{usage_list}}, _spec2usage($opts{usage}, $opts{required});
+
+			$opts{help} = $opts{usage} . (exists $opts{help} ? "\n   " . $opts{help} : "");
+			if (exists $opts{default}) {
+				$opts{help} .= " (default: $opts{default})";
+			}
 			delete $opts{usage};
 		}
 		return $self->{legacy}->add_arg(
@@ -99,6 +112,12 @@ sub option
 	} else {
 		return $self->{legacy}->opts;
 	}
+}
+
+sub usage
+{
+	my ($self) = @_;
+	join(' ', $self->{name}, @{$self->{usage_list}});
 }
 
 sub track_value
@@ -113,6 +132,11 @@ sub track_value
 sub getopts
 {
 	my ($self) = @_;
+	$self->option("debug|D",
+		usage => "--debug, -D",
+		help  => "Turn on debug mode"
+	);
+	$self->{legacy}->opts->{_attr}{usage} = $self->usage;
 	$self->{legacy}->getopts;
 }
 
