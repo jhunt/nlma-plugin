@@ -139,31 +139,31 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 4<5 && 4<8", su
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 4;
-	THRESHOLDS warning => 6, critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	           warning => 6, critical => 8;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(1, "THOLD WARNING - value is 7", "value=4;;;;", "Thresholds 7>6 && 7<8", sub {
+ok_plugin(1, "THOLD WARNING - value is 7", "value=7;;;;", "Thresholds 7>6 && 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
-	THRESHOLDS warning => 6, critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            warning => 6, critical => 8;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(2, "THOLD CRITICAL - value is 9", "value=4;;;;", "Thresholds 9>6 && 9>8", sub {
+ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;;;;", "Thresholds 9>6 && 9>8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
-	THRESHOLDS warning => 6, critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            warning => 6, critical => 8;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
@@ -172,31 +172,45 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 5<6; no crit", 
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 4;
-	THRESHOLDS warning => 6;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            warning => 6;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(1, "THOLD WARNING - value is 9", "value=4;;;;", "Thresholds 9>6; no crit", sub {
+ok_plugin(1, "THOLD WARNING - value is 9", "value=9;;;;", "Thresholds 9>6; no crit", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
-	THRESHOLDS warning => 6;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	             warning => 6;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(0, "THOLD OK - value is 7", "value=4;;;;", "Thresholds no warn; 7<8", sub {
+ok_plugin(0, "THOLD OK - value is 7", "value=7;;;;", "Thresholds no warn; 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
-	THRESHOLDS critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            critical => 8;
+	TRACK_VALUE "value", $val;
+	DONE;
+});
+
+# this test makes sure we always understand the
+# Nagios Threshold Format, in case we ever make
+# good on threats to ditch Nagios::Plugin
+ok_plugin(1, "THOLD WARNING - value is 42", undef, "Nagios Threshold Format", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "THOLD";
+	START;
+	my $val = 42;
+	CHECK_VALUE $val, "value is $val",
+	            warning  => '@40:45',
+	            critical => '@45:';
 	DONE;
 });
 
@@ -213,21 +227,21 @@ ok_plugin(2, "BAIL CRITICAL - bail early", undef, "Bail early", sub {
 
 ###################################################################
 
-ok_plugin(0, "ALERT OK - good", undef, "alert test", sub {
+ok_plugin(0, "EVAL OK - good", undef, "evaluate test", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
-	PLUGIN name => "alert";
+	PLUGIN name => "eval";
 	START;
-	ALERT 0,    "never triggered";
-	ALERT "OK", "also never triggered";
+	EVALUATE 0,    "never triggered";
+	EVALUATE "OK", "also never triggered";
 	OK "good";
 	DONE;
 });
 
-ok_plugin(2, "ALERT CRITICAL - triggered", undef, "alert test with non-OK", sub {
+ok_plugin(2, "EVAL CRITICAL - triggered", undef, "evaluate test with non-OK", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
-	PLUGIN name => "alert";
+	PLUGIN name => "eval";
 	START;
-	ALERT "CRITICAL", "triggered";
+	EVALUATE "CRITICAL", "triggered";
 	DONE;
 });
 
