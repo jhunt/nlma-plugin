@@ -376,49 +376,6 @@ B<Nagios::Plugin> library and exports some additional convenience methods.  Most
 the logic makes writing monitoring check plugins easier, more straightforward and
 less error-prone.
 
-=head1 AN EXAMPLE PLUGIN
-
-To get started, let's look at an example plugin
-
-  #!/usr/bin/perl
-FIXME: document me!
-
-=head1 PLUGIN SETUP AND OPTIONS
-
-FIXME: document me!
-
-=head1 TRIGGERING PROBLEMS
-
-
-These methods can be called any number of times during a single check run:
-
-  my $ip = host_lookup($dns_name);
-  if (!$ip) {
-    
-  }
-
-FIXME: document me!
-
-=head1 TRACKING PERFORMANCE DATA
-
-FIXME: document me!
-
-=head1 SAVING STATE
-
-FIXME: document me!
-
-=head1 TIMEOUTS
-
-FIXME: document me!
-
-=head1 TIMEOUTS
-
-FIXME: document me!
-
-=head1 DEBUGGING
-
-FIXME: document me!
-
 =head1 METHODS
 
 =head2 new
@@ -484,7 +441,7 @@ Trigger a check status, with an optional status message:
   $plugin->status(NAGIOS_WARN, "Warning!  Bad things about to happen");
 
 Execution continues on afterwards;  If you want to exit immediately,
-look at B<bail>.  See B<TRIGGERING PROBLEMS> for more in-depth detail.
+look at B<bail>.
 
 Valid status codes are:
 
@@ -518,16 +475,12 @@ Shorthand methods exist that pass predetermined status codes:
 
 Trigger a check status (with a status message) and exit immediately.
 Works like B<status> except that it immediately causes the plugin to exit,
-triggering the specified alert level.
+triggering the specified level.
 
-See B<TRIGGERING PROBLEMS> for more information.
-
-=head2 alert
+=head2 evaluate
 
 Trigger a check status (with a status message), but only if the status
 code is not OK.
-
-See B<TRIGGERING PROBLEMS> for more information.
 
 =head2 start
 
@@ -590,7 +543,7 @@ message will be used.
 
 =head2 start_timeout
 
-Starts a timeout timeout.  See B<TIMEOUTS>.
+Starts a timeout timeout.
 
   $plugin->start_timeout(30, "requesting HTTP");
   # do something that could take a while
@@ -604,7 +557,7 @@ requesting HTTP".
 
 =head2 stop_timeout
 
-Clears the currently active timouet timeout.  See B<TIMEOUTS>.
+Clears the currently active timouet timeout.
 
 =head2 state_file_path
 
@@ -619,7 +572,7 @@ May generate a file path like I</var/tmp/mon_save.state>.
 
 =head2 store
 
-Stores a value in a state file.  See B<SAVING STATE>.
+Stores a value in a state file.
 
   $plugin->store("check_logs.seek", $seek_pos);
 
@@ -627,7 +580,7 @@ The created state file will be modified so that its permissions are correct
 and its uid/gid ownership is sane.
 
 If the store operation cannot be carried out, either because of permissions
-or intervening directories, the framework will trigger an UNKNOWN alert with
+or intervening directories, the framework will trigger an UNKNOWN problem with
 a suitable message for debugging.
 
 =head2 retrieve
@@ -640,7 +593,7 @@ The full path to the state file will be determined by the configuration
 of the package; the check plugin does not need to know anything specific.
 
 If the file does not exist, B<undef> will be returned, but no error
-condition or alert will be triggered.
+condition or problem will be triggered.
 
 =head2 credentials
 
