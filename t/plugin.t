@@ -141,29 +141,29 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 4<5 && 4<8", su
 	my $val = 4;
 	CHECK_VALUE $val, "value is $val",
 	           warning => 6, critical => 8;
-	TRACK_VALUE "value", 4;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(1, "THOLD WARNING - value is 7", "value=4;;;;", "Thresholds 7>6 && 7<8", sub {
+ok_plugin(1, "THOLD WARNING - value is 7", "value=7;;;;", "Thresholds 7>6 && 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
 	CHECK_VALUE $val, "value is $val",
 	            warning => 6, critical => 8;
-	TRACK_VALUE "value", 4;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(2, "THOLD CRITICAL - value is 9", "value=4;;;;", "Thresholds 9>6 && 9>8", sub {
+ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;;;;", "Thresholds 9>6 && 9>8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
 	CHECK_VALUE $val, "value is $val",
 	            warning => 6, critical => 8;
-	TRACK_VALUE "value", 4;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
@@ -174,29 +174,29 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 5<6; no crit", 
 	my $val = 4;
 	CHECK_VALUE $val, "value is $val",
 	            warning => 6;
-	TRACK_VALUE "value", 4;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(1, "THOLD WARNING - value is 9", "value=4;;;;", "Thresholds 9>6; no crit", sub {
+ok_plugin(1, "THOLD WARNING - value is 9", "value=9;;;;", "Thresholds 9>6; no crit", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
 	CHECK_VALUE $val, "value is $val",
 	             warning => 6;
-	TRACK_VALUE "value", 4;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
-ok_plugin(0, "THOLD OK - value is 7", "value=4;;;;", "Thresholds no warn; 7<8", sub {
+ok_plugin(0, "THOLD OK - value is 7", "value=7;;;;", "Thresholds no warn; 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
 	CHECK_VALUE $val, "value is $val",
 	            critical => 8;
-	TRACK_VALUE "value", 4;
+	TRACK_VALUE "value", $val;
 	DONE;
 });
 
