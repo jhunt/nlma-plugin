@@ -256,7 +256,7 @@ ok_plugin(0, "TIMEOUT OK - no timeout", undef, "No Timeout", sub {
 	DONE;
 });
 
-ok_plugin(2, "Timed out after 1s", undef, "Timeout / no stage", sub {
+ok_plugin(2, "Timed out after 1s: running check", undef, "Timeout / default stage", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;

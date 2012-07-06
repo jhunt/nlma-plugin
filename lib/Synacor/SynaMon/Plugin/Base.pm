@@ -225,6 +225,8 @@ sub start
 		$self->debug("Setting default OK message");
 		$self->OK($opts{default});
 	}
+
+	$self->start_timeout($self->option->{timeout}, "running check");
 }
 
 sub done
