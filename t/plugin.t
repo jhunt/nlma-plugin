@@ -200,6 +200,20 @@ ok_plugin(0, "THOLD OK - value is 7", "value=7;;;;", "Thresholds no warn; 7<8", 
 	DONE;
 });
 
+# this test makes sure we always understand the
+# Nagios Threshold Format, in case we ever make
+# good on threats to ditch Nagios::Plugin
+ok_plugin(1, "THOLD WARNING - value is 42", undef, "Nagios Threshold Format", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "THOLD";
+	START;
+	my $val = 42;
+	CHECK_VALUE $val, "value is $val",
+	            warning  => '@40:45',
+	            critical => '@45:';
+	DONE;
+});
+
 ###################################################################
 
 ok_plugin(2, "BAIL CRITICAL - bail early", undef, "Bail early", sub {
