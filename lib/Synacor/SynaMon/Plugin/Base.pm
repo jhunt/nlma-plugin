@@ -7,7 +7,9 @@ use Nagios::Plugin qw();
 use base qw(Nagios::Plugin);
 
 use YAML::XS qw(LoadFile);
+use JSON;
 use Data::Dumper qw(Dumper);
+use LWP::UserAgent;
 $Data::Dumper::Pad = "DEBUG> ";
 
 our $VERSION = '0.1';
@@ -399,6 +401,79 @@ sub credentials
 	return ($yaml->{$name}{username}, $yaml->{$name}{password});
 }
 
+sub json_api
+{
+	my ($self, $method, $uri, %opts) = @_;
+	$method = uc($method);
+	my $user = exists($opts{user}) ? $opts{user} : undef;
+	my $pass = exists($opts{pass}) ? $opts{pass} : undef;
+	$opts{error} = "CRITICAL" unless exists $opts{error};
+
+	$self->debug(
+		"Calling API: $method $uri\n".
+		"    as user: ".($user||"(none)")."\n".
+		"  with pass: ".($pass||"(none)")."\n".
+		"  POST data: ".($opts{data}||"(none)")."\n");
+
+	my $ua = LWP::UserAgent->new;
+	$ua->agent($opts{UA} || "SynacorMonitoring/1.0");
+	$ua->timeout($opts{timeout} || $self->option->{timeout});
+
+	my $request = HTTP::Request->new($method => $uri);
+	$request->header(Accept=>'application/json', "Content-Type" => 'application/json');
+	if (($method eq "POST" || $method eq "PUT") and exists $opts{data}) {
+		$request->content($opts{data})
+	}
+
+	if ($user && $pass) {
+		$request->authorization_basic($user, $pass);
+	} elsif ($user || $pass) {
+		$self->UNKNOWN("Username not specified") unless $user;
+		$self->UNKNOWN("Password for '$user' not specified") unless $pass;
+	}
+
+	my $response = $ua->request($request);
+	my $content = $response->content;
+	chomp $content;
+
+	my $json;
+
+	$self->debug("Received ".$response->code." ".$response->message." response");
+	if ($response->is_success) {
+		if ($content =~ m/^_jqjsp/) {
+			$self->debug("JSONP detected; removing wrapper function call");
+			$content =~ s/^_jqjsp\((.*)\);?$/$1/;
+		}
+		$self->debug("raw JSON is '$content'");
+
+		eval {
+			$json = JSON->new->utf8->allow_nonref->decode($content);
+			1;
+		} or do {
+			$self->debug("JSON decode failed: $@");
+			$self->bail($self->CRITICAL("JSON Parse Error from $uri: $content"));
+		};
+
+		$self->debug("Decoded JSON is:");
+		$self->dump($json);
+		return $json;
+
+	} else {
+		if ($opts{error} =~ m/^(CRITICAL|WARNING|UNKNOWN)$/) {
+			$self->bail($self->STATUS($opts{error}, "Got ".$response->status_line." from $method $uri"));
+		}
+
+		eval {
+			$json = JSON->new->utf8->allow_nonref->decode($content);
+			1;
+		} or do {
+			$self->debug("Error handler JSON decode failed: $@");
+			$json = {error => $response->code." ".$response->message};
+		};
+		return $json;
+	}
+}
+
 "YAY!";
 
 =head1 NAME
@@ -669,6 +744,19 @@ In this example, the check looks for credentials specific to this
 $host, and if that fails, looks for the defaults.  Since the second
 call does not specify the I<fail silently> argument, the plugin
 will either retrieve credentials or trigger an UNKNOWN.
+
+=head2 json_api
+
+Interact with a JSON or JSONP API, using GET or POST HTTP methods.
+This function will use Basic Authentication if a B<user> and B<pass>
+argument are supplied.
+
+  my $album = json_api(
+    GET  => "http://some.service.synacor.com/music/collections/42",
+
+    user => 'music-lover1',
+    pass => 'secret'
+  );
 
 =head1 AUTHOR
 

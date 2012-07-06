@@ -23,6 +23,8 @@ our @EXPORT = qw/
 	STORE RETRIEVE CREDENTIALS
 
 	DEBUG DUMP
+
+	JSON_API
 /;
 
 my $plugin;
@@ -55,6 +57,8 @@ sub CREDENTIALS { $plugin->credentials(@_); }
 
 sub DEBUG { $plugin->debug(@_); }
 sub DUMP  { $plugin->dump(@_); }
+
+sub JSON_API { $plugin->json_api(@_); }
 
 END {
 	$plugin->done if $plugin && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
@@ -169,6 +173,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::debug>.
 =head2 DUMP
 
 Wrapper around B<Synacor::SynaMon::Plugin::dump>.
+
+=head2 JSON_API
+
+Wrapper around B<Synacor::SynaMon::Plugin::json_api>.
 
 =head1 AUTHOR
 

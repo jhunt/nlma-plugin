@@ -384,6 +384,60 @@ If the file does not exist, B<RETRIEVE> will return I<undef>.  If the file
 cannot be written to during a B<STORE> call, the plugin will exit immediately,
 triggering an UNKNOWN problem.
 
+=head1 ADVANCED FUNCTIONS
+
+This section details some of the more specialized functions that the framework
+provides.  If you have a suggestion for something you see multiple times in
+different check plugins, please suggest to the monitoring team that it be added
+to the framework.
+
+=head2 Calling JSON/JSONP APIs
+
+Several check plugins need to interact with JSON Web APIs, both internal and
+external.  The framework provides B<JSON_API>, which can handle:
+
+=over
+
+=item GET requests
+
+=item POST requests (with payload)
+
+=item User Authentication
+
+=item JSON deserialization (for free!)
+
+=back
+
+Here is some code to read some data from a public (unauthenticated) web
+service, reconstituted as a real Perl hash reference:
+
+  my $data = JSON_API(GET => "http://ws.example.com/test");
+
+Some APIs require that you POST your request parameters, before they
+will give back a useful response:
+
+  my $resulsts = JSON_API(
+    GET  => "http://ws.example.com/search",
+
+    data => json_encode({q => "needle"});
+
+Other APIs require credentials to access them.  These are passed as
+the B<user> and B<pass> keys:
+
+  my $results = JSON_API(
+    GET  => "http://ws.example.com/priv",
+
+    user => "jdoe",
+    pass => "secret"
+  );
+
+(Note: for security reasons, check plugins should retrieve
+usernames and passwords using the B<CREDENTIALS> function.)
+
+If the remote web server response with a non-OK status, JSON_API will
+trigger a B<CRITICAL> problem and then B<BAIL>.  Problems encountered
+while deserializing JSON result in the same behavior.
+
 =head1 DEBUGGING
 
 Debugging output explains a check plugin is doing, and proves to be a
