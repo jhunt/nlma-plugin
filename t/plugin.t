@@ -139,9 +139,9 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 4<5 && 4<8", su
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 4;
-	THRESHOLDS warning => 6, critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	           warning => 6, critical => 8;
+	TRACK_VALUE "value", 4;
 	DONE;
 });
 
@@ -150,9 +150,9 @@ ok_plugin(1, "THOLD WARNING - value is 7", "value=4;;;;", "Thresholds 7>6 && 7<8
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
-	THRESHOLDS warning => 6, critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            warning => 6, critical => 8;
+	TRACK_VALUE "value", 4;
 	DONE;
 });
 
@@ -161,9 +161,9 @@ ok_plugin(2, "THOLD CRITICAL - value is 9", "value=4;;;;", "Thresholds 9>6 && 9>
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
-	THRESHOLDS warning => 6, critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            warning => 6, critical => 8;
+	TRACK_VALUE "value", 4;
 	DONE;
 });
 
@@ -172,9 +172,9 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 5<6; no crit", 
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 4;
-	THRESHOLDS warning => 6;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            warning => 6;
+	TRACK_VALUE "value", 4;
 	DONE;
 });
 
@@ -183,9 +183,9 @@ ok_plugin(1, "THOLD WARNING - value is 9", "value=4;;;;", "Thresholds 9>6; no cr
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
-	THRESHOLDS warning => 6;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	             warning => 6;
+	TRACK_VALUE "value", 4;
 	DONE;
 });
 
@@ -194,9 +194,9 @@ ok_plugin(0, "THOLD OK - value is 7", "value=4;;;;", "Thresholds no warn; 7<8", 
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
-	THRESHOLDS critical => 8;
-	EVALUATE $val, "value is $val";
-	TRACK "value", 4;
+	CHECK_VALUE $val, "value is $val",
+	            critical => 8;
+	TRACK_VALUE "value", 4;
 	DONE;
 });
 

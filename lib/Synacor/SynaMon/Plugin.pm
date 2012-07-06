@@ -79,10 +79,9 @@ To get started, let's look at an example plugin that checks the age of a file:
     BAIL CRITICAL("stat($file) failed: $!");
   }
 
-  THRESHOLDS warning  => 1800,
-             critical => 3600;
-  my $age = time - $stat[9];
-  EVALUATE $age;
+  CHECK_VALUE $age, "$file is ${age}s old",
+              warning  => 1800,
+              critical => 3600;
   TRACK "age" => $age;
 
   DONE;
@@ -284,13 +283,13 @@ Check plugins often need to selectively trigger a problem based on a range
 or acceptable values.  A disk check may want to cause a WARNING if 80% of
 the partition is in use, but escalate to a CRITICAL it 90% or above.
 
-This is done with the B<THRESHOLDS> and B<EVALUATE> functions:
+This is done with the B<CHECK_VALUE> function:
 
   $used = get_percent_used($disk);
 
-  THRESHOLDS warning  => 0.8,
-             critical => 0.9;
-  EVALUATE $used, sprintf("$disk is %0.2f%% used", $used*100.0);
+  CHECK_VALUE $used, sprintf("$disk is %0.2f%% used", $used*100.0);
+              warning  => 0.8,
+              critical => 0.9;
 
 This is logically equivalent to
 
@@ -302,18 +301,6 @@ This is logically equivalent to
   } else {
     OK sprintf("$disk is %0.2f%% used", $used*100.0);
   }
-
-Thresholds will remain in effect for all B<EVALUATE> calls, until new thresholds
-are set:
-
-  THRESHOLDS warning  => 20,
-             critical => 40;
-
-  $val = get_Metric1();
-  EVALUATE $val, "Metric1 is $val";
-
-  $val = get_Metric2();
-  EVALUATE $val, "Metric2 is $val";
 
 If either threshold is not specified, that type of problem will
 not be triggerable.

@@ -11,13 +11,12 @@ use base qw(Exporter);
 our @EXPORT = qw/
 	PLUGIN OPTION
 
-	STATUS BAIL ALERT
+	STATUS BAIL EVALUATE
 	OK WARNING CRITICAL UNKNOWN
 
 	START DONE
 
-	THRESHOLDS EVALUATE
-	TRACK
+	CHECK_VALUE TRACK_VALUE
 
 	STAGE START_TIMEOUT STOP_TIMEOUT
 
@@ -40,10 +39,8 @@ sub WARNING  { $plugin->WARNING(@_); }
 sub CRITICAL { $plugin->CRITICAL(@_); }
 sub UNKNOWN  { $plugin->UNKNOWN(@_); }
 
-sub THRESHOLDS { $plugin->thresholds(@_); }
-sub EVALUATE   { $plugin->evaluate(@_); }
-
-sub TRACK { $plugin->track(@_); }
+sub CHECK_VALUE { $plugin->check_value(@_); }
+sub TRACK_VALUE { $plugin->track_value(@_); }
 
 sub START { $plugin->start(@_); }
 sub DONE  { $plugin->done(@_); }
@@ -125,17 +122,15 @@ Wrapper around B<Synacor::SynaMon::Plugin::CRITICAL>.
 
 Wrapper around B<Synacor::SynaMon::Plugin::UNKNOWN>.
 
-=head2 THRESHOLDS
-
-Wrapper around B<Synacor::SynaMon::Plugin::thresholds>.
+=head2 CHECK_VALUE
 
 =head2 EVALUATE
 
 Wrapper around B<Synacor::SynaMon::Plugin::evaluate>.
 
-=head2 TRACK
+=head2 TRACK_VALUE
 
-Wrapper around B<Synacor::SynaMon::Plugin::track>.
+Wrapper around B<Synacor::SynaMon::Plugin::track_value>.
 
 =head2 START
 

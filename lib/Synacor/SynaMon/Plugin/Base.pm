@@ -101,7 +101,7 @@ sub option
 	}
 }
 
-sub track
+sub track_value
 {
 	my ($self, $label, $value, @data) = @_;
 	$self->{legacy}->add_perfdata(
@@ -203,18 +203,13 @@ sub done
 	$self->{legacy}->nagios_exit($self->{legacy}->check_messages);
 }
 
-sub thresholds
+sub check_value
 {
-	my ($self, %thresh) = @_;
+	my ($self, $value, $message, %thresh) = @_;
 	$self->debug("Setting thresholds to:",
 	             "    warning:  ".(defined $thresh{warning}  ? $thresh{warning}  : "(unspec)"),
 	             "    critical: ".(defined $thresh{critical} ? $thresh{critical} : "(unspec)"));
 	$self->{legacy}->set_thresholds(%thresh);
-}
-
-sub evaluate
-{
-	my ($self, $value, $message) = @_;
 	$self->debug("Evaluating ($value) against thresholds");
 	$self->status($self->{legacy}->check_threshold($value), $message);
 }
@@ -474,9 +469,9 @@ reference, when called with no arguments:
     # do stuff specific to MySQL...
   }
 
-=head2 track
+=head2 track_value
 
-Track performance and trending data.  See B<TRACKING PERFORMANCE DATA>.
+Track performance and trending data.
 
 =head2 getopts
 
@@ -543,27 +538,17 @@ Start plugin execution and process command-line arguments.
 Finalize plugin execution, and exit with the appropriate return code
 and status message, formatted for Nagios.
 
-=head2 thresholds
+=head2 check_value
 
-Sets thresholds that can be evaluated.  See B<TRIGGERING PROBLEMS>.
+Checks a value against a set of thresholds, and triggering whatever
+problem state is most appropriate
 
-  $plugin->thresholds(
-      warning => 0.8,
-      critical => 0.9);
+  $plugin->check_value($cpu,
+      sprintf("CPU Usage is %0.2f%%", $cpu*100),
+      warning => 0.8, critical => 0.9);
 
 This call sets two thresholds that will trigger a WARNING at 80% or
-higher, and a CRITICAL at 90% or higher.
-
-=head2 evaluate
-
-Evaluate a single value against previously set thresholds, and trigger
-the appropriate status message.
-
-  $plugin->thresholds(
-      warning => 0.8,
-      critical => 0.9);
-  $plugin->evaluate($cpu_usage,
-      sprintf("CPU Usage is %0.2f", $cpu_usage));
+higher, and a CRITICAL at 90% or higher, and then check $cpu against them.
 
 =head2 debug
 
