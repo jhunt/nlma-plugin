@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.01";
+our $VERSION = "1.02";
 
 use Exporter;
 use base qw(Exporter);
@@ -334,6 +334,19 @@ This is logically equivalent to
 
 If either threshold is not specified, that type of problem will
 not be triggerable.
+
+B<CHECK_VALUE> also accepts a B<skip_OK> key, whose presence will prevent
+the framework from registering OK messages if neither threshold is
+triggered.  This can be useful to keep OK check output manageable:
+
+  for my $f (@files) {
+    CHECK_VALUE -s $file, "$file is too big!",
+      warning  => $size_warn,
+      critical => $size_crit;
+  }
+  OK "Files look great!";
+
+In this example, the OK message will be just "Files look great!"
 
 CHECK_VALUE has been available since version 1.0.
 

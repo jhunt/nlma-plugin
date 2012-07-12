@@ -10,8 +10,6 @@ use YAML::XS qw(LoadFile);
 use Data::Dumper qw(Dumper);
 $Data::Dumper::Pad = "DEBUG> ";
 
-our $VERSION = '0.1';
-
 use constant NAGIOS_OK       => 0;
 use constant NAGIOS_WARNING  => 1;
 use constant NAGIOS_CRITICAL => 2;
@@ -211,8 +209,20 @@ sub check_value
 	             "    warning:  ".(defined $thresh{warning}  ? $thresh{warning}  : "(unspec)"),
 	             "    critical: ".(defined $thresh{critical} ? $thresh{critical} : "(unspec)"));
 	$self->{legacy}->set_thresholds(%thresh);
+
+	my $skip_OK = undef;
+	if (exists $thresh{skip_OK}) {
+		$skip_OK = $thresh{skip_OK} ? 1 : undef;
+		delete $thresh{skip_OK};
+
+		$self->debug("skip_OK specified; will not register OK message");
+	}
+
 	$self->debug("Evaluating ($value) against thresholds");
-	$self->status($self->{legacy}->check_threshold($value), $message);
+	my $stat = $self->{legacy}->check_threshold($value);
+	$self->debug("Threshold check yielded status $stat");
+	return $stat, $message if $skip_OK && $stat == NAGIOS_OK;
+	$self->status($stat, $message);
 }
 
 sub debug

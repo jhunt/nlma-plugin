@@ -130,6 +130,18 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 4<5 && 4<8", su
 	DONE;
 });
 
+ok_plugin(0, "THOLD OK - skipped check", undef, "skip_OK test", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "THOLD";
+	START;
+	my $val = 4;
+	CHECK_VALUE $val, "value is $val",
+	           skip_OK => 1,
+	           warning => 6, critical => 8;
+	OK "skipped check";
+	DONE;
+});
+
 ok_plugin(1, "THOLD WARNING - value is 7", "value=7;;;;", "Thresholds 7>6 && 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
