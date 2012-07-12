@@ -22,8 +22,12 @@ sub import {
 		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
 	}
 
-	my $callpkg = caller;
-	Exporter::export '', $callpkg, keys %tags;
+	my @vcheck = grep { $_ =~ m/^\d+(.\d+)?$/ } @_;
+	my $v = pop @vcheck;
+	if ($v && $VERSION+0 < $v) {
+		print "UNKNOWN - Incorrect framework version $v+ (installed: $VERSION)\n";
+		exit 3;
+	}
 }
 
 "Make your time...";
@@ -54,6 +58,22 @@ To use the procedural (B<easy>) interface:
 
   #!/usr/bin/perl
   use Synacor::SynaMon::Plugin qw(:easy);
+
+=head1 VERSIONING
+
+The plugin framework will be backwards compatible at all costs.
+
+If you want to make sure that you get the correct version of the framework, i.e.
+so you can use a function that was added in a later release, add the minimum
+required version number to the list of things to import in your 'use' call.
+
+For example, to require framework version 1.56 or later:
+
+  #!/usr/bin/perl
+  use Synacor::SynaMon::Plugin qw(:easy 1.56)
+
+This documentation should define, for each function, what version of the framework
+that function first appeared in.
 
 =head1 AN EXAMPLE PLUGIN
 
@@ -86,7 +106,7 @@ To get started, let's look at an example plugin that checks the age of a file:
   CHECK_VALUE $age, "$file is ${age}s old",
               warning  => 1800,
               critical => 3600;
-  TRACK "age" => $age;
+  TRACK_VALUE "age" => $age;
 
   DONE;
 
@@ -125,6 +145,8 @@ The preamble of every check plugin has to do three things, in order:
 
 =head2 PLUGIN
 
+Available since framework version 1.0.
+
 The B<PLUGIN> function identifies the check plugin and sets up some
 basic information that the framework needs about it, including its
 name and a summary of what it does.
@@ -151,6 +173,8 @@ A short description of what the plugin checks, e.g.
 =back
 
 =head2 OPTION
+
+Available since framework version 1.0.
 
 To make check plugins more flexible, you can set up command-line
 arguments and flags to defer configuration until the plugin is run.
@@ -281,6 +305,8 @@ The hierarchy of problem types, from most severe to least, is:
 
 =back
 
+UNKNOWN, CRITICAL, WARNING and OK have been available since version 1.0.
+
 =head1 CHECKING THRESHOLDS
 
 Check plugins often need to selectively trigger a problem based on a range
@@ -309,17 +335,21 @@ This is logically equivalent to
 If either threshold is not specified, that type of problem will
 not be triggerable.
 
+CHECK_VALUE has been available since version 1.0.
+
 =head1 TRACKING PERFORMANCE DATA
 
 Performance data is what the monitoring system uses to generate trending
-graphs.  This data is collected by check plugins, via the B<TRACK> function.
+graphs.  This data is collected by check plugins, via B<TRACK_VALUE>.
 
 For each data point, the plugin must specify a label and the value:
 
-  TRACK "loadSys",  $load_sys;
-  TRACK "loadUser", $load_user;
+  TRACK_VALUE "loadSys",  $load_sys;
+  TRACK_VALUE "loadUser", $load_user;
 
 A plugin can track as many data points as it wants, within reason.
+
+TRACK_VALUE has been available since version 1.0.
 
 =head1 TIMEOUTS
 
@@ -364,6 +394,8 @@ will cause odd and undefined behavior.
 B<Note:> Timeouts and Perl's B<sleep> function do not interfere; plugins
 can use both without issue.
 
+START_TIMEOUT, STAGE and STOP_TIMEOUT have been available since version 1.0.
+
 =head1 SAVING STATE
 
 Check plugins may need to save some data between runs.  This could be anything
@@ -387,6 +419,8 @@ All state files managed through this interface will be:
 If the file does not exist, B<RETRIEVE> will return I<undef>.  If the file
 cannot be written to during a B<STORE> call, the plugin will exit immediately,
 triggering an UNKNOWN problem.
+
+STORE and RETRIEVE have been available since version 1.0.
 
 =head1 DEBUGGING
 

@@ -33,6 +33,24 @@ ok_plugin(3, "ATEXIT UNKNOWN - Check appears to be broken; no problems triggered
 
 ###################################################################
 
+ok_plugin(3, "UNKNOWN - Incorrect framework version 56.7+ (installed: $Synacor::SynaMon::Plugin::VERSION)", undef, "bad version check", sub {
+	eval "use Synacor::SynaMon::Plugin qw(:easy 56.7);";
+	PLUGIN name => "VERS";
+	START;
+	OK;
+	DONE;
+});
+
+ok_plugin(0, "VERS OK", undef, "good version check", sub {
+	eval "use Synacor::SynaMon::Plugin qw(:easy 1.0);";
+	PLUGIN name => "VERS";
+	START;
+	OK;
+	DONE;
+});
+
+###################################################################
+
 ok_plugin(0, "TEST OK - okay", undef, "Dummy OK", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "TEST";
