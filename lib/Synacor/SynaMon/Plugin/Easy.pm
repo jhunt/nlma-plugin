@@ -24,6 +24,13 @@ our @EXPORT = qw/
 
 	RUN
 
+	HTTP_REQUEST
+	HTTP_GET
+	HTTP_POST
+	HTTP_PUT
+
+	JSON_DECODE
+
 	DEBUG DUMP
 /;
 
@@ -59,6 +66,13 @@ sub RUN { $plugin->run(@_); }
 
 sub DEBUG { $plugin->debug(@_); }
 sub DUMP  { $plugin->dump(@_); }
+
+sub HTTP_REQUEST { $plugin->http_request(@_); }
+sub HTTP_GET     { $plugin->http_get(@_); }
+sub HTTP_PUT     { $plugin->http_put(@_); }
+sub HTTP_POST    { $plugin->http_post(@_); }
+
+sub JSON_DECODE { $plugin->json_decode(@_); }
 
 END {
 	$plugin->done if $plugin && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
@@ -177,6 +191,26 @@ Wrapper around B<Synacor::SynaMon::Plugin::debug>.
 =head2 DUMP
 
 Wrapper around B<Synacor::SynaMon::Plugin::dump>.
+
+=head2 HTTP_REQUEST
+
+Wrapper around B<Synacor::SynaMon::Plugin::http_request>.
+
+=head2 HTTP_GET
+
+Wrapper around B<Synacor::SynaMon::Plugin::http_get>.
+
+=head2 HTTP_PUT
+
+Wrapper around B<Synacor::SynaMon::Plugin::http_put>.
+
+=head2 HTTP_POST
+
+Wrapper around B<Synacor::SynaMon::Plugin::http_post>.
+
+=head2 JSON_DECODE
+
+Wrapper around B<Synacor::SynaMon::Plugin::json_decode>.
 
 =head1 AUTHOR
 

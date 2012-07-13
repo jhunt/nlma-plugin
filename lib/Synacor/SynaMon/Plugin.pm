@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.02";
+our $VERSION = "1.03";
 
 use Exporter;
 use base qw(Exporter);
@@ -434,6 +434,74 @@ cannot be written to during a B<STORE> call, the plugin will exit immediately,
 triggering an UNKNOWN problem.
 
 STORE and RETRIEVE have been available since version 1.0.
+
+=head1 ADVANCED FUNCTIONS
+
+This section details some of the more specialized functions that the framework
+provides.  If you have a suggestion for something you see multiple times in
+different check plugins, please suggest to the monitoring team that it be added
+to the framework.
+
+=head2 HTTP Requests
+
+The plugin framework provides primitives for interacting with HTTP web servers.
+These functions provide proper User Agent identification to the remote
+endpoint, and take care of some of the drudgery of dealing with LWP.
+
+The primary functions B<HTTP_REQUEST>, although in most applications, the
+alternate helper functions, like B<HTTP_GET> are much more useful.
+
+=over
+
+=item HTTP_GET $url, \%headers, \%options
+
+=item HTTP_PUT $url, $data, \%headers, \%options
+
+=item HTTP_POST $url, $data, \%headers, \%options
+
+=back
+
+When called in scalar context, these functions return a simple boolean value
+reflecting the success or failure of the request:
+
+  if (HTTP_GET $url) {
+    # success!
+  }
+
+In list context, they return two objects: the HTTP::Response object itself,
+and the decoded content of the response.
+
+  my ($res, $data) = HTTP_GET $url;
+  if ($res->is_success) {
+    # success!  do something with $data
+  }
+
+The HTTP_* functions are available as of version 1.03.
+
+The following options can be passed to any of these functions (as the
+final hashref argument) to influence how the request is made:
+
+=over
+
+=item UA
+
+User Agent string to set for the outgoing request.  Defaults to
+"SynacorMonitoring/$VERSION".
+
+=item timeout
+
+Timeout value (in seconds) for making the request.  Defaults to the
+global I<--timeout> parameter value.  If you are making multiple
+requests, you should probably set this to something lower.
+
+=item username
+
+=item password
+
+If username and password are both set, HTTP authentication will be
+requested, using these credentials.
+
+=back
 
 =head1 DEBUGGING
 

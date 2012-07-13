@@ -7,7 +7,9 @@ use Nagios::Plugin qw();
 use base qw(Nagios::Plugin);
 
 use YAML::XS qw(LoadFile);
+use JSON;
 use Data::Dumper qw(Dumper);
+use LWP::UserAgent;
 $Data::Dumper::Pad = "DEBUG> ";
 
 use constant NAGIOS_OK       => 0;
@@ -51,8 +53,11 @@ sub new
 {
 	my ($class, %options) = @_;
 
+	$ALL_DONE = 0;
+	my $bin = do{my $n=$0;$n=~s|.*/||;$n};
+
 	# Play nice with Nagios::Plugin
-	$options{shortname} = uc($options{name} || do{my $n=$0;$n=~s|.*/||;$n});
+	$options{shortname} = uc($options{name} || $bin);
 	delete $options{name};
 
 	if (exists $options{summary}) {
@@ -69,25 +74,40 @@ sub new
 			NAGIOS_CRITICAL => [],
 			NAGIOS_UNKNOWN  => [],
 		},
-		did_stuff => 0, # ticked for ever STATUS message
+		name => $bin,
+		usage_list => [],
+		did_stuff => 0, # ticked for every STATUS message
 		options => {},
 		legacy => Nagios::Plugin->new(%options),
 	};
 
-	$self = bless($self, $class);
-	$self->option("debug|D",
-		usage => "--debug, -D",
-		help  => "Turn on debug mode"
-	);
-	$self;
+	bless($self, $class);
+}
+
+sub _spec2usage
+{
+	my ($usage, $required) = @_;
+	return unless $required;
+
+	$usage =~ s/,\s+/|/;
+	$usage;
 }
 
 sub option
 {
 	my ($self, $spec, %opts) = @_;
 	if ($spec) {
+		if ($spec eq "timeout|t=i") {
+			$self->{legacy}{opts}{timeout} = $opts{default} if $opts{default};
+			return;
+		}
 		if (exists $opts{usage}) {
-			$opts{help} = $opts{usage} . (exists $opts{help} ? "\n\t" . $opts{help} : "");
+			push @{$self->{usage_list}}, _spec2usage($opts{usage}, $opts{required});
+
+			$opts{help} = $opts{usage} . (exists $opts{help} ? "\n   " . $opts{help} : "");
+			if (exists $opts{default}) {
+				$opts{help} .= " (default: $opts{default})";
+			}
 			delete $opts{usage};
 		}
 		return $self->{legacy}->add_arg(
@@ -97,6 +117,12 @@ sub option
 	} else {
 		return $self->{legacy}->opts;
 	}
+}
+
+sub usage
+{
+	my ($self) = @_;
+	join(' ', $self->{name}, @{$self->{usage_list}});
 }
 
 sub track_value
@@ -111,6 +137,11 @@ sub track_value
 sub getopts
 {
 	my ($self) = @_;
+	$self->option("debug|D",
+		usage => "--debug, -D",
+		help  => "Turn on debug mode"
+	);
+	$self->{legacy}->opts->{_attr}{usage} = $self->usage;
 	$self->{legacy}->getopts;
 }
 
@@ -182,7 +213,11 @@ sub UNKNOWN
 sub start
 {
 	my ($self, %opts) = @_;
+
+	$ALL_DONE = 1; # in case we bomb out in getopts
 	$self->getopts;
+	$ALL_DONE = 0;
+
 	$self->{debug} = $self->option->{debug};
 	$self->debug("Starting plugin execution");
 
@@ -190,6 +225,8 @@ sub start
 		$self->debug("Setting default OK message");
 		$self->OK($opts{default});
 	}
+
+	$self->start_timeout($self->option->{timeout}, "running check");
 }
 
 sub done
@@ -407,6 +444,64 @@ sub run
 	}
 
 	return wantarray ? @lines : join("\n", @lines)."\n";
+}
+
+sub http_request
+{
+	my ($self, $method, $uri, $data, $headers, $options) = @_;
+	$method = uc($method);
+	$headers = $headers || {};
+	$options = $options || {};
+
+	$self->debug("Making HTTP Request: $method $uri");
+	$self->dump($data) if $method eq "POST";
+
+	my $ua = LWP::UserAgent->new;
+	$ua->agent($options->{UA} || "SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION");
+	$ua->timeout($options->{timeout} || $self->option->{timeout} || 15);
+
+	my $request = HTTP::Request->new($method => $uri);
+	$request->head(%$headers);
+	if (($method eq "POST" || $method eq "PUT") and $data) {
+		$request->content($data);
+	}
+
+	if (exists $options->{username} && exists $options->{password}) {
+		$request->authorization_basic($options->{username}, $options->{password});
+	};
+
+	my $response = $ua->request($request);
+	return wantarray ?
+		($response, $response->decoded_content) :
+		$response->is_success;
+}
+
+sub http_get
+{
+	my ($self, $uri, $headers, $options) = @_;
+	$self->http_request(GET => $uri, undef, $headers, $options);
+}
+
+sub http_post
+{
+	my ($self, $uri, $data, $headers, $options) = @_;
+	$self->http_request(POST => $uri, $data, $headers, $options);
+}
+
+sub http_put
+{
+	my ($self, $uri, $data, $headers, $options) = @_;
+	$self->http_request(PUT => $uri, $data, $headers, $options);
+}
+
+sub json_decode
+{
+	my ($self, $data) = @_;
+	my $obj;
+	if ($data =~ /^[^\(]*\((.*)\)$/) { # JSONP
+		$data = $1;
+	}
+	eval { $obj = JSON->new->allow_nonref->decode($data); }
 }
 
 "YAY!";
@@ -704,6 +799,71 @@ some sanity checks on it.  If the command is an absolute path to
 an executable or script, the framework will check that the file
 exists and is actually executable.  If these tests fail, the whole
 check will be aborted as an UNKNOWN.
+
+=head2 http_request
+
+Issue an HTTP request, using LWP::UserAgent.  This is the general
+form of the function.  For most applications, specific aliases like
+B<http_get>, B<http_post>, et al. are much more suitable.
+
+If called in scalar context, returns a boolean value if the request
+succeeded, but provides no other details.
+
+In list context, B<http_request> returns the HTTP response object,
+and the decoded content of the response:
+
+  if ($plugin->http_request(get => $url)) {
+    # request succeeded, do something else
+  }
+
+  my ($res, $data) = $plugin->http_request(get => $url);
+  if ($res->is_success) {
+    # now we can do something with the $data
+  }
+
+The following parameters can be specified, in order:
+
+=over
+
+=item $method
+
+One of GET, PUT, or POST.
+
+=item $url
+
+=item $data
+
+Data for a PUT / POST request.  This should be pre-encoded.
+
+=item $headers
+
+A hashref of additional headers to submit along with the request.
+
+=item $options
+
+Additional options, including username / password, timeout and
+User-Agent string.
+
+=back
+
+=head2 http_get
+
+Helper method for making HTTP GET requests using B<http_request>.
+Accepts all of the parameters of B<http_request>, except for $data.
+
+=head2 http_put
+
+Helper method for making HTTP PUT requests.
+
+=head2 http_post
+
+Helper method for making HTTP POST requests.
+
+=head2 json_decode
+
+Decode JSON serialized data safely.  If an exception is thrown during
+the decode operation, undef will be returned.  Otherwise, the
+de-serialized object will be returned.
 
 =head1 AUTHOR
 
