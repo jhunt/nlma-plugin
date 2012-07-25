@@ -1,0 +1,5 @@
+---
+requires:
+  - perl-URI
+  - perl-libwww-perl
+  - perl > 5.8.0
