@@ -461,7 +461,7 @@ sub http_request
 	$ua->timeout($options->{timeout} || $self->option->{timeout} || 15);
 
 	my $request = HTTP::Request->new($method => $uri);
-	$request->head(%$headers);
+	$request->header(%$headers);
 	if (($method eq "POST" || $method eq "PUT") and $data) {
 		$request->content($data);
 	}
