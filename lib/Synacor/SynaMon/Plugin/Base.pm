@@ -387,7 +387,7 @@ sub credentials
 	}
 
 	my @stat = stat($filename);
-	if ($fail_silently || !@stat || ($stat[2] & 07777) != 0400) {
+	if (!$fail_silently && (!@stat || ($stat[2] & 07777) != 0400)) {
 		$self->bail(NAGIOS_UNKNOWN, sprintf("Insecure credentials file; mode is %04o (not 0400)",
 				$stat[2] & 07777));
 	}
