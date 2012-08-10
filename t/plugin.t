@@ -170,6 +170,7 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 5<6; no crit", 
 	START;
 	my $val = 4;
 	CHECK_VALUE $val, "value is $val",
+	            skip_OK => 0,
 	            warning => 6;
 	TRACK_VALUE "value", $val;
 	DONE;
@@ -238,6 +239,16 @@ ok_plugin(2, "EVAL CRITICAL - triggered", undef, "evaluate test with non-OK", su
 	PLUGIN name => "eval";
 	START;
 	EVALUATE "CRITICAL", "triggered";
+	DONE;
+});
+
+ok_plugin(0, "EVAL OK - edge cases", undef, "evaluate test with bad status values", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "eval";
+	START;
+	EVALUATE undef, "/undef/ is not a valid status code value";
+	EVALUATE "WTF?", "'WTF?' is not really a status code name";
+	OK "edge cases";
 	DONE;
 });
 
@@ -315,6 +326,27 @@ ok_plugin(3, "STORE UNKNOWN - Could not open 't/ENOENT/mon_test.fail' for writin
 	DONE;
 });
 
+ok_plugin(0, "STORE OK - arrays work", undef, "Store and retrieve arrays", sub {
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => "store";
+	START;
+
+	my @list = ("first\n", "second\n", "third\n");
+	STORE("test.list", \@list);
+
+	my $read_scalar = RETRIEVE("test.list");
+	$read_scalar eq "first\nsecond\nthird\n" or CRITICAL "STORE(list) / RETRIEVE(scalar) fails: $read_scalar";
+
+	my @read_list = RETRIEVE("test.list");
+	$read_list[0] eq "first\n"  or CRITICAL "RETRIEVE(list)[0] is $read_list[0]";
+	$read_list[1] eq "second\n" or CRITICAL "RETRIEVE(list)[1] is $read_list[1]";
+	$read_list[2] eq "third\n"  or CRITICAL "RETRIEVE(list)[2] is $read_list[2]";
+
+	OK "arrays work";
+	DONE;
+});
+
 ###################################################################
 
 chmod 0400, "t/data/creds";
@@ -356,11 +388,35 @@ ok_plugin(3, "CREDS UNKNOWN - Credentials key 'unknown' not found", undef, "Non-
 	DONE;
 });
 
+ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silently)", sub {
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
+	PLUGIN name => "creds";
+	START;
+	if (CREDENTIALS("unknown", "FAILOK")) {
+		WARNING "got creds for 'unknown' key";
+	} else {
+		OK "failed silently";
+	}
+	DONE;
+});
+
 ok_plugin(3, "CREDS UNKNOWN - Corrupt credentials key 'corrupt'", undef, "Bad key", sub {
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
 	CREDENTIALS("corrupt");
+	DONE;
+});
+
+ok_plugin(0, "CREDS OK - failed silently", undef, "Bad key (fail silently)", sub {
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
+	PLUGIN name => "creds";
+	START;
+	if (CREDENTIALS("corrupt", "FAILOK")) {
+		WARNING "got creds for 'corrupt' key";
+	} else {
+		OK "failed silently";
+	}
 	DONE;
 });
 
@@ -372,11 +428,35 @@ ok_plugin(3, "CREDS UNKNOWN - Could not find credentials file", undef, "Credenti
 	DONE;
 });
 
+ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file missing (fail silently)", sub {
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds.DNE";
+	PLUGIN name => "creds";
+	START;
+	if (CREDENTIALS("should-fail", "FAILOK")) {
+		WARNING "got creds from non-existent creds file";
+	} else {
+		OK "failed silently";
+	}
+	DONE;
+});
+
 ok_plugin(3, "CREDS UNKNOWN - Could not read credentials file", undef, "Credentials file unreadable", sub {
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.perms";
 	PLUGIN name => "creds";
 	START;
 	CREDENTIALS("should-fail");
+	DONE;
+});
+
+ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file unreadable (fail silently)", sub {
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds.perms";
+	PLUGIN name => "creds";
+	START;
+	if (CREDENTIALS("should-fail", "FAILOK")) {
+		WARNING "got creds from non-accessible creds file";
+	} else {
+		OK "failed silently";
+	}
 	DONE;
 });
 
@@ -388,11 +468,35 @@ ok_plugin(3, "CREDS UNKNOWN - Insecure credentials file; mode is 0664 (not 0400)
 	DONE;
 });
 
+ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file insecure (fail silently)", sub {
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds.insecure";
+	PLUGIN name => "creds";
+	START;
+	if (CREDENTIALS("should-fail", "FAILOK")) {
+		WARNING "got creds from insecure creds file";
+	} else {
+		OK "failed silently";
+	}
+	DONE;
+});
+
 ok_plugin(3, "CREDS UNKNOWN - Corrupted credentials file", undef, "Creds file corrupted", sub {
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.corrupt";
 	PLUGIN name => "creds";
 	START;
 	CREDENTIALS("should-fail");
+	DONE;
+});
+
+ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail silently)", sub {
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds.corrupt";
+	PLUGIN name => "creds";
+	START;
+	if (CREDENTIALS("should-fail", "FAILOK")) {
+		WARNING "got creds from corrupted creds file";
+	} else {
+		OK "failed silently";
+	}
 	DONE;
 });
 
