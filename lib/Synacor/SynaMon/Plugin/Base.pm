@@ -46,7 +46,7 @@ our %STATUS_CODES = (
 );
 
 our $TIMEOUT_MESSAGE = "Timed out";
-our $TIMEOUT_STAGE = undef;
+our $TIMEOUT_STAGE = "running check";
 our $ALL_DONE = 0;
 
 sub new
@@ -226,7 +226,7 @@ sub start
 		$self->OK($opts{default});
 	}
 
-	$self->start_timeout($self->option->{timeout}, "running check");
+	$self->start_timeout($self->option->{timeout});
 }
 
 sub done
@@ -297,9 +297,7 @@ sub start_timeout
 
 	alarm $seconds;
 	$SIG{ALRM} = sub {
-		print $TIMEOUT_MESSAGE;
-		print ": $TIMEOUT_STAGE" if $TIMEOUT_STAGE;
-		print "\n";
+		print "$TIMEOUT_MESSAGE: $TIMEOUT_STAGE\n";
 		$ALL_DONE = 1;
 		exit NAGIOS_CRITICAL;
 	};
@@ -438,12 +436,12 @@ sub run
 	close $pipe;
 	my $rc = $?;
 
-	unless ($rc == 0 || $opts{failok}) { # caller expects command to exit 0
+	if ($rc != 0 && !$opts{failok}) { # caller expects command to exit 0
 		# FIXME: handle termination, signal or plain old exit.
 		$self->CRITICAL("Command $safe exited $rc");
 	}
 
-	return wantarray ? @lines : join("\n", @lines)."\n";
+	return wantarray ? (map { chomp; $_ } @lines) : join('', @lines);
 }
 
 sub http_request
@@ -461,7 +459,10 @@ sub http_request
 	$ua->timeout($options->{timeout} || $self->option->{timeout} || 15);
 
 	my $request = HTTP::Request->new($method => $uri);
-	$request->header(%$headers);
+	for my $h (keys %$headers) {
+		$self->debug("   '$h: $headers->{$h}'");
+		$request->header($h, $headers->{$h});
+	}
 	if (($method eq "POST" || $method eq "PUT") and $data) {
 		$request->content($data);
 	}
@@ -485,12 +486,18 @@ sub http_get
 sub http_post
 {
 	my ($self, $uri, $data, $headers, $options) = @_;
+	if (ref($data) && ref($data) ne 'SCALAR') {
+		$self->UNKNOWN("HTTP_POST called incorrectly; \$data not a scalar reference");
+	}
 	$self->http_request(POST => $uri, $data, $headers, $options);
 }
 
 sub http_put
 {
 	my ($self, $uri, $data, $headers, $options) = @_;
+	if (ref($data) && ref($data) ne 'SCALAR') {
+		$self->UNKNOWN("HTTP_PUT called incorrectly; \$data not a scalar reference");
+	}
 	$self->http_request(PUT => $uri, $data, $headers, $options);
 }
 
@@ -498,6 +505,7 @@ sub json_decode
 {
 	my ($self, $data) = @_;
 	my $obj;
+	$data = $data || "";
 	if ($data =~ /^[^\(]*\((.*)\)$/) { # JSONP
 		$data = $1;
 	}

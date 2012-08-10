@@ -1,6 +1,9 @@
 use strict;
 use warnings;
 use Test::More;
+do "t/common.pl";
+
+plan skip_all => 'set TEST_ALL to enable Pod::Coverage tests' unless TEST_ALL();
 
 # Ensure a recent version of Test::Pod::Coverage
 my $min_tpc = 1.08;
