@@ -6,9 +6,10 @@ do "t/common.pl";
 ###################################################################
 # help option
 
-my $usage = "help.t -R|--required <string>\n";
+my $SCRIPT = "05-help.t";
+my $USAGE = "$SCRIPT -R|--required <string>\n";
 my $expect = <<EOF;
-help.t 1.4
+$SCRIPT 1.4
 
 This nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY. 
 It may be used, redistributed and/or modified under the terms of the GNU 
@@ -16,7 +17,7 @@ General Public Licence (see http://www.fsf.org/licensing/licenses/gpl.txt).
 
 This is the help test-driver check plugin.  It is useless.
 
-$usage
+$USAGE
  -?, --usage
    Print usage information
  -h, --help
@@ -75,6 +76,6 @@ sub help_plugin
 
 ok_plugin_help($expect, "--help (Help) output", \&help_plugin, ["--help"]);
 ok_plugin_help($expect, "-h (Help) output",     \&help_plugin, ["-h"]);
-ok_plugin_help($usage,  "-? (Usage) output",    \&help_plugin, ["-?"]);
+ok_plugin_help($USAGE,  "-? (Usage) output",    \&help_plugin, ["-?"]);
 
 done_testing;

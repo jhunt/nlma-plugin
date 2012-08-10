@@ -6,11 +6,13 @@ do "t/common.pl";
 ###################################################################
 # DEBUG support
 
-ok_plugin(0, "DEBUG OK - no debugging", undef, "debug off by default", sub {
+ok_plugin(0, "DEBUG OK - good", undef, "Debugging / Dumping", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
-	PLUGIN name => "DEBUG";
-	START default => "no debugging";
-	DEBUG "debug output found!";
+	PLUGIN name => "debug";
+	START;
+	DEBUG("this is a debug statement");
+	DUMP(qw(and this is a dumped array));
+	OK "good";
 	DONE;
 });
 
