@@ -218,7 +218,7 @@ sub start
 	$self->getopts;
 	$ALL_DONE = 0;
 
-	$self->{debug} = $self->option->{debug};
+	$self->{debug} = $self->option->debug;
 	$self->debug("Starting plugin execution");
 
 	if (exists $opts{default}) {
@@ -267,12 +267,9 @@ sub debug
 	my ($self, @messages) = @_;
 	return unless $self->{debug};
 	for (@messages) {
-		if (!defined $_) {
-			print STDERR "DEBUG> undef\n";
-		} else {
-			s/\n+$//;
-			print STDERR "DEBUG> ", (defined $_ ? $_ : 'undef'), "\n";
-		}
+		$_ = (defined($_) ? $_: "undef");
+		s/\n+$//;
+		print STDERR "DEBUG> $_\n";
 	}
 	print STDERR "\n";
 }
@@ -446,6 +443,7 @@ sub run
 
 	if ($rc != 0 && !$opts{failok}) { # caller expects command to exit 0
 		# FIXME: handle termination, signal or plain old exit.
+		$rc = $rc >> 8;
 		$self->CRITICAL("Command $safe exited $rc");
 	}
 

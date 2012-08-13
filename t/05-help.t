@@ -106,7 +106,7 @@ $USAGE
  -R, --required <string>
    A required option
  -d, --default <number>
-   A default option
+   A default option (default: 45)
  -N, --nousage
    Option with no usage
  --nousage-default=STRING
@@ -114,7 +114,7 @@ $USAGE
  --debug, -D
    Turn on debug mode
  -t, --timeout=INTEGER
-   Seconds before plugin times out (default: 22)
+   Seconds before plugin times out (default: 15)
  -v, --verbose
    Show details for command-line debugging (can repeat up to 3 times)
 EOF
@@ -132,15 +132,15 @@ EOF
 
 		OPTION "default|d=i",
 			usage => "-d, --default <number>",
-			help  => "A default option";
+			help  => "A default option",
+			default => 45;
 
 		OPTION "nousage|N",
 			help => "Option with no usage";
 
 		OPTION "timeout|t=i",
 			usage => "-t, --timeout <seconds>",
-			help  => "How long before timing out",
-			default => 22;
+			help  => "How long before timing out";
 
 		OPTION "nousage-default=s",
 			help => "Default / no usage",
