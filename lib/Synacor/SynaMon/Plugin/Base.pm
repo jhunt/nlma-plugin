@@ -357,23 +357,14 @@ sub retrieve
 	my ($self, $path, %options) = @_;
 	$path = $self->state_file_path($path);
 
-	my $fh;
-	my $have_file = -e $path;
-	if ($options{touch}) {
-		open $fh, ">>", $path or do {
-			$self->debug("FAILED to touch '$path': $!");
-			return undef;
-		};
-		close $fh;
+	if ($options{touch} && -e $path) {
 		utime(undef, undef, $path);
 	}
 
-	open $fh, "<", $path or do {
-		$have_file = 0;
+	open my $fh, "<", $path or do {
 		$self->debug("FAILED to open '$path' for reading: $!");
+		return undef;
 	};
-
-	return undef unless $have_file;
 
 	my @lines = <$fh>;
 	close $fh;
