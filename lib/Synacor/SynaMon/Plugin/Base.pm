@@ -361,11 +361,10 @@ sub retrieve
 	my ($self, $path, %options) = @_;
 	$path = $self->state_file_path($path);
 
-	my $fh;
 	return undef unless -e $path;
 	utime(undef, undef, $path) if $options{touch};
 
-	open $fh, "<", $path or do {
+	open my $fh, "<", $path or do {
 		$self->debug("FAILED to open '$path' for reading: $!");
 		return undef;
 	};
