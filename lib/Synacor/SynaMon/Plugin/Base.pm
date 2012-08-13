@@ -354,8 +354,12 @@ sub store
 
 sub retrieve
 {
-	my ($self, $path) = @_;
+	my ($self, $path, %options) = @_;
 	$path = $self->state_file_path($path);
+
+	if ($options{touch} && -e $path) {
+		utime(undef, undef, $path);
+	}
 
 	open my $fh, "<", $path or do {
 		$self->debug("FAILED to open '$path' for reading: $!");

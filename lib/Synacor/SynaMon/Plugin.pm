@@ -433,6 +433,20 @@ If the file does not exist, B<RETRIEVE> will return I<undef>.  If the file
 cannot be written to during a B<STORE> call, the plugin will exit immediately,
 triggering an UNKNOWN problem.
 
+By default, B<RETRIEVE> will behave much the like the UNIX B<cat> utility;
+the file will be opened read-only, and the mtime will not be changed.  This
+can cause problems for checks that do not write to the file if a problem is
+detected (i.e. the amount of memory present does not match the amount of memory
+from the last run).  Filesystem cleanup scripts like tmpwatch have been known
+to erase these state files when such problems persist for too long.
+
+To handle this, B<RETRIEVE> can be told to touch the file before accessing it:
+
+  my $state = RETRIEVE("state", touch => 1);
+
+If the file does not exist, there is no change in behavior.  If it does exist,
+its mtime will be updated to the current epoch time stamp.
+
 STORE and RETRIEVE have been available since version 1.0.
 
 =head1 ADVANCED FUNCTIONS
