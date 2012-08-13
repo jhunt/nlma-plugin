@@ -267,8 +267,12 @@ sub debug
 	my ($self, @messages) = @_;
 	return unless $self->{debug};
 	for (@messages) {
-		s/\n+$//;
-		print STDERR "DEBUG> ", (defined $_ ? $_ : 'undef'), "\n";
+		if (!defined $_) {
+			print STDERR "DEBUG> undef\n";
+		} else {
+			s/\n+$//;
+			print STDERR "DEBUG> ", (defined $_ ? $_ : 'undef'), "\n";
+		}
 	}
 	print STDERR "\n";
 }
@@ -354,10 +358,14 @@ sub store
 
 sub retrieve
 {
-	my ($self, $path) = @_;
+	my ($self, $path, %options) = @_;
 	$path = $self->state_file_path($path);
 
-	open my $fh, "<", $path or do {
+	my $fh;
+	return undef unless -e $path;
+	utime(undef, undef, $path) if $options{touch};
+
+	open $fh, "<", $path or do {
 		$self->debug("FAILED to open '$path' for reading: $!");
 		return undef;
 	};

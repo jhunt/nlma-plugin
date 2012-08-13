@@ -5,6 +5,15 @@ do "t/common.pl";
 
 ###################################################################
 
+my $plugin = Synacor::SynaMon::Plugin::Base->new;
+isa_ok($plugin, 'Synacor::SynaMon::Plugin::Base');
+is($plugin->state_file_path("test.out"), "/var/tmp/mon_test.out", "Default state file path generation");
+$ENV{MONITOR_STATE_FILE_DIR} = "/env";
+$ENV{MONITOR_STATE_FILE_PREFIX} = "PRE";
+is($plugin->state_file_path("test.out"), "/env/PRE_test.out", "Overrides state file path generation");
+
+###################################################################
+
 unlink "t/data/tmp/mon_test.value" if -f "t/data/tmp/mon_test.value";
 
 ok_plugin(0, "STORE OK - good", undef, "Store/Retrieve", sub {

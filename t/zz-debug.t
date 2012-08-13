@@ -28,4 +28,26 @@ ok_plugin(0, "DEBUG> test debugging", undef, "debug processing", sub {
 	DONE;
 }, ["-D"]);
 
+ok_plugin(0, "DEBUG> undef", undef, "debug undef handling", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START default => "done";
+
+	open STDERR, ">&STDOUT";
+	DEBUG undef;
+
+	DONE;
+}, ["-D"]);
+
+ok_plugin(0, "DEBUG> \$VAR1 = 'test';", undef, "object dump", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START default => "done";
+
+	open STDERR, ">&STDOUT";
+	DUMP "test";
+
+	DONE;
+}, ["-D"]);
+
 done_testing;
