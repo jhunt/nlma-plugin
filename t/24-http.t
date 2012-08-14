@@ -3,6 +3,10 @@
 use Test::More;
 do "t/common.pl";
 
+eval "use Test::Fake::HTTPD";
+plan skip_all => "Test::Fake::HTTPD required for testing HTTP primitives"
+	if $@;
+
 use Test::Fake::HTTPD;
 use JSON;
 
