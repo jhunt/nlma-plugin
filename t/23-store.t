@@ -5,6 +5,15 @@ do "t/common.pl";
 
 ###################################################################
 
+my $plugin = Synacor::SynaMon::Plugin::Base->new;
+isa_ok($plugin, 'Synacor::SynaMon::Plugin::Base');
+is($plugin->state_file_path("test.out"), "/var/tmp/mon_test.out", "Default state file path generation");
+$ENV{MONITOR_STATE_FILE_DIR} = "/env";
+$ENV{MONITOR_STATE_FILE_PREFIX} = "PRE";
+is($plugin->state_file_path("test.out"), "/env/PRE_test.out", "Overrides state file path generation");
+
+###################################################################
+
 unlink "t/data/tmp/mon_test.value" if -f "t/data/tmp/mon_test.value";
 
 ok_plugin(0, "STORE OK - good", undef, "Store/Retrieve", sub {
@@ -24,6 +33,22 @@ ok_plugin(0, "STORE OK - good", undef, "Store/Retrieve", sub {
 	OK "good";
 	DONE;
 });
+
+unlink "t/data/tmp/mon_undef" if -f "t/data/tmp/mon_undef";
+ok_plugin(0, "STORE OK - no data stored", undef, "STORE(undef) is a noop", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => "store";
+	START;
+
+	STORE "undef", undef;
+	my $val = RETRIEVE("undef");
+	!defined($val) || WARNING "retrieved value from file: $val";
+	OK "no data stored";
+	DONE;
+});
+ok(! -f "t/data/tmp/mon_undef", "STORE(undef) does not create a file");
 
 ok_plugin(3, "STORE UNKNOWN - Could not open 't/ENOENT/mon_test.fail' for writing", undef, "Store failure", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
