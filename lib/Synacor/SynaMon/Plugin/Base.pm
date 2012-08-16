@@ -10,6 +10,7 @@ use YAML::XS qw(LoadFile);
 use JSON;
 use Data::Dumper qw(Dumper);
 use LWP::UserAgent;
+use POSIX qw(WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED);
 $Data::Dumper::Pad = "DEBUG> ";
 
 use constant NAGIOS_OK       => 0;
@@ -442,9 +443,17 @@ sub run
 	my $rc = $?;
 
 	if ($rc != 0 && !$opts{failok}) { # caller expects command to exit 0
-		# FIXME: handle termination, signal or plain old exit.
-		$rc = $rc >> 8;
-		$self->CRITICAL("Command $safe exited $rc");
+		# handle normal exit, signal death or unknown properly
+		if (WIFEXITED($rc)) {
+			$rc = WEXITSTATUS($rc);
+			$self->CRITICAL("Command $safe exited $rc");
+		} elsif (WIFSIGNALED($rc)) {
+			$rc = WTERMSIG($rc);
+			$self->CRITICAL("Command $safe killed with signal $rc");
+		} else {
+			$rc = sprintf("0x%04x", $rc);
+			$self->CRITICAL("Command $safe terminated abnormally ($rc)");
+		}
 	}
 
 	return wantarray ? (map { chomp; $_ } @lines) : join('', @lines);

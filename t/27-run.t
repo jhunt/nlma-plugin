@@ -39,11 +39,11 @@ ok_plugin(0, "RUN OK", undef, "exec path run", sub {
 	DONE;
 });
 
-ok_plugin(2, "RUN CRITICAL - Command /bin/ls /path/to/no/file exited 2", undef, "command non-zero exit", sub {
+ok_plugin(2, "RUN CRITICAL - Command ./t/run/exit_code 2 exited 2", undef, "command non-zero exit", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
-	RUN "/bin/ls /path/to/no/file";
+	RUN "./t/run/exit_code 2";
 	OK "failure is OK";
 	DONE;
 });
@@ -52,7 +52,7 @@ ok_plugin(0, "RUN OK - failure is OK", undef, "failok", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
-	RUN "/bin/ls /path/to/no/file", failok => 1;
+	RUN "./t/run/exit_code 2", failok => 1;
 	OK "failure is OK";
 	DONE;
 });
