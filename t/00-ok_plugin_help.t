@@ -20,6 +20,8 @@ EOF
 }
 
 for (my $i = 0; $i < 20; $i++) {
+	# Yo Dawg, I heard you like testing, so I put a test in your tests,
+	# that tests your test.
 	test_ok_plugin_help();
 }
 
