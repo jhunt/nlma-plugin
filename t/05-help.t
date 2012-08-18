@@ -7,7 +7,7 @@ do "t/common.pl";
 # help option
 {
 	my $SCRIPT = "05-help.t";
-	my $USAGE = "$SCRIPT -R|--required <string>\n";
+	my $USAGE = "$SCRIPT -h|--help\n$SCRIPT -R|--required <string>\n";
 	my $expect = <<EOF;
 $SCRIPT 1.4
 
@@ -22,10 +22,6 @@ $USAGE
    Print usage information
  -h, --help
    Print detailed help screen
- -V, --version
-   Print version information
- --extra-opts=[section][\@file]
-   Read options from an ini file. See http://nagiosplugins.org/extra-opts for usage
  -R, --required <string>
    A required option
  -d, --default <number>
@@ -38,8 +34,6 @@ $USAGE
    Turn on debug mode
  -t, --timeout=INTEGER
    Seconds before plugin times out (default: 22)
- -v, --verbose
-   Show details for command-line debugging (can repeat up to 3 times)
 EOF
 
 	sub help_plugin
@@ -84,7 +78,7 @@ EOF
 
 {
 	my $SCRIPT = "05-help.t";
-	my $USAGE = "$SCRIPT -R|--required <string>\n";
+	my $USAGE = "$SCRIPT -h|--help\n$SCRIPT -R|--required <string>\n";
 	my $expect = <<EOF;
 $SCRIPT 1.4
 
@@ -99,10 +93,6 @@ $USAGE
    Print usage information
  -h, --help
    Print detailed help screen
- -V, --version
-   Print version information
- --extra-opts=[section][\@file]
-   Read options from an ini file. See http://nagiosplugins.org/extra-opts for usage
  -R, --required <string>
    A required option
  -d, --default <number>
@@ -115,8 +105,6 @@ $USAGE
    Turn on debug mode
  -t, --timeout=INTEGER
    Seconds before plugin times out (default: 15)
- -v, --verbose
-   Show details for command-line debugging (can repeat up to 3 times)
 EOF
 
 	sub help_plugin_no_default
@@ -153,4 +141,33 @@ EOF
 	ok_plugin_help($expect, "--help (Help) output", \&help_plugin_no_default, ["--help"]);
 }
 
+{
+
+	my $SCRIPT = "05-help.t";
+	my $USAGE = "$SCRIPT -h|--help\n$SCRIPT -R|--required <string>\n";
+	my $expect = <<EOF;
+Unknown option: asdf
+05-help.t -h|--help
+05-help.t -R|--required <string>
+EOF
+	sub help_plugin_usage
+	{
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN(name => "usage", version => "1.4",
+			summary => "This is the usage test-driver check plugin. It is uselesser.");
+		OPTION("required|R=s",
+			usage => "-R, --required <string>",
+			help => "A required option",
+			required => 1,
+		);
+		OPTION("optional|O",
+			usage => "-O, --optional",
+			help => "This is an optional flag that should not be in usage",
+		);
+		START;
+		DONE;
+	}
+
+	ok_plugin_help($expect, "Usage output from unknown option --asdf", \&help_plugin_no_default, ["--asdf"]);
+}
 done_testing;

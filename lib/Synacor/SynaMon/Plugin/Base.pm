@@ -82,6 +82,15 @@ sub new
 		legacy => Nagios::Plugin->new(%options),
 	};
 
+	# HAHA! Take that Nagios::Plugin for trying to be helpful!
+	# PEWPEWPEW! Options-be-gone!
+	my @new_args;
+	foreach my $arg (@{$self->{legacy}{opts}{_args}})
+	{
+		push (@new_args, $arg) if ($arg->{spec} !~ /(verbose|version|extra-opts)/);
+	}
+	$self->{legacy}{opts}{_args} = \@new_args;
+
 	bless($self, $class);
 }
 
@@ -123,7 +132,7 @@ sub option
 sub usage
 {
 	my ($self) = @_;
-	join(' ', $self->{name}, @{$self->{usage_list}});
+	$self->{name} . " -h|--help\n". join(' ', $self->{name}, @{$self->{usage_list}});
 }
 
 sub track_value
@@ -143,7 +152,11 @@ sub getopts
 		help  => "Turn on debug mode"
 	);
 	$self->{legacy}->opts->{_attr}{usage} = $self->usage;
+	open OLDERR, ">&", \*STDERR;
+	open STDERR, ">&STDOUT";
 	$self->{legacy}->getopts;
+	$self->{legacy}->opts->{_attr}{usage} = $self->usage ;
+	open STDERR, ">&", \*OLDERR;
 }
 
 sub status

@@ -1,4 +1,5 @@
 use Test::LongString;
+use POSIX qw(WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED);
 
 sub TEST_ALL
 {
@@ -20,12 +21,21 @@ sub ok_plugin
 
 	if ($pid) {
 		close $child;
-
-		$output = <$parent>;
+		
+		# treat output as array, then parse only first line, otherwise
+		# multi-line output may cause exit code 13's unexpectedly
+		@output = <$parent>;
 		close $parent;
 
 		wait;
-		$e = $? >> 8; # FIXME: be more explicit
+		my $rc = $?;
+		if (WIFEXITED($rc)) {
+			$e = WEXITSTATUS($rc);
+		} elsif (WIFSIGNALED($rc)) {
+			$e = WTERMSIG($rc);
+		} else {
+			$e = sprintf("0x%04x", $rc);
+		}
 
 	} elsif ($pid == 0) {
 		close $parent;
@@ -38,7 +48,7 @@ sub ok_plugin
 		fail "$message - Couldn't fork: $!";
 	}
 
-	($s, $p) = map { s/^\s+//; s/\s$//; $_ } split /\|/, $output;
+	($s, $p) = map { s/^\s+//; s/\s$//; $_ } split /\|/, $output[0];
 
 	is($s, $summary, "$message: expected summary output");
 	is($p, $perf,    "$message: expected perfdata output") if $perf;
@@ -57,14 +67,21 @@ sub ok_plugin_help
 		$output = do { local $/ = undef; <$parent> };
 		wait;
 
-		$e = $? >> 8; # FIXME: be more explicit
+		my $rc = $?;
+		if (WIFEXITED($rc)) {
+			$e = WEXITSTATUS($rc);
+		} elsif (WIFSIGNALED($rc)) {
+			$e = WTERMSIG($rc);
+		} else {
+			$e = sprintf("0x%04x", $rc);
+		}
 
 	} elsif ($pid == 0) {
 		close $parent;
 		open(STDOUT, ">&=" . fileno($child));
 		@ARGV = @$args;
 		$sub->();
-
+		exit 42;
 	} else {
 		fail "$message - Couldn't fork: $!";
 	}
