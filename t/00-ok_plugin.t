@@ -9,8 +9,9 @@ sub test_ok_plugin
 {
 	my ($code) = @_;
 	ok_plugin($code, "exit $code", undef, "ok_plugin exits properly", sub {
+		print "exit $code\n";
 		for (my $i = 1; $i <= $code + 1; $i++) {
-			print "exit $code\n";
+			print "multiline output #$i!\n";
 		}
 		exit $code;
 	});
