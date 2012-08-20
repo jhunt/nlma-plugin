@@ -56,6 +56,7 @@ stderr-test.pl -h|--help
 stderr-test.pl
 EOF
 	;
+	# Don't expect STDERR 2, since Nagios::Plugins->getopts will bail
 	my $stderr_expect = <<EOF
 STDERR 1
 EOF
