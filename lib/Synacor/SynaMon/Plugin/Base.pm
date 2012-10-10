@@ -11,6 +11,7 @@ use JSON;
 use Data::Dumper qw(Dumper);
 use LWP::UserAgent;
 use POSIX qw(WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED);
+use Time::HiRes qw(gettimeofday);
 $Data::Dumper::Pad = "DEBUG> ";
 
 use constant NAGIOS_OK       => 0;
@@ -240,7 +241,7 @@ sub start
 		$self->OK($opts{default});
 	}
 
-	$self->start_timeout($self->option->{timeout});
+	$self->start_timeout($self->option->{timeout}, $TIMEOUT_STAGE);
 }
 
 sub done
@@ -300,6 +301,8 @@ sub stage
 {
 	my ($self, $action) = @_;
 	$self->debug("Entering stage '$action'");
+	$self->{stage_started} = gettimeofday;
+	$self->{plugin_started} = gettimeofday unless defined $self->{plugin_started};
 	$TIMEOUT_STAGE = $action;
 }
 
@@ -335,6 +338,18 @@ sub stop_timeout
 	$self->debug("Stopped timeout after $duration seconds",
 	             "  with $remaining seconds remaining");
 	return $remaining;
+}
+
+sub stage_time
+{
+	my ($self) = @_;
+	return gettimeofday - $self->{stage_started};
+}
+
+sub total_time
+{
+	my ($self) = @_;
+	return gettimeofday - $self->{plugin_started};
 }
 
 sub state_file_path
@@ -735,6 +750,14 @@ requesting HTTP".
 =head2 stop_timeout
 
 Clears the currently active timeout timeout.
+
+=head2 stage_time
+
+Returns the (HiRes) number of seconds since the current stage began.
+
+=head2 total_time
+
+Returns the (HiRes) number of seconds since the first stage began.
 
 =head2 state_file_path
 

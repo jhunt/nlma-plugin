@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.07";
+our $VERSION = "1.08";
 
 use Exporter;
 use base qw(Exporter);
@@ -364,7 +364,7 @@ A plugin can track as many data points as it wants, within reason.
 
 TRACK_VALUE has been available since version 1.0.
 
-=head1 TIMEOUTS
+=head1 TIMERS and TIMEOUTS
 
 Check plugins usually have to deal with external factors: other programs,
 remote servers, etc.  Considering that the monitoring system has to perform
@@ -407,7 +407,28 @@ will cause odd and undefined behavior.
 B<Note:> Timeouts and Perl's B<sleep> function do not interfere; plugins
 can use both without issue.
 
+Closely related to timeouts are timers.  Each plugin maintains two timers, a
+B<total> timer that tracks how long the plugin has been running, and a B<stage>
+timer for tracking run time in the current stage.  The B<stage> timer is reset
+every time you call either B<STAGE> or B<START_TIMEOUT> (with a 'stage'
+parameter).
+
+To get the value of either timer, call B<TOTAL_TIME> or B<STAGE_TIME>:
+
+  STAGE "connecting to port";
+  do_connect();
+  TRACK_VALUE "connTime" => STAGE_TIME;
+
+  STAGE "running query";
+  run_query();
+  TRACK_VALUE "queryTime" => STAGE_TIME;
+
+  cleanup();
+  TRACK_VALUE "totalTime" => TOTAL_TIME;
+
 START_TIMEOUT, STAGE and STOP_TIMEOUT have been available since version 1.0.
+
+TOTAL_TIME and STAGE_TIME have been available since version 1.08.
 
 =head1 SAVING STATE
 
