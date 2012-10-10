@@ -433,12 +433,12 @@ If the file does not exist, B<RETRIEVE> will return I<undef>.  If the file
 cannot be written to during a B<STORE> call, the plugin will exit immediately,
 triggering an UNKNOWN problem.
 
-By default, B<RETRIEVE> will behave much the like the UNIX B<cat> utility;
-the file will be opened read-only, and the mtime will not be changed.  This
-can cause problems for checks that do not write to the file if a problem is
-detected (i.e. the amount of memory present does not match the amount of memory
-from the last run).  Filesystem cleanup scripts like tmpwatch have been known
-to erase these state files when such problems persist for too long.
+By default, B<RETRIEVE> will behave much the like the UNIX B<cat> utility; the
+file will be opened read-only, and the mtime will not be changed.  This can
+cause problems for checks that do not write to the file if a problem is detected
+(i.e. the amount of memory present does not match the amount of memory from the
+last run).  Filesystem cleanup scripts like tmpwatch have been known to erase
+these state files when such problems persist for too long.
 
 To handle this, B<RETRIEVE> can be told to touch the file before accessing it:
 
@@ -448,6 +448,57 @@ If the file does not exist, there is no change in behavior.  If it does exist,
 its mtime will be updated to the current epoch time stamp.
 
 STORE and RETRIEVE have been available since version 1.0.
+
+=head1 CREDENTIALS MANAGEMENT
+
+Often, check plugins require a username / password combination in order to
+access authenticated services.  It is best not to hard-code these values into
+the check code.  The difficulty lies in balancing flexibility with security.
+
+The framework provides a solution via its internal Credentials Store, or
+I<credstore>.  The credstore is a YAML file with secure ownership and
+permissions, that stores credentials by key.  The B<CREDENTIALS> function allows
+check plugins to extract username/password pairs.
+
+For example, credentials for accessing the test account on the corporate email
+account might be stored under the I<email> key.
+
+  my ($user, $pass) = CREDENTIALS('email');
+
+If the framework encounters any problems extracting the I<email> key from the
+credstore, it will immediately halt the plugin and trigger an UNKNOWN alert with
+an appropriate description.  Failure scenarios are:
+
+=over
+
+=over
+
+=item 1. The credstore does not exist or is not readable
+
+=item 2. The credstore file has insecure permissions (not 0400)
+
+=item 3. Corruption in the credstore (bad YAML)
+
+=item 4. Requested credentials not found
+
+=item 5. Malformed credentials key (no username and/or no password)
+
+=back
+
+=back
+
+You can pass in a second argument to avoid this and instead return
+undef:
+
+  my ($user,$pass) = CREDENTIALS("$host-ldap", 'silent');
+  if (!$user) {
+    ($user, $pass) = CREDENTIALS('DEFAULT-ldap');
+  }
+
+In this example, the check looks for credentials specific to this
+$host, and if that fails, looks for the defaults.  Since the second
+call does not specify the I<fail silently> argument, the plugin
+will either retrieve credentials or trigger an UNKNOWN.
 
 =head1 ADVANCED FUNCTIONS
 
