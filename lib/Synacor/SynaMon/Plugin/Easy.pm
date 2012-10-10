@@ -19,6 +19,7 @@ our @EXPORT = qw/
 	CHECK_VALUE TRACK_VALUE
 
 	STAGE START_TIMEOUT STOP_TIMEOUT
+	STAGE_TIME TOTAL_TIME
 
 	STORE RETRIEVE CREDENTIALS
 
@@ -57,6 +58,8 @@ sub DONE  { $plugin->done(@_); }
 sub STAGE { $plugin->stage(@_); }
 sub START_TIMEOUT { $plugin->start_timeout(@_); }
 sub STOP_TIMEOUT  { $plugin->stop_timeout(@_); }
+sub STAGE_TIME { $plugin->stage_time(@_); }
+sub TOTAL_TIME { $plugin->total_time(@_); }
 
 sub STORE { $plugin->store(@_); }
 sub RETRIEVE { $plugin->retrieve(@_); }
@@ -167,6 +170,14 @@ Wrapper around B<Synacor::SynaMon::Plugin::start_timer>.
 =head2 STOP_TIMEOUT
 
 Wrapper around B<Synacor::SynaMon::Plugin::stop_timer>.
+
+=head2 STAGE_TIME
+
+Wrapper around B<Synacor::SynaMon::Plugin::stage_time>.
+
+=head2 TOTAL_TIME
+
+Wrapper around B<Synacor::SynaMon::Plugin::total_time>.
 
 =head2 STORE
 
