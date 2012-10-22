@@ -196,6 +196,8 @@ Wrapper around B<Synacor::SynaMon::Plugin::credentials>.
 
 Wrapper around B<Synacor::SynaMon::Plugin::state_file_path>.
 
+Introduced in 1.09
+
 =head2 RUN
 
 Wrapper around B<Synacor::SynaMon::Plugin::run>.
