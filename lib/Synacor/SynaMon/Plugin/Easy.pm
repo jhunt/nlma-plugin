@@ -64,7 +64,7 @@ sub TOTAL_TIME { $plugin->total_time(@_); }
 sub STORE { $plugin->store(@_); }
 sub RETRIEVE { $plugin->retrieve(@_); }
 sub CREDENTIALS { $plugin->credentials(@_); }
-sub STATE_FILE_PATH { $plugin->state_file_path($@_); }
+sub STATE_FILE_PATH { $plugin->state_file_path(@_); }
 
 sub RUN { $plugin->run(@_); }
 
