@@ -11,6 +11,8 @@ use base qw(Exporter);
 our @EXPORT = qw/
 	PLUGIN OPTION
 
+	SET
+
 	STATUS BAIL EVALUATE
 	OK WARNING CRITICAL UNKNOWN
 
@@ -39,6 +41,8 @@ my $plugin;
 
 sub PLUGIN  { $plugin = Synacor::SynaMon::Plugin::Base->new(@_); }
 sub OPTION  { $plugin->option(@_); }
+
+sub SET { $plugin->set(@_); }
 
 sub STATUS   { $plugin->status(@_); }
 sub BAIL     { $plugin->bail(@_); }
@@ -111,6 +115,10 @@ Sets up the global plugin context.  This B<must> be called first, as
 soon as possible.  None of the other functions will work otherwise.
 
 Arguments are identical to B<Synacor::SynaMon::Plugin::new>
+
+=head2 SET
+
+Wrapper around B<Synacor::SynaMon::Plugin::set>.
 
 =head2 OPTION
 
