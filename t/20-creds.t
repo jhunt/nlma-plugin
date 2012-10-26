@@ -11,6 +11,8 @@ chmod 0400, "t/data/creds.corrupt";
 chmod 0000, "t/data/creds.perms";
 chmod 0664, "t/data/creds.insecure";
 
+delete $ENV{MONITOR_CRED_STORE};
+
 ok_plugin(0, "CREDS OK - good", undef, "Credentials OK", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
@@ -168,6 +170,69 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 	}
 	DONE;
 });
+
+{ # Credentials Store File Path Detection
+  # (these tests are done outside of the ok_plugin(...) framework,
+  #  because we can't depend on the contents of /home/ globally,
+  #  and there are no mechanisms to directly influence the creation
+  #  of the file path...
+
+
+	my %SAVED_ENV = (
+		USER      => $ENV{USER},
+		SUDO_USER => $ENV{SUDO_USER},
+	);
+	delete $ENV{MONITOR_CRED_STORE};
+
+	# THIS TEST MAKES A FEW ASSUMPTIONS:
+	#  - icinga is a local user
+	#  - ~icinga = /home/icinga
+	#  - nlma is a local user
+	#  - ~nlma = /home/nlma
+
+	my @whois = getpwnam("icinga");
+	ok(@whois, "[test sanity] icinga user exists");
+	is($whois[7], "/home/icinga", "[test sanity] ~icinga = /home/icinga");
+
+	@whois = getpwnam("nlma");
+	ok(@whois, "[test sanity] nlma user exists");
+	is($whois[7], "/home/nlma", "[test sanity] ~nlma = /home/nlma");
+
+	# with apologies to Otis Day...
+	@whois = getpwnam("shamalamadingdong");
+	ok(!@whois, "[test sanity] shamalamadingdong user does not exist");
+
+	my $plugin = Synacor::SynaMon::Plugin::Base->new;
+
+	delete $ENV{SUDO_USER};
+	$ENV{USER}      = "icinga";
+	is($plugin->_credstore_path, "/home/icinga/.creds",
+		"without \$SUDO_USER, ~\$USER/.creds is used");
+
+	$ENV{SUDO_USER} = "nlma";
+	$ENV{USER} = "icinga";
+	is($plugin->_credstore_path, "/home/nlma/.creds",
+		"with \$SUDO_USER, ~\$SUDO_USER/.creds is used");
+
+	delete $ENV{SUDO_USER};
+	$ENV{USER} = "shamalamadingdong";
+	is($plugin->_credstore_path, "/usr/local/groundwork/users/nagios/.creds",
+		"Fall-through, no shamalamadingdong user");
+
+	$ENV{SUDO_USER} = "shamalamadingdong";
+	$ENV{USER} = "icinga";
+	is($plugin->_credstore_path, "/home/icinga/.creds",
+		"If \$SUDO_USER isnt real, use \$USER");
+
+	$ENV{SUDO_USER} = "nlma";
+	$ENV{USER} = "icinga";
+	$ENV{MONITOR_CRED_STORE} = "/tmp/creds.public";
+	is($plugin->_credstore_path, "/tmp/creds.public",
+		"use \$MONITOR_CRED_STORE as-is, if present");
+
+	$ENV{SUDO_USER} = $SAVED_ENV{SUDO_USER} if $SAVED_ENV{SUDO_USER};
+	$ENV{USER}      = $SAVED_ENV{USER};
+}
 
 system("chmod 644 t/data/creds*");
 

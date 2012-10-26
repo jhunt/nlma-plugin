@@ -401,11 +401,28 @@ sub retrieve
 	wantarray ? @lines : join('', @lines);
 }
 
+sub _userdir
+{
+	my ($username) = @_;
+	return undef unless $username;
+	my @info = getpwnam($username);
+	return @info ? $info[7] : undef;
+}
+
+sub _credstore_path
+{
+	my ($self) = @_;
+	return $ENV{MONITOR_CRED_STORE} if exists $ENV{MONITOR_CRED_STORE};
+	my $homedir = _userdir($ENV{SUDO_USER}) || _userdir($ENV{USER});
+	return "$homedir/.creds" if $homedir;
+	"/usr/local/groundwork/users/nagios/.creds"; # evil default
+}
+
 sub credentials
 {
 	my ($self, $name, $fail_silently) = @_;
 
-	my $filename = $ENV{MONITOR_CRED_STORE} || "/usr/local/groundwork/users/nagios/.creds";
+	my $filename = $self->_credstore_path;
 	$self->debug("Retrieving '$name' credentials from $filename");
 
 	unless (-f $filename) {
