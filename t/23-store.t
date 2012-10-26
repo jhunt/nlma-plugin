@@ -261,4 +261,21 @@ ok_plugin(3, "STORE UNKNOWN - Unknown format for STORE: SQL", undef, "STORE as u
 	OK "somehow we triggered the OK... STORE as => XML didnt fail...";
 });
 
+ok_plugin(0, "BADFMT OK - good", undef, "RETRIEVE handles malformed JSON/YAML", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => "badfmt";
+	START;
+
+	STORE "bad", "{{well, this isn't json or YAML!";
+	my $out = RETRIEVE "bad", as => "json";
+	!$out or CRITICAL "got non-undef value from RETRIEVE as => json... $out";
+
+	$out = RETRIEVE "bad", as => "yml";
+	!$out or CRITICAL "got non-undef value from RETRIEVE as => yaml... $out";
+
+	OK "good";
+});
+
 done_testing;

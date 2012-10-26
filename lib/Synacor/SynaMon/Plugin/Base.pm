@@ -412,11 +412,11 @@ sub retrieve
 		$self->dump($data);
 
 		if ($options{as} =~ m/^ya?ml$/i) {
-			return YAML::XS::Load($data);
+			return eval { YAML::XS::Load($data) };
 		}
 
 		if ($options{as} =~ m/^json$/i) {
-			return $self->json_decode($data);
+			return eval { JSON->new->allow_nonref->decode($data) };
 		}
 
 		$self->UNKNOWN("Unknown format for RETRIEVE: $options{as}");
