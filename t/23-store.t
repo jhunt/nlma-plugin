@@ -1,6 +1,7 @@
 #!perl
 
 use Test::More;
+use Test::Deep;
 do "t/common.pl";
 
 ###################################################################
@@ -180,14 +181,15 @@ cmp_ok($stat[ 9], '>', time - 86400, "mon_state.perms is less than a day old (mt
 
 
 ## STORE / RETRIEVE formats (raw, json, yaml/yml)
-ok_plugin(0, "RETR OK - got formats", undef, "RETRIEVE as => <format> works", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+{
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
-	PLUGIN name => "retr";
-	START;
 
-	my ($raw, $out);
+	my $plugin = Synacor::SynaMon::Plugin::Base->new;
+	my ($data, $raw, $out);
+
+	$data = { key1 => "value1",
+	          list => [qw/a b c/] };
 
 	$raw = <<EOF;
 key1: value1
@@ -197,44 +199,28 @@ list:
   - c
 EOF
 
-	STORE "formatted", $raw;
-	$out = RETRIEVE "formatted", as => "yaml";
-	ref($out) or CRITICAL "YAML not a REF";
-	$out->{key1}    eq "value1" or CRITICAL "YAML{key1} was wrong ($out->{key1})";
-	$out->{list}[0] eq "a"      or CRITICAL "YAML{list}[0] was wrong ($out->{list}[0])";
-	$out->{list}[1] eq "b"      or CRITICAL "YAML{list}[1] was wrong ($out->{list}[1])";
-	$out->{list}[2] eq "c"      or CRITICAL "YAML{list}[2] was wrong ($out->{list}[2])";
+	$plugin->store("formatted", $raw);
+	$out = $plugin->retrieve("formatted", as => "yaml");
+	cmp_deeply($out, $data, "Read back the same YAML we wrote out (as => yaml)");
 
-	STORE "formatted", $out, as => "yAmL";
-	$out = RETRIEVE "formatted", as => "YML";
-	ref($out) or CRITICAL "YAML not a REF (as => yml)";
-	$out->{key1}    eq "value1" or CRITICAL "YAML{key1} was wrong ($out->{key1}) (as => yml)";
-	$out->{list}[0] eq "a"      or CRITICAL "YAML{list}[0] was wrong ($out->{list}[0]) (as => yml)";
-	$out->{list}[1] eq "b"      or CRITICAL "YAML{list}[1] was wrong ($out->{list}[1]) (as => yml)";
-	$out->{list}[2] eq "c"      or CRITICAL "YAML{list}[2] was wrong ($out->{list}[2]) (as => yml)";
+	$plugin->store("formatted", $out, as => "yAmL");
+	$out = $plugin->retrieve("formatted", as => "YML");
+	cmp_deeply($out, $data, "Read back the same YAML we wrote out (as => YML)");
 
 	$raw = '{"key1":"value1","list":["a","b","c"]}';
-	STORE "formatted", $raw;
-	$out = RETRIEVE "formatted", as => "json";
-	ref($out) or CRITICAL "JSON not a REF";
-	$out->{key1}    eq "value1" or CRITICAL "JSON{key1} was wrong ($out->{key1})";
-	$out->{list}[0] eq "a"      or CRITICAL "JSON{list}[0] was wrong ($out->{list}[0])";
-	$out->{list}[1] eq "b"      or CRITICAL "JSON{list}[1] was wrong ($out->{list}[1])";
-	$out->{list}[2] eq "c"      or CRITICAL "JSON{list}[2] was wrong ($out->{list}[2])";
+	$plugin->store("formatted", $raw);
+	$out = $plugin->retrieve("formatted", as => "json");
+	cmp_deeply($out, $data, "Read back the same JSON we wrote out (as => json)");
 
-	STORE "formatted", $out, as => "JsOn";
-	$out = RETRIEVE "formatted", as => "rAW";
-	!ref($out) or CRITICAL "RAW is a REF";
-	$raw eq $out or CRITICAL "RAW read did not equal RAW write qr/$out/ != /$raw/";
+	$plugin->store("formatted", $out, as => "JsOn");
+	$out = $plugin->retrieve("formatted", as => "rAW");
+	is($raw, $out, "RAW read did not equal RAW write");
 
 	$raw = "this is raw";
-	STORE "formatted", $raw, as => "RAW";
-	$out = RETRIEVE "formatted";
-	!ref($out) or CRITICAL "RAW is a REF";
-	$raw eq $out or CRITICAL "RAW read did not equal RAW write qr/$out/ != /$raw/";
-
-	OK "got formats";
-});
+	$plugin->store("formatted", $raw, as => "RAW");
+	$out = $plugin->retrieve("formatted");
+	is($raw, $out, "RAW read did not equal RAW write");
+};
 
 ok_plugin(3, "RETR UNKNOWN - Unknown format for RETRIEVE: XML", undef, "RETRIEVE as unknown format UNKNOWNS", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
