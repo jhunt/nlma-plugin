@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.09";
+our $VERSION = "1.11";
 
 use Exporter;
 use base qw(Exporter);
@@ -468,7 +468,19 @@ To handle this, B<RETRIEVE> can be told to touch the file before accessing it:
 If the file does not exist, there is no change in behavior.  If it does exist,
 its mtime will be updated to the current epoch time stamp.
 
+Starting with version 1.11 of the framework, STORE and RETRIEVE accept an
+optional format for serialization / deserialization.
+
+  my $state = { is => "ok", last_checked => time };
+  STORE "state", $state, as => "YAML";
+
+  my $state = RETRIEVE "state", as => "YAML";
+
+Support formats are B<JSON>, B<YAML> and B<RAW> (i.e. no translation).
+
 STORE and RETRIEVE have been available since version 1.0.
+
+Formats using the C<as> keyword have been available since 1.11.
 
 =head1 CREDENTIALS MANAGEMENT
 

@@ -363,7 +363,7 @@ sub state_file_path
 
 sub store
 {
-	my ($self, $path, $data) = @_;
+	my ($self, $path, $data, %options) = @_;
 	return unless defined $data;
 
 	$path = $self->state_file_path($path);
@@ -371,11 +371,18 @@ sub store
 	open my $fh, ">", $path or
 		$self->bail(NAGIOS_UNKNOWN, "Could not open '$path' for writing");
 
-	if (ref($data) eq "ARRAY") {
-		print $fh join('', @$data);
-	} else {
-		print $fh $data;
+	if ($options{as} && $options{as} !~ m/^raw$/i) {
+		if ($options{as} =~ m/^ya?ml$/i) {
+			$data = YAML::XS::Dump $data;
+		} elsif ($options{as} =~ m/^json$/i) {
+			eval { $data = JSON->new->allow_nonref->encode($data); };
+		} else {
+			$self->UNKNOWN("Unknown format for STORE: $options{as}");
+		}
+	} elsif (ref($data) eq "ARRAY") { # RAW lines...
+		$data = join('', @$data);
 	}
+	print $fh $data;
 	close $fh;
 
 	my (undef, undef, $uid, $gid) = getpwnam($ENV{MONITOR_STATE_FILE_OWNER} || 'nagios');
@@ -398,6 +405,22 @@ sub retrieve
 
 	my @lines = <$fh>;
 	close $fh;
+
+	if ($options{as} && $options{as} !~ m/^raw$/i) {
+		my $data = join('', @lines);
+		$self->debug("Retrieved RAW data:");
+		$self->dump($data);
+
+		if ($options{as} =~ m/^ya?ml$/i) {
+			return YAML::XS::Load($data);
+		}
+
+		if ($options{as} =~ m/^json$/i) {
+			return $self->json_decode($data);
+		}
+
+		$self->UNKNOWN("Unknown format for RETRIEVE: $options{as}");
+	}
 	wantarray ? @lines : join('', @lines);
 }
 
