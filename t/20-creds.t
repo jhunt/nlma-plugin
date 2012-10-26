@@ -46,12 +46,27 @@ ok_plugin(3, "CREDS UNKNOWN - Credentials key 'unknown' not found", undef, "Non-
 	DONE;
 });
 
-ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silently)", sub {
+ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silently / legacy)", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
-	if (CREDENTIALS("unknown", "FAILOK")) {
+	if (CREDENTIALS "unknown", "THIS IS LEGACY BEHAVIOR") {
+		WARNING "got creds for 'unknown' key";
+	} else {
+		OK "failed silently";
+	}
+	DONE;
+});
+
+
+ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silently)", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
+	PLUGIN name => "creds";
+	SET ignore_credstore_failures => 1;
+	START;
+	if (CREDENTIALS "unknown") {
 		WARNING "got creds for 'unknown' key";
 	} else {
 		OK "failed silently";
@@ -72,8 +87,9 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Bad key (fail silently)", sub
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
+	SET ignore_credstore_failures => 1;
 	START;
-	if (CREDENTIALS("corrupt", "FAILOK")) {
+	if (CREDENTIALS "corrupt") {
 		WARNING "got creds for 'corrupt' key";
 	} else {
 		OK "failed silently";
@@ -94,8 +110,9 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file missing (fai
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.DNE";
 	PLUGIN name => "creds";
+	SET ignore_credstore_failures => 1;
 	START;
-	if (CREDENTIALS("should-fail", "FAILOK")) {
+	if (CREDENTIALS "should-fail") {
 		WARNING "got creds from non-existent creds file";
 	} else {
 		OK "failed silently";
@@ -116,8 +133,9 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file unreadable (
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.perms";
 	PLUGIN name => "creds";
+	SET ignore_credstore_failures => 1;
 	START;
-	if (CREDENTIALS("should-fail", "FAILOK")) {
+	if (CREDENTIALS "should-fail") {
 		WARNING "got creds from non-accessible creds file";
 	} else {
 		OK "failed silently";
@@ -138,8 +156,9 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file insecure (fail sil
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.insecure";
 	PLUGIN name => "creds";
+	SET ignore_credstore_failures => 1;
 	START;
-	if (CREDENTIALS("should-fail", "FAILOK")) {
+	if (CREDENTIALS "should-fail") {
 		WARNING "got creds from insecure creds file";
 	} else {
 		OK "failed silently";
@@ -160,8 +179,9 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.corrupt";
 	PLUGIN name => "creds";
+	SET ignore_credstore_failures => 1;
 	START;
-	if (CREDENTIALS("should-fail", "FAILOK")) {
+	if (CREDENTIALS "should-fail") {
 		WARNING "got creds from corrupted creds file";
 	} else {
 		OK "failed silently";
