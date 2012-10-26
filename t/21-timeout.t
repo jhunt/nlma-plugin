@@ -58,6 +58,41 @@ ok_plugin(2, "Timed out after 2s: stage 2", undef, "Timeout / stage2", sub {
 	DONE;
 });
 
+ok_plugin(1, "Timed out after 1s: warning!", undef, "Timeout / warnings", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "timeout";
+	START;
+	SET on_timeout => "WARN";
+	STAGE "warning!";
+	START_TIMEOUT 1;
+	sleep 2;
+	DONE;
+});
+
+ok_plugin(3, "Timed out after 1s: unknown!", undef, "Timeout / unknowns", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "timeout";
+	START;
+	SET on_timeout => "unknowledgeableitdoesntmatterwhatgoesafterUNK...";
+	STAGE "unknown!";
+	START_TIMEOUT 1;
+	sleep 2;
+	DONE;
+});
+
+ok_plugin(2, "Timed out after 1s: re-CRIT!", undef, "Timeout / successive SET calls", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "timeout";
+	START;
+	SET on_timeout => "unknown";
+	SET on_timeout => "warning";
+	SET on_timeout => "CRIT!";
+	STAGE "re-CRIT!";
+	START_TIMEOUT 1;
+	sleep 2;
+	DONE;
+});
+
 ###################################################################
 
 sub within

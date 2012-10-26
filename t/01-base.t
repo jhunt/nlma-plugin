@@ -128,6 +128,33 @@ ok_plugin(2, "BAIL CRITICAL - bail early", undef, "Bail early", sub {
 	DONE;
 });
 
+ok_plugin(3, "BAIL UNKNOWN - an unknown error occurred", undef, "Bail with no status", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "bail";
+	START;
+	BAIL("an unknown error occurred");
+	OK "all good"; # never reached
+	DONE;
+});
+
+ok_plugin(3, "BAIL UNKNOWN - bad unknown message", undef, "Bail with invalid status", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "bail";
+	START;
+	BAIL("fake status", "bad unknown message");
+	OK "all good"; # never reached
+	DONE:
+});
+
+ok_plugin(1, "BAIL WARNING - warning failure??", undef, "Bail with alternate syntax", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "bail";
+	START;
+	BAIL("WARNING", "warning failure??");
+	OK "all good"; # never reached
+	DONE;
+});
+
 ###################################################################
 
 ok_plugin(0, "EVAL OK", undef, "evaluate test", sub {
