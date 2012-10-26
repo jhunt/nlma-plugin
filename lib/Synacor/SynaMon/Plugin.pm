@@ -529,9 +529,7 @@ If the framework encounters any problems extracting the I<email> key from the
 credstore, it will immediately halt the plugin and trigger an UNKNOWN alert with
 an appropriate description.  Failure scenarios are:
 
-=over
-
-=over
+=over 8
 
 =item 1. The credstore does not exist or is not readable
 
@@ -542,8 +540,6 @@ an appropriate description.  Failure scenarios are:
 =item 4. Requested credentials not found
 
 =item 5. Malformed credentials key (no username and/or no password)
-
-=back
 
 =back
 
@@ -558,6 +554,41 @@ behavior:
 
 In this example, the check looks for credentials specific to this
 $host, and if that fails, looks for the defaults.
+
+=head2 The credstore file format
+
+The credstore is a YAML file that looks like this:
+
+  mysql: # the lookup key
+    username: db_readonly
+    password: secret
+  router:
+    username: admin
+    password: password
+
+The names of the top-level keys are up to the discretion of check
+plugin writers.  Each key must have a username and password subkey,
+and no other keys or subkeys.
+
+=head2 Where is the credstore file?
+
+The framework tries to determine the correct path to the credentials
+file, based on its running environment.  The following algorithm is used:
+
+=over 8
+
+=item 1. Use the environment variable MONITOR_CRED_STORE, if it exists.
+
+=item 2. If run under sudo, use .creds in the I<original> user's home
+
+=item 3. Otherwise, use .creds in the current user's home
+
+To illustrate, suppose that the user jdoe runs a check plugin as herself.
+The plugin will access the credstore /home/jdoe/.creds.  If she runs it as
+the icinga user, under sudo, it will still use /home/jdoe.creds.  This
+is specifically aimed at testing, and 'sudo as root' scenarios.
+
+=back
 
 =head1 ADVANCED FUNCTIONS
 
