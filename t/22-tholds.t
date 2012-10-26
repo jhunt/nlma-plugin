@@ -28,25 +28,28 @@ ok_plugin(0, "THOLD OK - skipped check", undef, "skip_OK test", sub {
 	DONE;
 });
 
-ok_plugin(1, "THOLD WARNING - value is 7", "value=7;;", "Thresholds 7>6 && 7<8", sub {
+ok_plugin(1, "THOLD WARNING - value is 7", "value=7;6;8", "Thresholds 7>6 && 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
 	CHECK_VALUE $val, "value is $val",
 	            warning => 6, critical => 8;
-	TRACK_VALUE "value", $val;
+	TRACK_VALUE "value", $val,
+	            warning => 6, critical => 8;
 	DONE;
 });
 
-ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;;", "Thresholds 9>6 && 9>8", sub {
+ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;6;8;0;99", "Thresholds 9>6 && 9>8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
 	CHECK_VALUE $val, "value is $val",
 	            warning => 6, critical => 8;
-	TRACK_VALUE "value", $val;
+	TRACK_VALUE "value", $val,
+	            warning => 6, critical => 8,
+	            min => 0, max => 99;
 	DONE;
 });
 
