@@ -9,7 +9,7 @@ use base qw(Nagios::Plugin);
 use YAML::XS qw(LoadFile);
 use JSON;
 use Data::Dumper qw(Dumper);
-use LWP::UserAgent;
+use WWW::Mechanize;
 use POSIX qw(WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED);
 use Time::HiRes qw(gettimeofday);
 $Data::Dumper::Pad = "DEBUG> ";
@@ -542,6 +542,21 @@ sub run
 	return wantarray ? (map { chomp; $_ } @lines) : join('', @lines);
 }
 
+sub mech
+{
+	my ($self, $options) = @_;
+
+	if (! $self->{mech} || $options->{recreate}) {
+		my $mech = WWW::Mechanize->new(autocheck => 0);
+		$mech->cookie_jar({});
+		$mech->agent($options->{UA} || "SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION");
+		$mech->timeout($options->{timeout} || $self->option->{timeout} || 15);
+		$self->{mech} = $mech;
+	}
+
+	return $self->{mech};
+}
+
 sub http_request
 {
 	my ($self, $method, $uri, $data, $headers, $options) = @_;
@@ -551,10 +566,6 @@ sub http_request
 
 	$self->debug("Making HTTP Request: $method $uri");
 	$self->dump($data) if $method eq "POST";
-
-	my $ua = LWP::UserAgent->new;
-	$ua->agent($options->{UA} || "SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION");
-	$ua->timeout($options->{timeout} || $self->option->{timeout} || 15);
 
 	my $request = HTTP::Request->new($method => $uri);
 	for my $h (keys %$headers) {
@@ -569,7 +580,7 @@ sub http_request
 		$request->authorization_basic($options->{username}, $options->{password});
 	};
 
-	my $response = $ua->request($request);
+	my $response = $self->mech()->request($request);
 	return wantarray ?
 		($response, $response->decoded_content) :
 		$response->is_success;
@@ -597,6 +608,21 @@ sub http_put
 		$self->UNKNOWN("HTTP_PUT called incorrectly; \$data not a scalar reference");
 	}
 	$self->http_request(PUT => $uri, $data, $headers, $options);
+}
+
+sub submit_form
+{
+	my ($self, @options) = @_;
+	my $response;
+	eval {
+		$response = $self->mech()->submit_form(@options);
+	} or do {
+		$self->CRITICAL("Form submission failed: $@") if $@;
+	};
+
+	return wantarray ?
+		($response, $response->decoded_content) :
+		$response->is_success;
 }
 
 sub json_decode
@@ -919,9 +945,41 @@ an executable or script, the framework will check that the file
 exists and is actually executable.  If these tests fail, the whole
 check will be aborted as an UNKNOWN.
 
+=head2 mech
+
+This method is used to access the plugin's WWW::Mechanize object.
+There will ony be one WWW::Mechanize object in use at a time. If
+you need to generate a new one, specify the B<recreate> option in
+your mech() call, anda new object will be created. If no
+current mech exists, it will be created using the options passed
+in.  
+
+  my $mech = $plugin->mech(recreate => 1, UA => "my special User Agent", timeout => '1');
+
+Parameters:
+
+=over
+
+=item recreate
+
+Causes generation of a new WWW::Mechanize object if non-zero
+
+=item UA
+
+Provides a specific User Agent to use when connecting to web servers.
+Defaults to SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION"
+
+=item timeout
+
+Provide a custom timeout for HTTP requests. If not specified, defaults
+to the plugin's timeout (-t flag to the check), or if that is not present,
+15.
+
+=back
+
 =head2 http_request
 
-Issue an HTTP request, using LWP::UserAgent.  This is the general
+Issue an HTTP request, using WWW::Mechanize.  This is the general
 form of the function.  For most applications, specific aliases like
 B<http_get>, B<http_post>, et al. are much more suitable.
 
@@ -977,6 +1035,11 @@ Helper method for making HTTP PUT requests.
 =head2 http_post
 
 Helper method for making HTTP POST requests.
+
+=head2 submit_form
+
+Helper method for form submission via WWW::Mechanize. Calls $mech->submit_form()
+with all provided parameters.
 
 =head2 json_decode
 

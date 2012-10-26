@@ -27,6 +27,9 @@ my $httpd = run_http_server {
 
 		$path =~ s@^/thing/@@;
 		$message .= $path;
+		if ($req->header('Cookie') =~ /testcookie=(\S+);?/) {
+			$message .= " with testcookie=$1";
+		}
 
 		my $type = $req->header('Accept');
 		if ($type) {
@@ -48,6 +51,9 @@ my $httpd = run_http_server {
 		my $message = 'You tried to '.$req->method." $content to $path";
 		return [ 200, [ 'Content-type' => 'text/html' ], [ $message ] ];
 
+	} elsif ($path =~ m@^/cookie/@) {
+                $path =~ s@^/cookie/@@;                                                                                      #  Yeah, sorry, but if we reach this time, you can punch me in the face..
+                return [ 302, [ 'Location' => '/thing/set-cookie', 'set-cookie' => "testcookie=$path; Domain=127.0.0.1; Path=/; Expires=Wed, 13-Jan-2021 22:23:01 GMT;"], []];
 	} else {
 		return [ 404, [ 'Content-type' => 'text/html' ], [ "$path: not found!" ] ];
 	}
@@ -192,6 +198,21 @@ ok_plugin(0, "HTTP OK - looks good", undef, "PUT without data", sub {
 	(undef, $data) = HTTP_PUT $httpd->endpoint."/data/put-bucket", undef;
 	$data eq "You tried to PUT _nothing_ to put-bucket" or CRITICAL "Bad PUT Response: '$data'";
 
+	DONE;
+});
+
+ok_plugin(0, "HTTP OK - looks good", undef, "Redirect URI sets cookie, that is used on redirection, and next request", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "HTTP";
+	START default => "looks good";
+	
+	my $data;
+	(undef, $data) = HTTP_GET($httpd->endpoint."/cookie/testvalue1");
+	DUMP($data);
+	$data eq "I see you GET-ing that set-cookie with testcookie=testvalue1!" or CRITICAL "Did not see cookie in response! Got $data";
+	(undef, $data) = HTTP_GET($httpd->endpoint."/thing/cookiechecker");
+	DUMP($data);
+	$data eq "I see you GET-ing that cookiechecker with testcookie=testvalue1!" or CRITICAL "Did not see cookie in second response! Got $data";
 	DONE;
 });
 

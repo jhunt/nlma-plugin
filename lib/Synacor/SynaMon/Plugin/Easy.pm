@@ -27,10 +27,12 @@ our @EXPORT = qw/
 
 	RUN
 
+	MECH
 	HTTP_REQUEST
 	HTTP_GET
 	HTTP_POST
 	HTTP_PUT
+	SUBMIT_FORM
 
 	JSON_DECODE
 
@@ -75,10 +77,12 @@ sub RUN { $plugin->run(@_); }
 sub DEBUG { $plugin->debug(@_); }
 sub DUMP  { $plugin->dump(@_); }
 
+sub MECH         { $plugin->mech(@_); }
 sub HTTP_REQUEST { $plugin->http_request(@_); }
 sub HTTP_GET     { $plugin->http_get(@_); }
 sub HTTP_PUT     { $plugin->http_put(@_); }
 sub HTTP_POST    { $plugin->http_post(@_); }
+sub SUBMIT_FORM  { $plugin->submit_form(@_); }
 
 sub JSON_DECODE { $plugin->json_decode(@_); }
 
@@ -218,6 +222,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::debug>.
 
 Wrapper around B<Synacor::SynaMon::Plugin::dump>.
 
+=head2 MECH
+
+Wrapper around B<Synacor::SynaMon::Plugin::mech>.
+
 =head2 HTTP_REQUEST
 
 Wrapper around B<Synacor::SynaMon::Plugin::http_request>.
@@ -233,6 +241,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::http_put>.
 =head2 HTTP_POST
 
 Wrapper around B<Synacor::SynaMon::Plugin::http_post>.
+
+=head2 SUBMIT_FORM
+
+Wrapper around B<Synacor::SynaMon::Plugin::submit_form>.
 
 =head2 JSON_DECODE
 
