@@ -215,7 +215,7 @@ sub bail
 	my ($self, $status, $message) = @_;
 	$ALL_DONE = 1;
 	if (! defined $message) {
-		$message = $status unless defined $message; 
+		$message = $status unless defined $message;
 	}
 	$status = $STATUS_CODES{$status} || $STATUS_CODES{"UNKNOWN"};
 	$self->{legacy}->nagios_exit($status, $message);
