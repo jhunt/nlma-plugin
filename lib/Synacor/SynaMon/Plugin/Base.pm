@@ -80,6 +80,10 @@ sub new
 		usage_list => [],
 		did_stuff => 0, # ticked for every STATUS message
 		options => {},
+		settings => {
+			ignore_credstore_failures => 0,
+			on_timeout => NAGIOS_CRITICAL,
+		},
 		legacy => Nagios::Plugin->new(%options),
 	};
 
@@ -93,6 +97,32 @@ sub new
 	$self->{legacy}{opts}{_args} = \@new_args;
 
 	bless($self, $class);
+}
+
+sub set
+{
+	my ($self, %vars) = @_;
+	for my $key (keys %vars) {
+		my $value = $vars{$key};
+
+		if ($key eq 'on_timeout') {
+			if ($value =~ m/^warn/i) {
+				$value = NAGIOS_WARNING;
+			} elsif ($value =~ m/^crit/i) {
+				$value = NAGIOS_CRITICAL;
+			} elsif ($value =~ m/^unk/i) {
+				$value = NAGIOS_UNKNOWN;
+			} else {
+				$self->debug("CODE ISSUE: Bad value for on_timeout setting\n".
+					"'$value' not one of (warning|critical|unknown)");
+
+				$self->bail(NAGIOS_UNKNOWN,
+					"check plugin BUG detected: run again with --debug");
+			}
+		}
+
+		$self->{settings}{$key} = $value;
+	}
 }
 
 sub _spec2usage
@@ -317,7 +347,7 @@ sub start_timeout
 	$SIG{ALRM} = sub {
 		print "$TIMEOUT_MESSAGE: $TIMEOUT_STAGE\n";
 		$ALL_DONE = 1;
-		exit NAGIOS_CRITICAL;
+		exit $self->{settings}{on_timeout};
 	};
 
 	$self->{timeout_for} = $seconds;
@@ -404,6 +434,11 @@ sub retrieve
 sub credentials
 {
 	my ($self, $name, $fail_silently) = @_;
+	if ($fail_silently) {
+		$self->debug("DEPRECATION: calling credentials with fail-silently as a parameter is DEPRECATED");
+	} else {
+		$fail_silently = $self->{settings}{ignore_credstore_failures};
+	}
 
 	my $filename = $ENV{MONITOR_CRED_STORE} || "/usr/local/groundwork/users/nagios/.creds";
 	$self->debug("Retrieving '$name' credentials from $filename");
@@ -573,6 +608,11 @@ less error-prone.
 =head2 new
 
 Create a new Plugin::Base object.
+
+=head2 set
+
+Set one or more behavior-modifying settings.  See Synacor::Synamon::Plugin(3)
+for a full list of settings, legal values and their purpose.
 
 =head2 option
 

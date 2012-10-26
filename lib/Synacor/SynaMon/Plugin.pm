@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.09";
+our $VERSION = "1.10";
 
 use Exporter;
 use base qw(Exporter);
@@ -235,6 +235,45 @@ get a hash containing all defined options, and their final values.
 Once all the options are defined, the B<START> function should be
 called to kick off plugin execution.  This is where command-line
 arguments get processed.
+
+=head1 SETTINGS
+
+The framework exists to make the life of a plugin writer easier.
+To that end, it relies on a set of conventions that hold for 95% of
+all plugins.  For example, it always assumes that if a timeout occurs,
+that should be treated as a critical problem.
+
+Sometimes, however, plugin writers need to bend the system and do
+things in unconventional manners.  For example, for some situations,
+timeouts may be too frequent to be treated as critical problems, and
+should be dealt with as warnings instead.
+
+B<SET> to the rescue!  B<SET> is a way to reach into the inner workings
+of the framework and re-tune / re-focus its behavior.
+
+To implement the timeout-as-a-warning example:
+
+  SET on_timeout => "warn";
+
+Here is a list of settings, their legal values, and what they do:
+
+=over 8
+
+=item B<ignore_credstore_failures>
+
+If set to a non-zero value, issues encountered while retrieving
+credentials are ignored.  If the error is recoverable (e.g. insecure
+file permissions) it will be ignored outright.  For 'fatal' errors,
+(e.g. not finding the key you asked for), B<undef> will be returned.
+
+=item B<on_timeout>
+
+What type of problem to trigger when a timeout occurs.  Valid values
+are B<warn>, B<critical>, and B<unknown>.  The default is B<critical>.
+
+=back
+
+B<SET> has been available since version 1.10
 
 =head1 TRIGGERING PROBLEMS
 
@@ -508,18 +547,17 @@ an appropriate description.  Failure scenarios are:
 
 =back
 
-You can pass in a second argument to avoid this and instead return
-undef:
+You can B<SET> the I<ignore_credstore_failures> setting to avoid this
+behavior:
 
-  my ($user,$pass) = CREDENTIALS("$host-ldap", 'silent');
+  SET ignore_credstore_failures => 1;
+  my ($user,$pass) = CREDENTIALS "$host-ldap";
   if (!$user) {
-    ($user, $pass) = CREDENTIALS('DEFAULT-ldap');
+    ($user, $pass) = CREDENTIALS "DEFAULT-ldap";
   }
 
 In this example, the check looks for credentials specific to this
-$host, and if that fails, looks for the defaults.  Since the second
-call does not specify the I<fail silently> argument, the plugin
-will either retrieve credentials or trigger an UNKNOWN.
+$host, and if that fails, looks for the defaults.
 
 =head1 ADVANCED FUNCTIONS
 
