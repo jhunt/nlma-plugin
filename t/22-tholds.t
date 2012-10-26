@@ -5,7 +5,7 @@ do "t/common.pl";
 
 ###################################################################
 
-ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 4<5 && 4<8", sub {
+ok_plugin(0, "THOLD OK - value is 4", "value=4;;", "Thresholds 4<5 && 4<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
@@ -28,7 +28,7 @@ ok_plugin(0, "THOLD OK - skipped check", undef, "skip_OK test", sub {
 	DONE;
 });
 
-ok_plugin(1, "THOLD WARNING - value is 7", "value=7;;;;", "Thresholds 7>6 && 7<8", sub {
+ok_plugin(1, "THOLD WARNING - value is 7", "value=7;;", "Thresholds 7>6 && 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
@@ -39,7 +39,7 @@ ok_plugin(1, "THOLD WARNING - value is 7", "value=7;;;;", "Thresholds 7>6 && 7<8
 	DONE;
 });
 
-ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;;;;", "Thresholds 9>6 && 9>8", sub {
+ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;;", "Thresholds 9>6 && 9>8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
@@ -50,7 +50,7 @@ ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;;;;", "Thresholds 9>6 && 9>
 	DONE;
 });
 
-ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 5<6; no crit", sub {
+ok_plugin(0, "THOLD OK - value is 4", "value=4;;", "Thresholds 5<6; no crit", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
@@ -62,7 +62,7 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;;;", "Thresholds 5<6; no crit", 
 	DONE;
 });
 
-ok_plugin(1, "THOLD WARNING - value is 9", "value=9;;;;", "Thresholds 9>6; no crit", sub {
+ok_plugin(1, "THOLD WARNING - value is 9", "value=9;;", "Thresholds 9>6; no crit", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
@@ -73,7 +73,7 @@ ok_plugin(1, "THOLD WARNING - value is 9", "value=9;;;;", "Thresholds 9>6; no cr
 	DONE;
 });
 
-ok_plugin(0, "THOLD OK - value is 7", "value=7;;;;", "Thresholds no warn; 7<8", sub {
+ok_plugin(0, "THOLD OK - value is 7", "value=7;;", "Thresholds no warn; 7<8", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;

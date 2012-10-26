@@ -12,7 +12,7 @@ sub TEST_ALL
 
 sub ok_plugin
 {
-	my ($exit, $summary, $perfdata, $message, $sub, $args) = @_;
+	my ($exit, $summary, $perf, $message, $sub, $args) = @_;
 	$args = $args || [];
 
 	my ($e, $s, $p, $output);
