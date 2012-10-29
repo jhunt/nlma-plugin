@@ -580,7 +580,7 @@ sub http_request
 		$request->authorization_basic($options->{username}, $options->{password});
 	};
 
-	my $response = $self->mech()->request($request);
+	my $response = $self->mech->request($request);
 	return wantarray ?
 		($response, $response->decoded_content) :
 		$response->is_success;
@@ -615,7 +615,7 @@ sub submit_form
 	my ($self, @options) = @_;
 	my $response;
 	eval {
-		$response = $self->mech()->submit_form(@options);
+		$response = $self->mech->submit_form(@options);
 	} or do {
 		$self->CRITICAL("Form submission failed: $@") if $@;
 	};
@@ -952,9 +952,12 @@ There will ony be one WWW::Mechanize object in use at a time. If
 you need to generate a new one, specify the B<recreate> option in
 your mech() call, anda new object will be created. If no
 current mech exists, it will be created using the options passed
-in.  
+in.
 
-  my $mech = $plugin->mech(recreate => 1, UA => "my special User Agent", timeout => '1');
+  my $mech = $plugin->mech(
+               recreate => 1,
+               UA       => "my special User Agent",
+               timeout  => 1);
 
 Parameters:
 
@@ -962,18 +965,17 @@ Parameters:
 
 =item recreate
 
-Causes generation of a new WWW::Mechanize object if non-zero
+Force creation of a new WWW::Mechanize object.
 
 =item UA
 
-Provides a specific User Agent to use when connecting to web servers.
-Defaults to SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION"
+User Agent string to use when connecting to web servers.
+Defaults to C<SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION>
 
 =item timeout
 
-Provide a custom timeout for HTTP requests. If not specified, defaults
-to the plugin's timeout (-t flag to the check), or if that is not present,
-15.
+Timeout for HTTP requests. If not specified, defaults to the plugin
+timeout (-t flag to the check), or if that is not present, 15.
 
 =back
 

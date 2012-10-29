@@ -205,7 +205,7 @@ ok_plugin(0, "HTTP OK - looks good", undef, "Redirect URI sets cookie, that is u
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "looks good";
-	
+
 	my $data;
 	(undef, $data) = HTTP_GET($httpd->endpoint."/cookie/testvalue1");
 	DUMP($data);
