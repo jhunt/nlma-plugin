@@ -203,6 +203,7 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 		SUDO_USER => $ENV{SUDO_USER},
 	);
 	delete $ENV{MONITOR_CRED_STORE};
+	delete $ENV{USER};
 
 	# THIS TEST MAKES A FEW ASSUMPTIONS:
 	#  - icinga is a local user
@@ -222,31 +223,25 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 	@whois = getpwnam("shamalamadingdong");
 	ok(!@whois, "[test sanity] shamalamadingdong user does not exist");
 
+	my @pwent = getpwnam(getpwuid($<));
+	my $HOME = $pwent[7];
+
 	my $plugin = Synacor::SynaMon::Plugin::Base->new;
 
 	delete $ENV{SUDO_USER};
-	$ENV{USER}      = "icinga";
-	is($plugin->_credstore_path, "/home/icinga/.creds",
-		"without \$SUDO_USER, ~\$USER/.creds is used");
+	is($plugin->_credstore_path, "$HOME/.creds",
+		"without \$SUDO_USER, ~\$</.creds is used");
 
 	$ENV{SUDO_USER} = "nlma";
-	$ENV{USER} = "icinga";
 	is($plugin->_credstore_path, "/home/nlma/.creds",
 		"with \$SUDO_USER, ~\$SUDO_USER/.creds is used");
 
-	delete $ENV{SUDO_USER};
-	$ENV{USER} = "shamalamadingdong";
-	is($plugin->_credstore_path, "/usr/local/groundwork/users/nagios/.creds",
+	$ENV{SUDO_USER} = "shamalamadingdong";
+	is($plugin->_credstore_path, "$HOME/.creds",
 		"Fall-through, no shamalamadingdong user");
 
-	$ENV{SUDO_USER} = "shamalamadingdong";
-	$ENV{USER} = "icinga";
-	is($plugin->_credstore_path, "/home/icinga/.creds",
-		"If \$SUDO_USER isnt real, use \$USER");
-
-	$ENV{SUDO_USER} = "nlma";
-	$ENV{USER} = "icinga";
 	$ENV{MONITOR_CRED_STORE} = "/tmp/creds.public";
+	$ENV{SUDO_USER} = "nlma";
 	is($plugin->_credstore_path, "/tmp/creds.public",
 		"use \$MONITOR_CRED_STORE as-is, if present");
 

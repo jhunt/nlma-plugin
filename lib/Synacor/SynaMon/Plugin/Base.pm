@@ -469,7 +469,7 @@ sub _credstore_path
 {
 	my ($self) = @_;
 	return $ENV{MONITOR_CRED_STORE} if exists $ENV{MONITOR_CRED_STORE};
-	my $homedir = _userdir($ENV{SUDO_USER}) || _userdir($ENV{USER});
+	my $homedir = _userdir($ENV{SUDO_USER}) || _userdir(getpwuid($>));
 	return "$homedir/.creds" if $homedir;
 	"/usr/local/groundwork/users/nagios/.creds"; # evil default
 }
