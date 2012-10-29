@@ -1,6 +1,7 @@
 #!perl
 
 use Test::More;
+use Test::Deep;
 do "t/common.pl";
 
 ###################################################################
@@ -178,5 +179,89 @@ chmod 0400, "t/data/tmp/mon_state.perms";
 # Interestingly, you can touch a file you own that is chmod'd 000.
 cmp_ok($stat[ 9], '>', time - 86400, "mon_state.perms is less than a day old (mtime)");
 
+
+## STORE / RETRIEVE formats (raw, json, yaml/yml)
+{
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+
+	my $plugin = Synacor::SynaMon::Plugin::Base->new;
+	my ($data, $raw, $out);
+
+	$data = { key1 => "value1",
+	          list => [qw/a b c/] };
+
+	$raw = <<EOF;
+key1: value1
+list:
+  - a
+  - b
+  - c
+EOF
+
+	$plugin->store("formatted", $raw);
+	$out = $plugin->retrieve("formatted", as => "yaml");
+	cmp_deeply($out, $data, "Read back the same YAML we wrote out (as => yaml)");
+
+	$plugin->store("formatted", $out, as => "yAmL");
+	$out = $plugin->retrieve("formatted", as => "YML");
+	cmp_deeply($out, $data, "Read back the same YAML we wrote out (as => YML)");
+
+	$raw = '{"key1":"value1","list":["a","b","c"]}';
+	$plugin->store("formatted", $raw);
+	$out = $plugin->retrieve("formatted", as => "json");
+	cmp_deeply($out, $data, "Read back the same JSON we wrote out (as => json)");
+
+	$plugin->store("formatted", $out, as => "JsOn");
+	$out = $plugin->retrieve("formatted", as => "rAW");
+	is($raw, $out, "RAW read did not equal RAW write");
+
+	$raw = "this is raw";
+	$plugin->store("formatted", $raw, as => "RAW");
+	$out = $plugin->retrieve("formatted");
+	is($raw, $out, "RAW read did not equal RAW write");
+};
+
+ok_plugin(3, "RETR UNKNOWN - Unknown format for RETRIEVE: XML", undef, "RETRIEVE as unknown format UNKNOWNS", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => "retr";
+	START;
+
+	my $raw = '{"key1":"value1","list":["a","b","c"]}'."\n";
+	STORE "formatted", $raw;
+	my $out = RETRIEVE "formatted", as => "XML"; # HA!
+	OK "somehow we triggered the OK... RETRIEVE as => XML didnt fail...";
+});
+
+ok_plugin(3, "STORE UNKNOWN - Unknown format for STORE: SQL", undef, "STORE as unknown format UNKNOWNS", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => "store";
+	START;
+
+	my $raw = [qw(a b c d e f g h)];
+	STORE "formatted", $raw, as => "SQL";
+	OK "somehow we triggered the OK... STORE as => XML didnt fail...";
+});
+
+ok_plugin(0, "BADFMT OK - good", undef, "RETRIEVE handles malformed JSON/YAML", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => "badfmt";
+	START;
+
+	STORE "bad", "{{well, this isn't json or YAML!";
+	my $out = RETRIEVE "bad", as => "json";
+	!$out or CRITICAL "got non-undef value from RETRIEVE as => json... $out";
+
+	$out = RETRIEVE "bad", as => "yml";
+	!$out or CRITICAL "got non-undef value from RETRIEVE as => yaml... $out";
+
+	OK "good";
+});
 
 done_testing;
