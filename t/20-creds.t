@@ -223,14 +223,14 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 	@whois = getpwnam("shamalamadingdong");
 	ok(!@whois, "[test sanity] shamalamadingdong user does not exist");
 
-	my @pwent = getpwnam(getpwuid($<));
+	my @pwent = getpwnam(getpwuid($>));
 	my $HOME = $pwent[7];
 
 	my $plugin = Synacor::SynaMon::Plugin::Base->new;
 
 	delete $ENV{SUDO_USER};
 	is($plugin->_credstore_path, "$HOME/.creds",
-		"without \$SUDO_USER, ~\$</.creds is used");
+		"without \$SUDO_USER, ~\$>/.creds is used");
 
 	$ENV{SUDO_USER} = "nlma";
 	is($plugin->_credstore_path, "/home/nlma/.creds",
