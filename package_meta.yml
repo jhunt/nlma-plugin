@@ -3,4 +3,5 @@ requires:
   - perl-URI
   - perl-libwww-perl
   - perl-HTML-Parser
+  - perl-HTML-Tagset
   - perl > 5.8.0
