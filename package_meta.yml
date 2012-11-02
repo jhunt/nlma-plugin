@@ -2,4 +2,5 @@
 requires:
   - perl-URI
   - perl-libwww-perl
+  - perl-HTML-Parser
   - perl > 5.8.0
