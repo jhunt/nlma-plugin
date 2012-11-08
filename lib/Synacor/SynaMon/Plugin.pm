@@ -595,12 +595,12 @@ file, based on its running environment.  The following algorithm is used:
 
 =item 3. Otherwise, use .creds in the current user's home
 
+=back
+
 To illustrate, suppose that the user jdoe runs a check plugin as herself.
 The plugin will access the credstore /home/jdoe/.creds.  If she runs it as
 the icinga user, under sudo, it will still use /home/jdoe.creds.  This
 is specifically aimed at testing, and 'sudo as root' scenarios.
-
-=back
 
 =head1 ADVANCED FUNCTIONS
 
