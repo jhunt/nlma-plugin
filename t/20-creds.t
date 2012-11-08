@@ -35,11 +35,16 @@ ok_plugin(0, "CREDS OK - good", undef, "Credentials OK", sub {
 		CRITICAL "useronly: $user/$pass";
 	}
 
+	($user, $pass) = CREDENTIALS("fail", "failagain", "db");
+	unless ($user eq "dbuser" && $pass eq "dbpass") {
+		CRITICAL "multi-key lookup: $user/$pass";
+	}
+
 	OK "good";
 	DONE;
 });
 
-ok_plugin(3, "CREDS UNKNOWN - Credentials key 'unknown' not found", undef, "Non-existent key", sub {
+ok_plugin(3, "CREDS UNKNOWN - Credentials not found for 'unknown'", undef, "Non-existent key", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
@@ -48,19 +53,14 @@ ok_plugin(3, "CREDS UNKNOWN - Credentials key 'unknown' not found", undef, "Non-
 	DONE;
 });
 
-ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silently / legacy)", sub {
+ok_plugin(3, "CREDS UNKNOWN - Credentials not found for 'fail1', 'fail2', 'fail3'", undef, "Non-existent key (multi)", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
-	if (CREDENTIALS "unknown", "THIS IS LEGACY BEHAVIOR") {
-		WARNING "got creds for 'unknown' key";
-	} else {
-		OK "failed silently";
-	}
+	CREDENTIALS(qw/fail1 fail2 fail3/);
 	DONE;
 });
-
 
 ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silently)", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
@@ -82,6 +82,18 @@ ok_plugin(3, "CREDS UNKNOWN - Corrupt credentials key 'corrupt'", undef, "Bad ke
 	PLUGIN name => "creds";
 	START;
 	CREDENTIALS("corrupt");
+	DONE;
+});
+
+ok_plugin(3, "CREDS UNKNOWN - Corrupt credentials key 'corrupt'", undef, "Bad key (early)", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
+	PLUGIN name => "creds";
+	START;
+	# first key does not exist;
+	# second key is corrupt
+	# last key does exist.
+	CREDENTIALS("this-key-does-not-exist", "corrupt", "db");
 	DONE;
 });
 

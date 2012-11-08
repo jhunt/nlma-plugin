@@ -476,49 +476,52 @@ sub _credstore_path
 
 sub credentials
 {
-	my ($self, $name, $fail_silently) = @_;
-	if ($fail_silently) {
-		$self->debug("DEPRECATION: calling credentials with fail-silently as a parameter is DEPRECATED");
-	} else {
-		$fail_silently = $self->{settings}{ignore_credstore_failures};
-	}
+	my ($self, @keys) = @_;
+	my $ignore = $self->{settings}{ignore_credstore_failures};
 
 	my $filename = $self->_credstore_path;
-	$self->debug("Retrieving '$name' credentials from $filename");
+	$self->debug("Retrieving credentials from $filename");
 
 	unless (-f $filename) {
-		return undef if $fail_silently;
+		$self->debug("Credstore '$filename' does not exist");
+		return undef if $ignore;
 		$self->bail(NAGIOS_UNKNOWN, "Could not find credentials file");
 	}
 
 	unless (-r $filename) {
-		return undef if $fail_silently;
+		$self->debug("Credstore '$filename' exists but is not readable");
+		return undef if $ignore;
 		$self->bail(NAGIOS_UNKNOWN, "Could not read credentials file");
 	}
 
 	my @stat = stat($filename);
-	if (!$fail_silently && (!@stat || ($stat[2] & 07777) != 0400)) {
+	if (!$ignore && (!@stat || ($stat[2] & 07777) != 0400)) {
 		$self->bail(NAGIOS_UNKNOWN, sprintf("Insecure credentials file; mode is %04o (not 0400)",
 				$stat[2] & 07777));
 	}
 
 	my $yaml = LoadFile($filename);
 	unless (ref($yaml) eq "HASH") {
-		return undef if $fail_silently;
+		$self->debug("Credstore '$filename' does not contain a YAML hashref");
+		return undef if $ignore;
 		$self->bail(NAGIOS_UNKNOWN, "Corrupted credentials file");
 	}
 
-	unless (exists $yaml->{$name}) {
-		return undef if $fail_silently;
-		$self->bail(NAGIOS_UNKNOWN, "Credentials key '$name' not found");
+	for my $name (@keys) {
+		$self->debug("Checking credentials store for '$name'");
+
+		if (exists $yaml->{$name}) {
+			unless ($yaml->{$name}{username} || $yaml->{$name}{password}) {
+				$self->debug("Corrupt credentials key $name");
+				return undef if $ignore;
+				$self->bail(NAGIOS_UNKNOWN, "Corrupt credentials key '$name'");
+			}
+			return ($yaml->{$name}{username}, $yaml->{$name}{password});
+		}
 	}
 
-	unless ($yaml->{$name}{username} || $yaml->{$name}{password}) {
-		return undef if $fail_silently;
-		$self->bail(NAGIOS_UNKNOWN, "Corrupt credentials key '$name'");
-	}
-
-	return ($yaml->{$name}{username}, $yaml->{$name}{password});
+	return undef if $ignore;
+	$self->bail(NAGIOS_UNKNOWN, "Credentials not found for '".join("', '", @keys)."'");
 }
 
 sub run
