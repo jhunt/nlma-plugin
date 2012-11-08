@@ -537,6 +537,39 @@ account might be stored under the I<email> key.
 
   my ($user, $pass) = CREDENTIALS('email');
 
+You can pass as many keys as you want to B<CREDENTIALS>; it will try each key
+in turn and return the first set of credentials that match.  This allows you
+to specify specific keys first, and fall back to more generic keys as needed:
+
+  my $host = "host.example.com";
+  my ($user, $pass) = CREDENTIALS("$host/email", "email");
+
+In this case, if the 'host.example.com/email' key is not found in the credstore,
+try the more generic 'email' key.
+
+Another function, B<CRED_KEYS> makes it easy to generate a list of credentials
+keys that can be overridden at the server role level, cluster level and host
+level:
+
+  my $host = "role01.atl.synacor.com";
+  my ($u, $p) = CREDENTIALS( CRED_KEYS("LDAP", $host) );
+
+This code searches for the following keys in the credstore:
+
+=over 8
+
+=item LDAP/role01.atl.synacor.com
+
+=item LDAP/atl/role
+
+=item LDAP/atl/*
+
+=item LDAP/*/role
+
+=item LDAP
+
+=back
+
 If the framework encounters any problems extracting the I<email> key from the
 credstore, it will immediately halt the plugin and trigger an UNKNOWN alert with
 an appropriate description.  Failure scenarios are:
@@ -549,7 +582,7 @@ an appropriate description.  Failure scenarios are:
 
 =item 3. Corruption in the credstore (bad YAML)
 
-=item 4. Requested credentials not found
+=item 4. Requested credentials not found (under any key)
 
 =item 5. Malformed credentials key (no username and/or no password)
 

@@ -1,6 +1,7 @@
 #!perl
 
 use Test::More;
+use Test::Deep;
 do "t/common.pl";
 
 ###################################################################
@@ -259,6 +260,26 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 
 	$ENV{SUDO_USER} = $SAVED_ENV{SUDO_USER} if $SAVED_ENV{SUDO_USER};
 	$ENV{USER}      = $SAVED_ENV{USER};
+}
+
+{
+	my $plugin = Synacor::SynaMon::Plugin::Base->new;
+
+	cmp_deeply([$plugin->cred_keys("TYPE", "role01.dc.synacor.com")],
+		["TYPE/role01.dc.synacor.com",
+		 "TYPE/dc/role",
+		 "TYPE/dc/*",
+		 "TYPE/*/role",
+		 "TYPE" ],
+		"Basic role / cluster key breakdown");
+
+	cmp_deeply([$plugin->cred_keys("LDAP", "test23.svcs.atl.synacor.com")],
+		["LDAP/test23.svcs.atl.synacor.com",
+		 "LDAP/svcs.atl/test",
+		 "LDAP/svcs.atl/*",
+		 "LDAP/*/test",
+		 "LDAP" ],
+		"Generate LDAP credentials keys");
 }
 
 system("chmod 644 t/data/creds*");

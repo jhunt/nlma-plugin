@@ -524,6 +524,24 @@ sub credentials
 	$self->bail(NAGIOS_UNKNOWN, "Credentials not found for '".join("', '", @keys)."'");
 }
 
+sub cred_keys
+{
+	my ($self, $type, $hostname) = @_;
+
+	$self->debug("Generating candidate cred keys for $type/$hostname");
+	$hostname =~ m/^([a-z]+)[^\.]*\.(.*)/;
+	my ($role, $cluster) = ($1, $2);
+	$cluster =~ s/\.synacor\.com$//;
+
+	return (
+		"$type/$hostname",       # host-specific
+		"$type/$cluster/$role",  # cluster / role specific
+		"$type/$cluster/*",      # cluster-global
+		"$type/*/$role",         # role-global
+		$type,                   # ...
+	);
+}
+
 sub run
 {
 	my ($self, $command, %opts) = @_;
@@ -916,6 +934,11 @@ check, and be chmod'ed 0400 (i.e. only readable, only by the owner).
 
   my ($user,$pass) = $plugin->credentials('database');
 
+You can also pass in multiple credential keys, and the framework
+will search for each key in order, returning the first match:
+
+  my ($user,$pass) = $plugin->credentials('$host/db', 'mysqldb', 'db');
+
 By default, check execution is halted immediately with an UNKNOWN
 status if any of the following problems are encountered:
 
@@ -927,24 +950,34 @@ status if any of the following problems are encountered:
 
 =item 3. File does not contain a YAMLized hash
 
-=item 4. Specified key does not exist in YAML
+=item 4. None of the keys given exist in the YAML
 
 =item 5. Value in YAML does not contain either username or password
 
 =back
 
-You can pass in a second argument to avoid this and instead return
-undef:
+=head2 cred_keys($type, $hostname)
 
-  my ($user,$pass) = $plugin->credentials("$host-ldap", 'silent');
-  if (!$user) {
-    ($user, $pass) = $plugin->credentials('DEFAULT-ldap');
-  }
+Generate a list of credstore keys, based on the $type and $hostname
+given.  These keys will become increasingly more generic.  For example,
+the following list will be generated for md01.atl.synacor.com, type POP:
 
-In this example, the check looks for credentials specific to this
-$host, and if that fails, looks for the defaults.  Since the second
-call does not specify the I<fail silently> argument, the plugin
-will either retrieve credentials or trigger an UNKNOWN.
+=over 8
+
+=item POP/md01.atl.synacor.com
+
+=item POP/atl/md
+
+=item POP/atl/*
+
+=item POP/*/md
+
+=item POP
+
+This list can be passed to the B<credentials> function, activating its
+susbsequent search mechanism for keys.
+
+=back
 
 =head2 run
 
