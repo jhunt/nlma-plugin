@@ -95,6 +95,54 @@ ok_plugin(2, "Timed out after 1s: re-CRIT!", undef, "Timeout / successive SET ca
 
 ###################################################################
 
+ok_plugin(0, "TIMEOUT OK - no timeout", undef, "POSIX: No Timeout", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "timeout";
+	START;
+	SET signals => 'posix';
+	START_TIMEOUT 1, "timeout triggered";
+	STOP_TIMEOUT;
+	OK "no timeout";
+	DONE;
+});
+
+ok_plugin(2, "Timed out after 1s: running check", undef, "POSIX: Timeout", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "timeout";
+	START;
+	SET signals => 'posix';
+	START_TIMEOUT 1;
+	sleep 2;
+	STOP_TIMEOUT;
+	DONE;
+});
+
+ok_plugin(2, "Timed out after 1s: init", undef, "POSIX: Timeout / start_timeout keeps stage name", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "timeout";
+	START;
+	SET signals => 'posix';
+	STAGE "init";
+	START_TIMEOUT 1;
+	sleep 2;
+	STOP_TIMEOUT;
+	DONE;
+});
+
+ok_plugin(1, "Timed out after 1s: warning!", undef, "POSIX: Timeout / warnings", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "timeout";
+	START;
+	SET signals => 'posix';
+	SET on_timeout => "WARN";
+	STAGE "warning!";
+	START_TIMEOUT 1;
+	sleep 2;
+	DONE;
+});
+
+###################################################################
+
 sub within
 {
 	my ($a, $b, $eps, $msg) = @_;

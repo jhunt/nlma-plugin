@@ -10,7 +10,11 @@ use YAML::XS qw(LoadFile);
 use JSON;
 use Data::Dumper qw(Dumper);
 use WWW::Mechanize;
-use POSIX qw(WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED);
+use POSIX qw/
+	WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED
+	SIGALRM
+	sigaction
+/;
 use Time::HiRes qw(gettimeofday);
 $Data::Dumper::Pad = "DEBUG> ";
 
@@ -83,6 +87,7 @@ sub new
 		settings => {
 			ignore_credstore_failures => 0,
 			on_timeout => NAGIOS_CRITICAL,
+			signals => 'perl',
 		},
 		legacy => Nagios::Plugin->new(%options),
 	};
@@ -346,12 +351,21 @@ sub start_timeout
 	$self->debug("Setting timeout for ${seconds}s");
 	$self->stage($action) if $action;
 
-	alarm $seconds;
-	$SIG{ALRM} = sub {
+	my $handler = sub {
 		print "$TIMEOUT_MESSAGE: $TIMEOUT_STAGE\n";
 		$ALL_DONE = 1;
 		exit $self->{settings}{on_timeout};
 	};
+
+	if ($self->{settings}{signals} eq 'posix') {
+		my $old  = POSIX::SigAction->new;
+		my $new  = POSIX::SigAction->new($handler, POSIX::SigSet->new(SIGALRM));
+		sigaction(SIGALRM, $new, $old);
+
+	} else { # fallback to 'perl'
+		$SIG{ALRM} = $handler;
+	}
+	alarm $seconds;
 
 	$self->{timeout_for} = $seconds;
 	$self->{timeout_started} = time;

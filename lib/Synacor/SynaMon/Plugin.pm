@@ -271,6 +271,12 @@ file permissions) it will be ignored outright.  For 'fatal' errors,
 What type of problem to trigger when a timeout occurs.  Valid values
 are B<warn>, B<critical>, and B<unknown>.  The default is B<critical>.
 
+=item B<signals>
+
+How to install signal handlers for things like timeout (SIGALRM).  Valid
+values are B<posix> and (the default) B<perl>.  For B<posix>, POSIX::SigAction
+will be used.  Otherwise, the Perl %SIG hash is used.
+
 =back
 
 B<SET> has been available since version 1.10
