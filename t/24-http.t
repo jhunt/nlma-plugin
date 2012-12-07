@@ -27,7 +27,8 @@ my $httpd = run_http_server {
 
 		$path =~ s@^/thing/@@;
 		$message .= $path;
-		if ($req->header('Cookie') =~ /testcookie=(\S+);?/) {
+		my $cookie = $req->header('Cookie');
+		if ($cookie and $cookie =~ /testcookie=(\S+);?/) {
 			$message .= " with testcookie=$1";
 		}
 
