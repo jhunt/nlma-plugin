@@ -118,11 +118,27 @@ sub set
 			} elsif ($value =~ m/^unk/i) {
 				$value = NAGIOS_UNKNOWN;
 			} else {
-				$self->debug("CODE ISSUE: Bad value for on_timeout setting\n".
-					"'$value' not one of (warning|critical|unknown)");
+				$self->debug("CODE ISSUE: Bad value for `on_timeout` setting",
+				             "  '$value' not one of (warning|critical|unknown)");
 
 				$self->bail(NAGIOS_UNKNOWN,
 					"check plugin BUG detected: run again with --debug");
+			}
+
+		} elsif ($key eq 'signals') {
+			if ($value !~ m/^perl|posix$/) {
+				$self->debug("CODE ISSUE: Bad value for `signals` settings",
+				             "  '$value' not one of (perl|posix)");
+
+				$self->bail(NAGIOS_UNKNOWN,
+					"check plugin BUG detected: run again with --debug");
+			}
+
+			if ($value ne $self->{settings}{$key}) {
+				$self->debug("Signal handling style changed from $self->{settings}{$key} to $value",
+				             "  Re-issuing signal handlers for active timeouts");
+
+				$self->start_timeout($self->stop_timeout);
 			}
 		}
 
@@ -358,11 +374,13 @@ sub start_timeout
 	};
 
 	if ($self->{settings}{signals} eq 'posix') {
+		$self->debug("Using POSIX sigaction for SIGALRM handler");
 		my $old  = POSIX::SigAction->new;
 		my $new  = POSIX::SigAction->new($handler, POSIX::SigSet->new(SIGALRM));
 		sigaction(SIGALRM, $new, $old);
 
-	} else { # fallback to 'perl'
+	} else {
+		$self->debug("Using Perl SIG{ALRM} for SIGALRM handler");
 		$SIG{ALRM} = $handler;
 	}
 	alarm $seconds;
