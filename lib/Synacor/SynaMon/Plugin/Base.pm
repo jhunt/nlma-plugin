@@ -138,6 +138,9 @@ sub set
 				$self->debug("Signal handling style changed from $self->{settings}{$key} to $value",
 				             "  Re-issuing signal handlers for active timeouts");
 
+				# Set the value, so that start_timeout honors it...
+				$self->{settings}{$key} = $value;
+				# Forcibly re-issue the timeout, under new settings
 				$self->start_timeout($self->stop_timeout);
 			}
 		}
