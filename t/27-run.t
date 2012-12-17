@@ -39,7 +39,7 @@ ok_plugin(0, "RUN OK", undef, "exec path run", sub {
 	DONE;
 });
 
-ok_plugin(2, "RUN CRITICAL - Command ./t/run/exit_code 2 exited 2", undef, "command non-zero exit", sub {
+ok_plugin(2, "RUN CRITICAL - Command './t/run/exit_code 2' exited with code 2.", undef, "command non-zero exit", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;

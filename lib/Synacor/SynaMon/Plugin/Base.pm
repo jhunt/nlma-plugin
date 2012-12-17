@@ -608,13 +608,13 @@ sub run
 		# handle normal exit, signal death or unknown properly
 		if (WIFEXITED($rc)) {
 			$rc = WEXITSTATUS($rc);
-			$self->CRITICAL("Command $safe exited $rc");
+			$self->CRITICAL("Command '$safe' exited with code $rc.");
 		} elsif (WIFSIGNALED($rc)) {
 			$rc = WTERMSIG($rc);
-			$self->CRITICAL("Command $safe killed with signal $rc");
+			$self->CRITICAL("Command '$safe' killed with signal $rc");
 		} else {
 			$rc = sprintf("0x%04x", $rc);
-			$self->CRITICAL("Command $safe terminated abnormally ($rc)");
+			$self->CRITICAL("Command '$safe' terminated abnormally with code ($rc)");
 		}
 	}
 
