@@ -79,9 +79,21 @@ sub SET_NSCA
 	}
 }
 
+sub _status
+{
+	my ($s) = @_;
+	return 0  if $s =~ m/^(ok|up)/i;
+	# standard nagios: 1 = DOWN; 2 = UNREACHABLE
+	return 1  if $s =~ m/^(warn|down)/i;
+	return 2  if $s =~ m/^(crit|unreach)/i;
+	return $s if $s =~ m/^[0123]$/;
+	return 3; # UNKNOWN
+}
+
 sub SEND_NSCA
 {
 	my (%args) = @_;
+	$args{status} = _status($args{status});
 
 	my $s;
 	if (exists $args{service}) {
@@ -173,11 +185,15 @@ The B<%details> hash should contain the following keys:
 
 =item B<service> (optional)
 
-=item B<status> (0-3)
+=item B<status>
 
 =item B<output>
 
 =back
+
+B<NOTE:> check status can be specified as an integer between 0 and 3,
+or as human-readable names like "CRITICAL" and "WARNING".  Unknown
+values are treated as 3/UNKNOWN.
 
 =head2 LOG
 
