@@ -77,7 +77,7 @@ sub CRED_KEYS { $plugin->cred_keys(@_); }
 
 sub RUN { $plugin->run(@_); }
 
-sub DEBUG { $plugin->debug(@_); }
+sub DEBUG { $plugin->debug(@_) if $plugin }
 sub DUMP  { $plugin->dump(@_); }
 
 sub MECH         { $plugin->mech(@_); }
