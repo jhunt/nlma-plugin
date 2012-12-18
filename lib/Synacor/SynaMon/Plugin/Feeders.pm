@@ -146,3 +146,97 @@ END {
 }
 
 1;
+
+=head1 NAME
+
+Synacor::SynaMon::Plugin::Feeders - Framework for Feeder Plugins
+
+=head1 DESCRIPTION
+
+Feeder plugins are a special breed of monitoring plugin that only run on the
+Hammer Throw core servers, and feed results for all hosts monitored by that
+node.
+
+=head1 FUNCTIONS
+
+=head2 SEND_NSCA %details
+
+Submit a single result via the send_nsca utility.  The framework will
+keep a running send_nsca process around for bulk operations (which is
+what feeders do).
+
+The B<%details> hash should contain the following keys:
+
+=over
+
+=item B<host>
+
+=item B<service> (optional)
+
+=item B<status> (0-3)
+
+=item B<output>
+
+=back
+
+=head2 LOG
+
+Retrieve a Log::Log4perl object for sending messages to the logging
+subsystem.  The logger object returned will be properly memoized and
+configured for the executing feeder / environment / debug flags.
+
+=head2 SET_NSCA %settings
+
+Configure the SEND_NSCA function, by specifying the following values:
+
+=over
+
+=item B<bin>
+
+Absolute path to the send_nsca binary.
+
+Defaults to I</usr/bin/send_nsca>
+
+=item B<host>
+
+Hostname or IP address of the host to submit feeder results to.
+
+Defaults to I<localhost>
+
+=item B<config>
+
+Path to the send_nsca configuration file.
+
+Defaults to I</etc/icinga/send_nsca.cfg>
+
+=item B<port>
+
+Port number to connect to.
+
+Defaults to I<5667>
+
+=item B<args>
+
+Extra arguments to pass to send_nsca.
+
+=item B<max>
+
+Maximum number of results to send to a send_nsca process before
+re-execing a new one.  This is to work around a bug in either send_nsca
+or the NSCA daemon.
+
+Defaults to I<700>.
+
+=item B<noop>
+
+Don't actually send results via send_nsca.  Useful for debugging.
+
+Defaults to I<0> (i.e. not in noop mode).
+
+=back
+
+=head1 AUTHOR
+
+Written by James Hunt <jhunt@synacor.com>
+
+=cut
