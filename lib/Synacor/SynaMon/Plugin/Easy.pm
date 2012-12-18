@@ -40,7 +40,7 @@ our @EXPORT = qw/
 	DEBUG DUMP
 /;
 
-my $plugin;
+our $plugin;
 
 sub PLUGIN  { $plugin = Synacor::SynaMon::Plugin::Base->new(@_); }
 sub OPTION  { $plugin->option(@_); }

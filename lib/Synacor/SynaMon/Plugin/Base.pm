@@ -81,6 +81,7 @@ sub new
 			NAGIOS_UNKNOWN  => [],
 		},
 		name => $bin,
+		bin  => $bin, # name may change drop the 'check_' prefix...
 		usage_list => [],
 		did_stuff => 0, # ticked for every STATUS message
 		options => {},

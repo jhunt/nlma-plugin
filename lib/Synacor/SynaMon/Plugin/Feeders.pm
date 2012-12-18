@@ -3,6 +3,8 @@ package Synacor::SynaMon::Plugin::Feeders;
 use Synacor::SynaMon::Plugin::Easy;
 use POSIX qw/WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED/;
 
+use Log::Log4perl;
+
 use Exporter;
 use base qw(Exporter);
 
@@ -19,10 +21,14 @@ my %NSCA = (
 my $PIPE;
 my $N = -1;
 
+my $LOG;
+use constant HT_LOG_CONFIG => "/opt/synacor/monitor/etc/htlog.conf";
+
 our @EXPORT = qw/
-	CONFIG_NSCA
+	SET_NSCA
 	SEND_NSCA
 
+	LOG
 /;
 
 $SIG{PIPE} = sub
@@ -64,7 +70,7 @@ sub _exec_receiver
 	}
 }
 
-sub CONFIG_NSCA
+sub SET_NSCA
 {
 	my (%C) = @_;
 	for (keys %C) {
@@ -90,6 +96,47 @@ sub SEND_NSCA
 		print $PIPE "$s\n\x17"
 			or BAIL "SEND_NSCA failed: $!";
 	}
+}
+
+sub LOG
+{
+	return $LOG if $LOG;
+
+	if (OPTION->debug) {
+		$ENV{HT_DEBUG} = "DEBUG";
+	}
+
+	my $service = $Synacor::SynaMon::Plugin::Easy::plugin->{bin};
+	DEBUG "Setting up Log4perl for $service";
+
+	if (exists $ENV{HT_TRACE} and $ENV{HT_TRACE}) {
+		$ENV{HT_DEBUG} = "TRACE";
+	}
+
+	my $config = $ENV{HT_LOG_CONFIG} || HT_LOG_CONFIG;
+	if (-f $config) {
+		Log::Log4perl::init_and_watch($config, 'HUP');
+	} else {
+		my $literal = q|
+			log4perl.rootLogger = WARN, DEFAULT
+			log4perl.appender.DEFAULT = Log::Log4perl::Appender::Screen
+			log4perl.appender.DEFAULT.layout = Log::Log4perl::Layout::PatternLayout
+			log4perl.appender.DEFAULT.layout.ConversionPattern = :: [%P] %p: %m%n
+		|;
+		Log::Log4perl::init(\$literal);
+	}
+	$LOG = Log::Log4perl->get_logger($service);
+
+	if (OPTION->debug) {
+		$LOG->level("DEBUG");
+		$LOG->debug("DEBUG logging initiated by user '$ENV{USER}' via --debug flag");
+	} elsif ($ENV{HT_DEBUG}) {
+		$LOG->level("DEBUG");
+		$LOG->debug("DEBUG logging initiated by user '$ENV{USER}' via HT_DEBUG environment variable");
+	}
+
+	$LOG->info("Logger subsystem initialized from $config");
+	return $LOG;
 }
 
 END {
