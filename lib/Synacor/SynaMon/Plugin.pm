@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.11";
+our $VERSION = "1.12";
 
 use Exporter;
 use base qw(Exporter);
@@ -16,7 +16,17 @@ sub import {
 	strict->import;
 
 	my %tags = map { $_ => 1 } @_;
-	if (exists $tags{':easy'}) {
+	if (exists $tags{':feeder'}) {
+		delete $tags{':feeder'};
+
+		use Synacor::SynaMon::Plugin::Feeders;
+		Synacor::SynaMon::Plugin::Feeders->export_to_level(1);
+
+		use Synacor::SynaMon::Plugin::Easy;
+		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
+
+	} elsif (exists $tags{':easy'}) {
+
 		delete $tags{':easy'};
 		use Synacor::SynaMon::Plugin::Easy;
 		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
