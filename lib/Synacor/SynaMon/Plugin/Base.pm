@@ -45,6 +45,9 @@ our %STATUS_CODES = (
 	CRITICAL => NAGIOS_CRITICAL,
 	UNKNOWN  => NAGIOS_UNKNOWN,
 
+	UP       => NAGIOS_OK,
+	DOWN     => NAGIOS_WARNING, # according to Nagios...
+
 	0 => NAGIOS_OK,
 	1 => NAGIOS_WARNING,
 	2 => NAGIOS_CRITICAL,
