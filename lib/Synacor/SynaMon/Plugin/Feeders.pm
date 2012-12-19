@@ -144,9 +144,11 @@ sub LOG
 }
 
 END {
-	DEBUG "Initiating Feeder Shutdown";
-	DEBUG "Closing send_nsca pipe" unless $NSCA{noop};
-	_close_pipe;
+	if ($Synacor::SynaMon::Plugin::MODE eq "feeder") {
+		DEBUG "Initiating Feeder Shutdown" ;
+		DEBUG "Closing send_nsca pipe" unless $NSCA{noop};
+		_close_pipe;
+	}
 }
 
 1;
