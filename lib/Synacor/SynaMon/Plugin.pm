@@ -9,6 +9,8 @@ our $VERSION = "1.12";
 use Exporter;
 use base qw(Exporter);
 
+our $MODE = 'plugin';
+
 sub import {
 	my $class = shift;
 
@@ -18,6 +20,7 @@ sub import {
 	my %tags = map { $_ => 1 } @_;
 	if (exists $tags{':feeder'}) {
 		delete $tags{':feeder'};
+		$MODE = "feeder";
 
 		use Synacor::SynaMon::Plugin::Feeders;
 		Synacor::SynaMon::Plugin::Feeders->export_to_level(1);
@@ -26,8 +29,9 @@ sub import {
 		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
 
 	} elsif (exists $tags{':easy'}) {
-
 		delete $tags{':easy'};
+		$MODE = "plugin";
+
 		use Synacor::SynaMon::Plugin::Easy;
 		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
 	}

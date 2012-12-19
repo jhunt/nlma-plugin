@@ -1,0 +1,5 @@
+#!/usr/bin/perl
+$l = <STDIN>; chomp $l;
+#print STDERR "Line: '$l'\n";
+close STDIN;
+exit 2;

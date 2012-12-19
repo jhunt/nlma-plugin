@@ -17,10 +17,10 @@ GetOptions(\%OPTIONS,
 while (<STDIN>) { }
 
 if (exists $OPTIONS{signal}) {
-	print STDERR "killed via $OPTIONS{signal}\n";
+#	print STDERR "killed via $OPTIONS{signal}\n";
 	kill $OPTIONS{signal}, $$;
 	waitpid($$, 0);
 }
 
-print STDERR "exiting $OPTIONS{exit}\n";
+#print STDERR "exiting $OPTIONS{exit}\n";
 exit $OPTIONS{exit};

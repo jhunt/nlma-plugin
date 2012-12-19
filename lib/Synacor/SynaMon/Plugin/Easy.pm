@@ -90,7 +90,7 @@ sub SUBMIT_FORM  { $plugin->submit_form(@_); }
 sub JSON_DECODE { $plugin->json_decode(@_); }
 
 END {
-	DEBUG "Initiating Plugin Shutdown";
+	$plugin->finalize("END block") if $plugin;
 	$plugin->done if $plugin && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
 }
 

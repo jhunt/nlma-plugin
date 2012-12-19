@@ -3,6 +3,7 @@ package Synacor::SynaMon::Plugin::Base;
 use warnings;
 use strict;
 
+use Synacor::SynaMon::Plugin ();
 use Nagios::Plugin qw();
 use base qw(Nagios::Plugin);
 
@@ -106,6 +107,11 @@ sub new
 	$self->{legacy}{opts}{_args} = \@new_args;
 
 	bless($self, $class);
+}
+
+sub mode
+{
+	$Synacor::SynaMon::Plugin::MODE;
 }
 
 sub set
@@ -245,8 +251,9 @@ sub bail
 	if (! defined $message) {
 		$message = $status unless defined $message;
 	}
-	$status = $STATUS_CODES{$status} || $STATUS_CODES{"UNKNOWN"};
-	$self->{legacy}->nagios_exit($status, $message);
+	my $code = $STATUS_CODES{$status} || $STATUS_CODES{"UNKNOWN"};
+	$self->debug("Bailing $status ($code) from message: $message");
+	$self->{legacy}->nagios_exit($code, $message);
 }
 
 sub evaluate
@@ -295,7 +302,7 @@ sub start
 	$ALL_DONE = 0;
 
 	$self->{debug} = $self->option->debug;
-	$self->debug("Starting plugin execution");
+	$self->debug("Starting ".$self->mode." execution");
 
 	if (exists $opts{default}) {
 		$self->debug("Setting default OK message");
@@ -305,14 +312,22 @@ sub start
 	$self->start_timeout($self->option->{timeout}, $TIMEOUT_STAGE);
 }
 
-sub done
+sub finalize
 {
-	my ($self) = @_;
+	my ($self, $via) = @_;
+	return if $ALL_DONE;
 	$ALL_DONE = 1;
+	$self->debug("Finalizing ".$self->mode." execution via $via");
 	if (!$self->{did_stuff}) {
 		$self->UNKNOWN("Check appears to be broken; no problems triggered");
 	}
 	$self->{legacy}->nagios_exit($self->{legacy}->check_messages);
+}
+
+sub done
+{
+	my ($self) = @_;
+	$self->finalize("DONE call") unless $self->mode eq 'feeder';
 }
 
 sub check_value
@@ -738,6 +753,11 @@ less error-prone.
 
 Create a new Plugin::Base object.
 
+=head2 mode
+
+Return a string representing the current execution mode.  This is used internally
+to alter behavior for feeder plugins.
+
 =head2 set
 
 Set one or more behavior-modifying settings.  See Synacor::Synamon::Plugin(3)
@@ -849,8 +869,15 @@ Start plugin execution and process command-line arguments.
 
 =head2 done
 
+Wrapper for B<finalize>, for explicitly ending execution of a plugin.
+
+=head2 finalize($method)
+
 Finalize plugin execution, and exit with the appropriate return code
 and status message, formatted for Nagios.
+
+B<finalize> should be called from END blocks, with an argument of
+"END block".  It is called automatically by B<done>
 
 =head2 check_value
 

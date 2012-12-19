@@ -66,8 +66,9 @@ sub _exec_receiver
 		DEBUG "NOOP `$cmd`";
 	} else {
 		DEBUG "Executing `$cmd`";
-		open $PIPE, "|-", $cmd
-			or UNKNOWN "Failed to exec $NSCA{bin}: $!";
+		eval {
+			open $PIPE, "|-", $cmd or UNKNOWN "Failed to exec $NSCA{bin}: $!";
+		};
 	}
 }
 
@@ -111,10 +112,6 @@ sub LOG
 	my $service = $Synacor::SynaMon::Plugin::Easy::plugin->{bin};
 	DEBUG "Setting up Log4perl for $service";
 
-	if (exists $ENV{HT_TRACE} and $ENV{HT_TRACE}) {
-		$ENV{HT_DEBUG} = "TRACE";
-	}
-
 	my $config = $ENV{HT_LOG_CONFIG} || HT_LOG_CONFIG;
 	if (-f $config) {
 		Log::Log4perl::init_and_watch($config, 'HUP');
@@ -135,6 +132,11 @@ sub LOG
 	} elsif ($ENV{HT_DEBUG}) {
 		$LOG->level("DEBUG");
 		$LOG->debug("DEBUG logging initiated by user '$ENV{USER}' via HT_DEBUG environment variable");
+	}
+
+	if ($ENV{HT_TRACE}) {
+		$LOG->level("TRACE");
+		$LOG->debug("TRACE logging initiated by user '$ENV{USER}' via HT_TRACE environment variable");
 	}
 
 	$LOG->info("Logger subsystem initialized from $config");

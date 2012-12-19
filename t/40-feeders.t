@@ -6,6 +6,7 @@ use Test::LongString;
 
 use constant TEST_SEND_NSCA => "t/bin/send_nsca";
 use constant TEST_NSCA_OUT  => "t/tmp/nsca.out";
+use constant TEST_LOG_FILE  => "t/tmp/feeders";
 
 sub slurp
 {
@@ -34,23 +35,6 @@ ok_plugin(3, "FEEDER UNKNOWN - Failed to exec t/bin/enoent: No such file or dire
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin => "t/bin/enoent";
-
-	SEND_NSCA host     => "a-host",
-	          service  => "cpu",
-	          status   => "WARNING",
-	          output   => "Kinda High...";
-
-	OK "sent";
-});
-
-###################################################################
-# send_nsca - broken pipe
-
-ok_plugin(2, "FEEDER CRITICAL - broken pipe: check send_nsca command", undef, "SEND_NSCA / broken pipe", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
-	PLUGIN name => "feeder";
-	START;
-	SET_NSCA bin => "/bin/true";
 
 	SEND_NSCA host     => "a-host",
 	          service  => "cpu",
@@ -227,7 +211,117 @@ ok_plugin(2, "FEEDER CRITICAL - t/bin/die killed by signal 15", undef, "SEND_NSC
 });
 
 ###################################################################
+# send_nsca - bail after 1 line of input
+
+ok_plugin(2, "FEEDER CRITICAL - t/bin/eat1 exited with code 2", undef, "SEND_NSCA / delayed broken pipe", sub {
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	PLUGIN name => "feeder";
+	START;
+	SET_NSCA bin => "t/bin/eat1"; # exits 2 after reading a single line
+
+	SEND_NSCA host     => "a-host",
+	          service  => "cpu",
+	          status   => "WARNING",
+	          output   => "Kinda High...";
+
+	# By now, eat1 has closed STDIN
+	# This call to SEND_NSCA should then SIGPIPE
+	SEND_NSCA host     => "a-host",
+	          service  => "cpu",
+	          status   => "WARNING",
+	          output   => "Kinda High...";
+
+	OK "good";
+});
+
+###################################################################
+# LOGGING
+
+$ENV{HT_LOG_CONFIG} = "t/data/feederlog.conf";
+
+unlink TEST_LOG_FILE;
+ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs", sub {
+	PLUGIN name => "feeder";
+	START;
+
+	LOG->trace("this is a trace message");
+	LOG->debug("this is a debug message");
+	LOG->info("this is an info message");
+	LOG->warn("this is a warning message");
+	LOG->error("this is an error message");
+	LOG->fatal("this is a fatal message");
+	OK "logged";
+});
+is_string_nows(slurp(TEST_LOG_FILE),
+	"WARN: this is a warning message\n".
+	"ERROR: this is an error message\n".
+	"FATAL: this is a fatal message\n",
+		"log messages logged");
+
+unlink TEST_LOG_FILE;
+ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
+	close STDERR;
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	LOG->trace("this is a trace message");
+	LOG->debug("this is a debug message");
+	LOG->info("this is an info message");
+	LOG->warn("this is a warning message");
+	LOG->error("this is an error message");
+	LOG->fatal("this is a fatal message");
+	OK "logged";
+}, ['-D']);
+unlike(slurp(TEST_LOG_FILE), qr/^TRACE:/m, "no trace messages in logs");
+like(slurp(TEST_LOG_FILE), qr/^DEBUG:/m, "found debugging in logs");
+like(slurp(TEST_LOG_FILE), qr/via --debug/m, "found evidence of --debug debugging in logs");
+
+unlink TEST_LOG_FILE;
+$ENV{HT_DEBUG} = 1;
+ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
+	close STDERR;
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	LOG->trace("this is a trace message");
+	LOG->debug("this is a debug message");
+	LOG->info("this is an info message");
+	LOG->warn("this is a warning message");
+	LOG->error("this is an error message");
+	LOG->fatal("this is a fatal message");
+	OK "logged";
+});
+unlike(slurp(TEST_LOG_FILE), qr/^TRACE:/m, "no trace messages in logs");
+like(slurp(TEST_LOG_FILE), qr/^DEBUG:/m, "found debugging in logs");
+like(slurp(TEST_LOG_FILE), qr/via HT_DEBUG/m, "found evidence of env var debugging in logs");
+delete $ENV{HT_DEBUG};
+
+unlink TEST_LOG_FILE;
+$ENV{HT_TRACE} = 1;
+ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
+	close STDERR;
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	LOG->trace("this is a trace message");
+	LOG->debug("this is a debug message");
+	LOG->info("this is an info message");
+	LOG->warn("this is a warning message");
+	LOG->error("this is an error message");
+	LOG->fatal("this is a fatal message");
+	OK "logged";
+});
+like(slurp(TEST_LOG_FILE), qr/^TRACE:/m, "found trace messages in logs");
+like(slurp(TEST_LOG_FILE), qr/^DEBUG:/m, "found debugging in logs");
+like(slurp(TEST_LOG_FILE), qr/via HT_TRACE/m, "found evidence of env var debugging in logs");
+delete $ENV{HT_TRACE};
+
+###################################################################
 # cleanup
 
+unlink TEST_LOG_FILE;
 unlink TEST_NSCA_OUT;
 done_testing;
