@@ -1,0 +1,11 @@
+#!/bin/bash
+OUT=/dev/null
+while [[ -n "$1" ]]; do
+	if [[ $1 == "-c" ]]; then
+		shift;
+		OUT=$1;
+	fi
+	shift;
+done
+echo "[[starting]]" >> $OUT
+/bin/cat >> $OUT

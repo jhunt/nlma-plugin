@@ -49,7 +49,7 @@ sub _close_pipe
 		CRITICAL "$NSCA{bin} exited with code $rc";
 	} elsif (WIFSIGNALED($rc)) {
 		$rc = WTERMSIG($rc);
-		CRITICAL "$NSCA{bin} filled with signal $rc";
+		CRITICAL "$NSCA{bin} killed by signal $rc";
 	} else {
 		$rc = sprintf("0x%04x", $rc);
 		CRITICAL "$NSCA{bin} terminated abnormally with code ($rc)";

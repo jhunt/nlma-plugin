@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+use Getopt::Long;
+my %OPTIONS = (exit => 0);
+GetOptions(\%OPTIONS,
+	'signal=s',
+	'exit=i',
+
+	'port|p=i',
+	'host|H=s',
+	'config|c=s',
+);
+
+while (<STDIN>) { }
+
+if (exists $OPTIONS{signal}) {
+	print STDERR "killed via $OPTIONS{signal}\n";
+	kill $OPTIONS{signal}, $$;
+	waitpid($$, 0);
+}
+
+print STDERR "exiting $OPTIONS{exit}\n";
+exit $OPTIONS{exit};
