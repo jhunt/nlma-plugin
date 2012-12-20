@@ -23,6 +23,7 @@ sub slurp
 
 ok_plugin(0, "FEEDER OK - good", undef, "Basic Feeder Plugin", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	OK "good";
 });
@@ -30,8 +31,9 @@ ok_plugin(0, "FEEDER OK - good", undef, "Basic Feeder Plugin", sub {
 ###################################################################
 # send_nsca - bad exec
 
-ok_plugin(3, "FEEDER UNKNOWN - Failed to exec t/bin/enoent: No such file or directory", undef, "SEND_NSCA / bad exec", sub {
+ok_plugin(3, "FEEDER UNKNOWN - t/bin/enoent: No such file or directory", undef, "SEND_NSCA / bad exec", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin => "t/bin/enoent";
@@ -50,6 +52,7 @@ ok_plugin(3, "FEEDER UNKNOWN - Failed to exec t/bin/enoent: No such file or dire
 unlink TEST_NSCA_OUT;
 ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA a few times", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin    => TEST_SEND_NSCA,
@@ -79,6 +82,7 @@ is_string_nows(slurp(TEST_NSCA_OUT),
 unlink TEST_NSCA_OUT;
 ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA / bad status", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin    => TEST_SEND_NSCA,
@@ -116,6 +120,7 @@ unlink TEST_NSCA_OUT;
 system("touch ".TEST_NSCA_OUT);
 ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA noop", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin    => TEST_SEND_NSCA,
@@ -138,6 +143,7 @@ is_string_nows(slurp(TEST_NSCA_OUT), "",
 unlink TEST_NSCA_OUT;
 ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA lots of times", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin    => TEST_SEND_NSCA,
@@ -166,6 +172,7 @@ is_string_nows(slurp(TEST_NSCA_OUT), $s,
 
 ok_plugin(2, "FEEDER CRITICAL - t/bin/die exited with code 4", undef, "SEND_NSCA bin exits non-zero", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin  => "t/bin/die",
@@ -181,6 +188,7 @@ ok_plugin(2, "FEEDER CRITICAL - t/bin/die exited with code 4", undef, "SEND_NSCA
 
 ok_plugin(2, "FEEDER CRITICAL - t/bin/die exited with code 4", undef, "SEND_NSCA bin exits non-zero (with DONE)", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin  => "t/bin/die",
@@ -197,6 +205,7 @@ ok_plugin(2, "FEEDER CRITICAL - t/bin/die exited with code 4", undef, "SEND_NSCA
 
 ok_plugin(2, "FEEDER CRITICAL - t/bin/die killed by signal 15", undef, "SEND_NSCA bin killed", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin  => "t/bin/die",
@@ -215,6 +224,7 @@ ok_plugin(2, "FEEDER CRITICAL - t/bin/die killed by signal 15", undef, "SEND_NSC
 
 ok_plugin(2, "FEEDER CRITICAL - t/bin/eat1 exited with code 2", undef, "SEND_NSCA / delayed broken pipe", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin => "t/bin/eat1"; # exits 2 after reading a single line
@@ -241,6 +251,8 @@ $ENV{HT_LOG_CONFIG} = "t/data/feederlog.conf";
 
 unlink TEST_LOG_FILE;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs", sub {
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 
@@ -260,8 +272,8 @@ is_string_nows(slurp(TEST_LOG_FILE),
 
 unlink TEST_LOG_FILE;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
-	close STDERR;
-	open STDERR, ">", "/dev/null";
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 
@@ -280,8 +292,8 @@ like(slurp(TEST_LOG_FILE), qr/via --debug/m, "found evidence of --debug debuggin
 unlink TEST_LOG_FILE;
 $ENV{HT_DEBUG} = 1;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
-	close STDERR;
-	open STDERR, ">", "/dev/null";
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 
@@ -301,8 +313,8 @@ delete $ENV{HT_DEBUG};
 unlink TEST_LOG_FILE;
 $ENV{HT_TRACE} = 1;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
-	close STDERR;
-	open STDERR, ">", "/dev/null";
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	close STDERR; open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 
