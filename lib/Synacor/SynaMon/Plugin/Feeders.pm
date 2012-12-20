@@ -3,6 +3,7 @@ package Synacor::SynaMon::Plugin::Feeders;
 use Synacor::SynaMon::Plugin::Base;
 use Synacor::SynaMon::Plugin::Easy;
 use POSIX qw/WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED/;
+use IPC::Open2;
 
 use Log::Log4perl;
 
@@ -19,7 +20,7 @@ my %NSCA = (
 	noop   => 0,
 );
 
-my $PIPE;
+my ($NSCA_IN, $NSCA_OUT);
 my $N = -1;
 
 my $LOG;
@@ -39,9 +40,11 @@ $SIG{PIPE} = sub
 
 sub _close_pipe
 {
-	return unless $PIPE;
+	return unless $NSCA_IN;
 
-	close $PIPE;
+	close $NSCA_IN;
+	my $pid = waitpid(-1, 0);
+	DEBUG "PID $pid terminated";
 	$rc = $?;
 	return if $rc == 0;
 	if (WIFEXITED($rc)) {
@@ -66,9 +69,9 @@ sub _exec_receiver
 		DEBUG "NOOP `$cmd`";
 	} else {
 		DEBUG "Executing `$cmd`";
-		eval {
-			open $PIPE, "|-", $cmd or UNKNOWN "Failed to exec $NSCA{bin}: $!";
-		};
+		-x $NSCA{bin} or UNKNOWN "$NSCA{bin}: $!";
+		open2($NSCA_OUT, $NSCA_IN, $cmd) or
+			UNKNOWN "Failed to exec $NSCA{bin}: $!";
 	}
 }
 
@@ -96,7 +99,7 @@ sub SEND_NSCA
 	$N++;
 	DEBUG "SEND_NSCA $N/$NSCA{max}:\n'$s'";
 	unless ($NSCA{noop}) {
-		print $PIPE "$s\n\x17"
+		print $NSCA_IN "$s\n\x17"
 			or BAIL "SEND_NSCA failed: $!";
 	}
 }
