@@ -11,12 +11,10 @@ use YAML::XS qw(LoadFile);
 use JSON;
 use Data::Dumper qw(Dumper);
 use WWW::Mechanize;
-use Proc::ProcessTable;
 use POSIX qw/
 	WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED
 	SIGALRM
 	sigaction
-	sys_wait_h
 /;
 use Time::HiRes qw(gettimeofday);
 $Data::Dumper::Pad = "DEBUG> ";
@@ -91,6 +89,7 @@ sub new
 		usage_list => [],
 		did_stuff => 0, # ticked for every STATUS message
 		options => {},
+		pids => [],
 		settings => {
 			ignore_credstore_failures => 0,
 			on_timeout => NAGIOS_CRITICAL,
@@ -393,14 +392,11 @@ sub start_timeout
 
 	my $handler = sub {
 		$self->debug("SIGALRM received, trying to clean up + abort the check.");
-		my $ps = Proc::ProcessTable->new();
-		my @children = map { $_->pid() } grep { $_->ppid() == $$ } @{$ps->table()};
-
 		# Don't remove this! there are some processes *cough*cassandra-cli*cough*
 		# That don't exit when perl exits and sends child processes a signal to exit
-		kill(15, @children);
+		kill(15, @{$self->{pids}});
 		sleep 1;
-		kill(9, @children);
+		kill(9,  @{$self->{pids}});
 
 		print "$TIMEOUT_MESSAGE: $TIMEOUT_STAGE\n";
 		$ALL_DONE = 1;
@@ -626,10 +622,11 @@ sub run
 		$self->bail(NAGIOS_UNKNOWN, "$bin: not executable") unless -x $bin;
 	}
 
-	open my $pipe, "$command|";
+	my $pid = open my $pipe, "$command|";
 	if (!$pipe) {
 		$self->bail(NAGIOS_UNKNOWN, "Failed to run $bin");
 	}
+	push @{$self->{pids}}, $pid;
 
 	my @lines = <$pipe>;
 	close $pipe;
