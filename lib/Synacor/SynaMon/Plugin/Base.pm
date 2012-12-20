@@ -11,10 +11,12 @@ use YAML::XS qw(LoadFile);
 use JSON;
 use Data::Dumper qw(Dumper);
 use WWW::Mechanize;
+use Proc::ProcessTable;
 use POSIX qw/
 	WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED
 	SIGALRM
 	sigaction
+	sys_wait_h
 /;
 use Time::HiRes qw(gettimeofday);
 $Data::Dumper::Pad = "DEBUG> ";
@@ -390,6 +392,16 @@ sub start_timeout
 	$self->stage($action) if $action;
 
 	my $handler = sub {
+		$self->debug("SIGALRM received, trying to clean up + abort the check.");
+		my $ps = Proc::ProcessTable->new();
+		my @children = map { $_->pid() } grep { $_->ppid() == $$ } @{$ps->table()};
+
+		# Don't remove this! there are some processes *cough*cassandra-cli*cough*
+		# That don't exit when perl exits and sends child processes a signal to exit
+		kill(15, @children);
+		sleep 1;
+		kill(9, @children);
+
 		print "$TIMEOUT_MESSAGE: $TIMEOUT_STAGE\n";
 		$ALL_DONE = 1;
 		exit $self->{settings}{on_timeout};

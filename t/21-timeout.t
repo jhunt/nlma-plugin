@@ -192,4 +192,19 @@ ok_plugin(0, "TIME OK - all good", undef, "Timers / start_timeout should reset S
 	DONE;
 });
 
+# test that we kill child processes that don't respond to usual interrupts, after timing out
+ok_plugin(2,
+	"Timed out after 1s: Running a command that ignores all signals like cassandra-cli",
+	undef,
+	"Time out kills child processes",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "RUN";
+		START;
+		START_TIMEOUT 1;
+		STAGE "Running a command that ignores all signals like cassandra-cli";
+		RUN "t/bin/dontdie";
+		OK "Exited before a timeout occurred (that's bad for this test)";
+	});
+
 done_testing;

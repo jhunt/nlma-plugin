@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+local $SIG{ALRM} = sub { print STDERR "Alarm? No, cleared quickly.\n" };
+local $SIG{QUIT} = sub { print STDERR "Quit? I'd love to, but I can't.\n" };
+local $SIG{TERM} = sub { print STDERR "No point in terminating: I'll be back.\n" };
+local $SIG{PIPE} = sub { print STDERR "To the tobaccoeria!\n" };
+local $SIG{HUP} = sub { print STDERR "Hup? Excuse you!\n" };
+local $SIG{INT} = sub { print STDERR "Leave me alone, I know what I'm doing\n" };
+local $SIG{ABRT} = sub { print STDERR "Please enter self-destruct cancelation code\n" };
+local $SIG{KILL} = sub { print STDERR "Am I still alive?" };
+
+# wait for 20 seconds.. not forever like cassandra-cli. stupid jive-ass-java
+my $n=0;
+while ($n < 20){ sleep 1; $n++ };
