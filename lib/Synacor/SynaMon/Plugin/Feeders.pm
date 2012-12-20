@@ -87,7 +87,8 @@ sub SET_NSCA
 sub SEND_NSCA
 {
 	my (%args) = @_;
-	$args{status} = $Synacor::SynaMon::Plugin::Base::STATUS_CODES{$args{status}} || 3;
+	$args{status} = $Synacor::SynaMon::Plugin::Base::STATUS_CODES{$args{status}};
+	$args{status} = 3 if !defined($args{status});
 
 	my $s;
 	if (exists $args{service}) {

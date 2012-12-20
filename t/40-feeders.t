@@ -59,6 +59,10 @@ ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA a few times", sub {
 	         BOGUS  => "this is a bogus option",
 	         config => TEST_NSCA_OUT;
 
+	SEND_NSCA host     => "b-host",
+	          status   => "UP",
+	          output   => "its up!";
+
 	SEND_NSCA host     => "a-host",
 	          status   => "DOWN",
 	          output   => "its broke!";
@@ -72,6 +76,7 @@ ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA a few times", sub {
 });
 is_string_nows(slurp(TEST_NSCA_OUT),
 	"[[starting]]\n".
+	"b-host\t0\tits up!\n\x17".
 	"a-host\t1\tits broke!\n\x17".
 	"a-host\tcpu\t2\tKinda High...\n\x17",
 		"send_nsca output is correct");
