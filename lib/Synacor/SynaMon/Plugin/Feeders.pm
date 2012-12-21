@@ -3,14 +3,25 @@ package Synacor::SynaMon::Plugin::Feeders;
 use Synacor::SynaMon::Plugin::Base;
 use Synacor::SynaMon::Plugin::Easy;
 use POSIX qw/WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED/;
-use IPC::Open2;
-
 use Log::Log4perl;
 
 use Exporter;
 use base qw(Exporter);
 
+our @EXPORT = qw/
+	SET_NSCA
+	SEND_NSCA
+	FLUSH_NSCA
+
+	LOG
+/;
+
+use constant HT_LOG_CONFIG => "/opt/synacor/monitor/etc/htlog.conf";
+
+my @RESULTS = ();
+my $LOG;
 my %NSCA = (
+	chunk  => "/opt/synacor/monitor/bin/chunk",
 	bin    => "/usr/bin/send_nsca",
 	host   => "localhost",
 	config => "/etc/icinga/send_nsca.cfg",
@@ -20,67 +31,52 @@ my %NSCA = (
 	noop   => 0,
 );
 
-my ($NSCA_IN, $NSCA_OUT);
-my $N = -1;
-
-my $LOG;
-use constant HT_LOG_CONFIG => "/opt/synacor/monitor/etc/htlog.conf";
-
-our @EXPORT = qw/
-	SET_NSCA
-	SEND_NSCA
-
-	LOG
-/;
-
-$SIG{PIPE} = sub
-{
-	BAIL(CRITICAL "broken pipe: check send_nsca command");
-};
-
-sub _close_pipe
-{
-	return unless $NSCA_IN;
-
-	close $NSCA_IN;
-	my $pid = waitpid(-1, 0);
-	DEBUG "PID $pid terminated";
-	$rc = $?;
-	return if $rc == 0;
-	if (WIFEXITED($rc)) {
-		$rc = WEXITSTATUS($rc);
-		CRITICAL "$NSCA{bin} exited with code $rc";
-	} elsif (WIFSIGNALED($rc)) {
-		$rc = WTERMSIG($rc);
-		CRITICAL "$NSCA{bin} killed by signal $rc";
-	} else {
-		$rc = sprintf("0x%04x", $rc);
-		CRITICAL "$NSCA{bin} terminated abnormally with code ($rc)";
-	}
-}
-
-sub _exec_receiver
-{
-	_close_pipe;
-	$N = 0;
-
-	my $cmd = "$NSCA{bin} -H $NSCA{host} -c $NSCA{config} -p $NSCA{port} $NSCA{args}";
-	if ($NSCA{noop}) {
-		DEBUG "NOOP `$cmd`";
-	} else {
-		DEBUG "Executing `$cmd`";
-		-x $NSCA{bin} or UNKNOWN "$NSCA{bin}: $!";
-		open2($NSCA_OUT, $NSCA_IN, $cmd) or
-			UNKNOWN "Failed to exec $NSCA{bin}: $!";
-	}
-}
+##########################################################
 
 sub SET_NSCA
 {
 	my (%C) = @_;
 	for (keys %C) {
 		next unless exists $NSCA{$_};
+		DEBUG "Setting $_ => $C{$_} (was $NSCA{$_})";
 		$NSCA{$_} = $C{$_};
+	}
+}
+
+sub FLUSH_NSCA
+{
+	return unless @RESULTS;
+	my $chunk = "$NSCA{chunk} -L $NSCA{max}";
+	my $cmd = "$NSCA{bin} -H $NSCA{host} -c $NSCA{config} -p $NSCA{port} $NSCA{args}";
+	if ($NSCA{noop}) {
+		DEBUG "NOOP `$chunk -- $cmd`";
+		DEBUG "NOOP >> '$_\\n'\n" for @RESULTS;
+		return;
+	}
+
+	DEBUG "Executing `$chunk -- $cmd`";
+	-x $NSCA{bin} or UNKNOWN "$NSCA{bin}: $!";
+
+	open my $pipe, "|-", "$chunk -- $cmd"
+		or BAIL "Exec failed: $!";
+
+	for (@RESULTS) {
+		DEBUG "NSCA >> '$_\\n'\n";
+		print $pipe "$_\n"
+			or BAIL "SEND_NSCA failed: $!";
+	}
+	close $pipe;
+	$rc = $?;
+	return if $rc == 0;
+	if (WIFEXITED($rc)) {
+		$rc = WEXITSTATUS($rc);
+		CRITICAL "sub-process exited with code $rc";
+	} elsif (WIFSIGNALED($rc)) {
+		$rc = WTERMSIG($rc);
+		CRITICAL "sub-process killed by signal $rc";
+	} else {
+		$rc = sprintf("0x%04x", $rc);
+		CRITICAL "sub-process terminated abnormally with code ($rc)";
 	}
 }
 
@@ -90,18 +86,10 @@ sub SEND_NSCA
 	$args{status} = $Synacor::SynaMon::Plugin::Base::STATUS_CODES{$args{status}};
 	$args{status} = 3 if !defined($args{status});
 
-	my $s;
 	if (exists $args{service}) {
-		$s = "$args{host}\t$args{service}\t$args{status}\t$args{output}";
+		push @RESULTS, "$args{host}\t$args{service}\t$args{status}\t$args{output}";
 	} else {
-		$s = "$args{host}\t$args{status}\t$args{output}";
-	}
-	_exec_receiver if $N < 0 or $N >= $NSCA{max};
-	$N++;
-	DEBUG "SEND_NSCA $N/$NSCA{max}:\n'$s'";
-	unless ($NSCA{noop}) {
-		print $NSCA_IN "$s\n\x17"
-			or BAIL "SEND_NSCA failed: $!";
+		push @RESULTS, "$args{host}\t$args{status}\t$args{output}";
 	}
 }
 
@@ -149,9 +137,8 @@ sub LOG
 
 END {
 	if ($Synacor::SynaMon::Plugin::MODE eq "feeder") {
-		DEBUG "Initiating Feeder Shutdown" ;
-		DEBUG "Closing send_nsca pipe" unless $NSCA{noop};
-		_close_pipe;
+		DEBUG "Flushing ".@RESULTS." NSCA results\n";
+		FLUSH_NSCA;
 	}
 }
 
@@ -171,9 +158,8 @@ node.
 
 =head2 SEND_NSCA %details
 
-Submit a single result via the send_nsca utility.  The framework will
-keep a running send_nsca process around for bulk operations (which is
-what feeders do).
+Submit a single result via the send_nsca utility.  This operation is
+specifically tuned for bulk submission, which is what most feeders do.
 
 The B<%details> hash should contain the following keys:
 
@@ -191,7 +177,13 @@ The B<%details> hash should contain the following keys:
 
 B<NOTE:> check status can be specified as an integer between 0 and 3,
 or as human-readable names like "CRITICAL" and "WARNING".  Unknown
+
 values are treated as 3/UNKNOWN.
+
+=head2 FLUSH_NSCA
+
+Send all batched results to the local monitoring server instance (or
+whatever you set I<hostname> to via B<SET_NSCA>).
 
 =head2 LOG
 
@@ -204,6 +196,13 @@ configured for the executing feeder / environment / debug flags.
 Configure the SEND_NSCA function, by specifying the following values:
 
 =over
+
+=item B<chunk>
+
+Absolute path to the chunk utility, for splitting input into appropriately-
+sized chunks for processing by multiple send_nsca processes.
+
+Defaults to I</opt/synacor/monitor/bin/chunk>
 
 =item B<bin>
 
