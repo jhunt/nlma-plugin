@@ -7,5 +7,4 @@ while [[ -n "$1" ]]; do
 	fi
 	shift;
 done
-echo "[[starting]]" >> $OUT
 /bin/cat >> $OUT
