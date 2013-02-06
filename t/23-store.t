@@ -264,7 +264,8 @@ ok_plugin(0, "BADFMT OK - good", undef, "RETRIEVE handles malformed JSON/YAML", 
 	OK "good";
 });
 
-ok_plugin(0, "STOREBULK OK - good", undef, "STORE_BULK no_previous_data_ok suppresses alarm for missing data.",
+ok_plugin(0, "STOREBULK OK - good", undef,
+	"STORE as data_archive: no_previous_data_ok suppresses alarm for missing data.",
 	sub {
 		use Synacor::SynaMon::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
@@ -282,7 +283,7 @@ ok_plugin(0, "STOREBULK OK - good", undef, "STORE_BULK no_previous_data_ok suppr
 	});
 
 ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
-	"STORE_BULK default no_previous_data_ok and on_previous_data_missing return a warning message.",
+	"STORE as data_archive: default no_previous_data_ok and on_previous_data_missing return a warning message.",
 	sub {
 		use Synacor::SynaMon::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
@@ -298,7 +299,7 @@ ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
 	});
 
 ok_plugin(3, "STOREBULK UNKNOWN - No previous data found.", undef,
-	"STORE_BULK on_previous_data_missing behaves properly",
+	"STORE as data_archive: on_previous_data_missing behaves properly",
 	sub {
 		use Synacor::SynaMon::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
@@ -316,7 +317,7 @@ ok_plugin(3, "STOREBULK UNKNOWN - No previous data found.", undef,
 	});
 
 ok_plugin(0, "STOREBULK OK - good", undef,
-	"STORE_BULK trims old data and stores current properly",
+	"STORE as data_archive trims old data and stores current properly",
 	sub {
 		use Synacor::SynaMon::Plugin qw(:easy);
 		use Test::Deep::NoTest;
@@ -348,6 +349,8 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 		CRITICAL("Stored object doesn't match expected for second datapoint."
 			. " Got '".to_json($retr_obj)."'. Expected '".to_json({ $newtime => $newobj })."'")
 			unless (eq_deeply($retr_obj, { $newtime => $newobj }));
+
+		unlink STATE_FILE_PATH($STORE_FILE);
 
 		OK "good";
 	});
