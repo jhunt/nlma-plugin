@@ -291,6 +291,37 @@ How to install signal handlers for things like timeout (SIGALRM).  Valid
 values are B<posix> and (the default) B<perl>.  For B<posix>, POSIX::SigAction
 will be used.  Otherwise, the Perl %SIG hash is used.
 
+=item B<no_previous_data_ok>
+
+Determines whether or not an alarm should be generated if no previous data
+was found for STORE($path, $obj, as => 'data_archive') calls.
+
+When set to non-zero, no alarm will be generated. Defaults to 0 (generate alarm).
+
+This datapoint only affects the B<data_archive> B<STORE AND RETREIVE FORMATS>.
+
+See B<FETCH SCRIPTS> and B<STORE AND RETRIEVE FORMATS> or more information.
+
+=item B<on_previous_data_missing>
+
+Determines what status level alarm should be generated if no previous data
+was found for a given STORE($path, $obj, as => 'data_archive') call. Similar to
+B<on_timeout>, this accepts values of B<warn>, B<critical>, B<unknown>. The default
+is B<warn>.
+
+This datapoint only affects the B<data_archive> B<STORE AND RETREIVE FORMATS>.
+
+See B<FETCH SCRIPTS> and B<STORE AND RETRIEVE FORMATS> or more information.
+
+=item B<delete_after>
+
+Affects how long data is retained for in STORE($path, $Obj, as => 'data_archive') call.
+This defaults to 86400 seconds (24 hours).
+
+This datapoint only affects the B<data_archive> B<STORE AND RETREIVE FORMATS>.
+
+See B<FETCH SCRIPTS> and B<STORE AND RETRIEVE FORMATS> or more information.
+
 =back
 
 B<SET> has been available since version 1.10
@@ -535,11 +566,44 @@ optional format for serialization / deserialization.
 
   my $state = RETRIEVE "state", as => "YAML";
 
-Support formats are B<JSON>, B<YAML> and B<RAW> (i.e. no translation).
+See B<STORE AND RETRIEVE FORMATS> for more information on values for the 'as' key.
 
 STORE and RETRIEVE have been available since version 1.0.
 
 Formats using the C<as> keyword have been available since 1.11.
+
+=head1 STORE AND RETRIEVE FORMATS
+
+B<STORE> and  B<RETRIEVE> provide shortcuts for saving/retreiving data in different
+formats. These are specified by passing the 'as' key to the %options argument of
+those functions. The values are case insensitive, and are limited ot the following
+formats:
+
+=over 8
+
+=item B<yaml>
+
+Stores data in multi-line YAML format.
+
+=item B<yml>
+
+Alias to the B<yaml> format
+
+=item B<json>
+
+Formats data as JSON.
+
+=item B<raw>
+
+Stores raw data into a file. Don't forget newlines if passing an array of strings!
+
+=item B<data_archive>
+
+Formats the data as JSON using a hashref of datasets keyed by storage time. This
+is primarily used by fetch_* scripts. See B<FETCH SCRIPTS> under the B<ADVANCED
+FUNCTIONS> section for more details.
+
+=back
 
 =head1 CREDENTIALS MANAGEMENT
 
@@ -722,6 +786,69 @@ If username and password are both set, HTTP authentication will be
 requested, using these credentials.
 
 =back
+
+=head2 FETCH SCRIPTS
+
+Fetch scripts are designed to pull bulk performance data from an application
+via one command, and store them for processing by multiple checks. This
+is currently necessary due to the limitation we have of associating a single
+graph to a single check. We don't necessarily want to build graphs
+with every possible datapoint (of vastly differing scales and scope)
+for an application. Additionally, we wish to reduce the monitoring overhead
+on an application by retrieving data as little as possible.
+
+As a result, B<fetch_*> were born. Their purpose is to connect to
+an application (mongo, redis, jmx-based data via jolokia, etc.), and retrieve
+a large amount of data to be stored locally. Some of the data may need
+to reference older data, so the data is stored via the B<data_archive> STORE
+format (see B<STORE AND RETRIEVE FORMATS>), which handles the grunt work of
+handling data retention, keying datasets based on storage time, and storing
+into local temp files.
+
+Once this is done, B<check_*> scripts can be used to retrieve specific datapoints
+from the stored data, and calculate thresholds/perfdata as appropriate for the
+specific datapoint (COUNTER vs GAUGE vs rolling AVG). These checks should then
+be dependent on the corresponding fetch_* script in nagios, such that a problem
+retrieving data will not result in mass-alerts for all the datapoint checks.
+
+Lifecycle of fetch_* plugins:
+
+1. Connect to application
+
+2. Gather all data we're interested in measuring in as bulk a fashion as possible
+
+3. Store the data:
+
+   STORE($path, $data, as => 'data_archive');
+
+4. Alarm if there were issues retrieving/parsing data from the application, or
+errors storing the data.
+
+While asynchronously, related check_* plugins will do the following:
+
+1. Grab latest N datapoints (1, 2, 3, ... depending on how many are needed for the
+current calculation)
+
+2. Calculate the metric we wish to display (e.g. [current - last] / [now - then]
+for count/min)
+
+3. Apply any thresholds, generate perfdata, and alarm appropriately.
+
+By DEFAULT, if no previous data was found for a fetch_* script, a WARNING message
+will be generated. This is configurable via the B<on_previous_data_missing> setting:
+
+    SET on_previous_data_missing => 'unknown';
+
+If you wish to disable alarms for previous data being missing, use the
+B<no_previous_data_ok> setting:
+
+    SET no_previous_data_ok => 1;
+
+Data Retention for B<fetch_*> scripts defaults to deleting datapoints that are older
+than 24 hours. To alter this behavior, use the B<delete_after> setting (set in seconds);
+
+    SET delete_after => 120;               # delete after 2 minutes
+    SET delete_after => 60 * 60 * 24 * 30; # delete after 30 days
 
 =head1 DEBUGGING
 

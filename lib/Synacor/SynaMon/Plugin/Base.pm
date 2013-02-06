@@ -121,7 +121,7 @@ sub set
 	for my $key (keys %vars) {
 		my $value = $vars{$key};
 
-		if ($key eq 'on_timeout') {
+		if ($key eq 'on_timeout' || $key eq 'on_previous_data_missing') {
 			if ($value =~ m/^warn/i) {
 				$value = NAGIOS_WARNING;
 			} elsif ($value =~ m/^crit/i) {
@@ -129,7 +129,7 @@ sub set
 			} elsif ($value =~ m/^unk/i) {
 				$value = NAGIOS_UNKNOWN;
 			} else {
-				$self->debug("CODE ISSUE: Bad value for `on_timeout` setting",
+				$self->debug("CODE ISSUE: Bad value for `$key` setting",
 				             "  '$value' not one of (warning|critical|unknown)");
 
 				$self->bail(NAGIOS_UNKNOWN,
@@ -471,6 +471,8 @@ sub store
 			$data = YAML::XS::Dump $data;
 		} elsif ($options{as} =~ m/^json$/i) {
 			eval { $data = JSON->new->allow_nonref->encode($data); };
+		} elsif ($options{as} =~ m/^data_archive$/i) {
+			eval { $data = JSON->new->allow_nonref->encode($self->_process_bulk_data($path, $data)); };
 		} else {
 			$self->UNKNOWN("Unknown format for STORE: $options{as}");
 		}
@@ -482,6 +484,36 @@ sub store
 
 	my (undef, undef, $uid, $gid) = getpwnam($ENV{MONITOR_STATE_FILE_OWNER} || 'nagios');
 	chown $uid, $gid, $path;
+}
+
+sub _process_bulk_data
+{
+	my ($self, $path, $obj) = @_;
+	my $status = defined $self->{settings}{on_previous_data_missing} ?
+		$self->{settings}{on_previous_data_missing} : NAGIOS_WARNING;
+	my $nodata_ok = defined $self->{settings}{no_previous_data_ok} ?
+		$self->{settings}{no_previous_data_ok} : 0;
+	my $age_limit = defined $self->{settings}{delete_after} ?
+		$self->{settings}{delete_after} : (24 * 60 * 60);
+
+	my $data_history = eval {from_json($self->retrieve($path))}
+		or do { $self->status($status, "No previous data found.") unless $nodata_ok; };
+
+	foreach my $time (sort keys %{$data_history}) {
+		$self->debug("Testing $time against $age_limit");
+		if ($time < time - $age_limit) {
+			$self->debug("Deleting datapoint for $time. Too old. (>= $age_limit)");
+			delete $data_history->{$time};
+		} else {
+			#optimization to skip processing if we're done deleting
+			last;
+		}
+	}
+
+	$data_history->{time()} = $obj;
+	$self->debug("data_archive for $path is now:");
+	$self->dump($data_history);
+	return $data_history;
 }
 
 sub retrieve
@@ -828,7 +860,7 @@ Process command-line options, populating the plugin object.
 
 Trigger a check status, with an optional status message:
 
-  $plugin->status(NAGIOS_WARN, "Warning!  Bad things about to happen");
+  $plugin->status(NAGIOS_WARNING, "Warning!  Bad things about to happen");
 
 Execution continues on afterwards;  If you want to exit immediately,
 look at B<bail>.
@@ -979,7 +1011,7 @@ May generate a file path like I</var/tmp/mon_save.state>.
 
 Stores a value in a state file.
 
-  $plugin->store("check_logs.seek", $seek_pos);
+  $plugin->store("check_logs.seek", $seek_pos, %options);
 
 The created state file will be modified so that its permissions are correct
 and its uid/gid ownership is sane.
@@ -987,6 +1019,66 @@ and its uid/gid ownership is sane.
 If the store operation cannot be carried out, either because of permissions
 or intervening directories, the framework will trigger an UNKNOWN problem with
 a suitable message for debugging.
+
+Supported keys for B<%options>:
+
+=over
+
+=item B<as>
+
+Defines formatter type to store the data as.
+
+Supported formatters: (case insensitive)
+
+=over
+
+=item B<yaml>
+
+Stores data in YAML format.
+
+=item B<yml>
+
+Alias to the B<yaml> storage format.
+
+=item B<json>
+
+Stores data in json format.
+
+=item B<raw>
+
+Stores the data without any additional processing. If you pass data as an arrayref, ensure
+that you include newline characters at the end of each line, if you care about having newlines.
+
+=item B<data_archive>
+
+Used by 'fetch' style scripts. This method allows for data to be gathered in one swoop,
+and stored for individual check plugins to retrieve and use on their own. It will
+gather and save data in a json hash keyed  by timestamp of the data gathering.
+
+The behavior of this setting can be modified by customizing the following settings:
+
+=over
+
+=item B<delete_after>
+
+Sets the retention policy for bulk data. B<store_bulk_data> will auto-delete datapoints
+older than B<delete_after>. Defaults to 876400 (one day). This value is set in seconds.
+
+=item B<no_previous_data_ok>
+
+If this is set (default is false), B<store_bulk_data> will not generate messages if there
+was no previous data found.
+
+=item B<on_previous_data_missing>
+
+Sets the behavior of the message generated for "on_previous_data_missing". Possible values
+are 'warning', 'critical', 'unknown'. Defaults to 'warning'.
+
+=back
+
+=back
+
+=back
 
 =head2 retrieve
 

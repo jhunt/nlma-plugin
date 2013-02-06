@@ -264,4 +264,92 @@ ok_plugin(0, "BADFMT OK - good", undef, "RETRIEVE handles malformed JSON/YAML", 
 	OK "good";
 });
 
+ok_plugin(0, "STOREBULK OK - good", undef, "STORE_BULK no_previous_data_ok suppresses alarm for missing data.",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
+		my $STORE_FILE = "store_bulk";
+		PLUGIN name => 'storebulk';
+		START;
+
+		SET(no_previous_data_ok => 1);
+
+		my $obj = { val1 => 1, val2 => 2 };
+		STORE($STORE_FILE, $obj, as => 'data_archive');
+		unlink STATE_FILE_PATH($STORE_FILE);
+
+		OK "good";
+	});
+
+ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
+	"STORE_BULK default no_previous_data_ok and on_previous_data_missing return a warning message.",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
+		my $STORE_FILE = "store_bulk";
+		PLUGIN name => 'storebulk';
+		START;
+
+		my $obj = { val1 => 1, val2 => 2 };
+		STORE($STORE_FILE, $obj, as => 'data_archive');
+		unlink STATE_FILE_PATH($STORE_FILE);
+
+		OK "good";
+	});
+
+ok_plugin(3, "STOREBULK UNKNOWN - No previous data found.", undef,
+	"STORE_BULK on_previous_data_missing behaves properly",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
+		my $STORE_FILE = "store_bulk";
+		PLUGIN name => 'storebulk';
+		START;
+
+		SET(on_previous_data_missing => 'unknown');
+
+		my $obj = { val1 => 1, val2 => 2 };
+		STORE($STORE_FILE, $obj, as => 'data_archive');
+		unlink STATE_FILE_PATH($STORE_FILE);
+
+		OK "good";
+	});
+
+ok_plugin(0, "STOREBULK OK - good", undef,
+	"STORE_BULK trims old data and stores current properly",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		use Test::Deep::NoTest;
+		use JSON;
+		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
+		my $STORE_FILE = "store_bulk";
+		PLUGIN name => 'storebulk';
+		START;
+
+		SET(no_previous_data_ok => 1);
+
+		my $obj = { val1 => 1, val2 => 2 };
+		my $time = time;
+		STORE($STORE_FILE, $obj, as => 'data_archive');
+
+		my $retr_obj = RETRIEVE($STORE_FILE, as => 'json');
+		CRITICAL("Stored object doesn't match expected for initial datapoint."
+			. " Got '".to_json($retr_obj)."'. Expected '".to_json({ $time => $obj })."'")
+			unless (eq_deeply($retr_obj, { $time => $obj }));
+
+		sleep 2;
+		SET(delete_after => 0);
+
+		my $newobj = { val1 => 2, val2 => 3};
+		my $newtime = time;
+		STORE($STORE_FILE, $newobj, as => 'data_archive');
+
+		$retr_obj = RETRIEVE($STORE_FILE, as => 'json');
+		CRITICAL("Stored object doesn't match expected for second datapoint."
+			. " Got '".to_json($retr_obj)."'. Expected '".to_json({ $newtime => $newobj })."'")
+			unless (eq_deeply($retr_obj, { $newtime => $newobj }));
+
+		OK "good";
+	});
+
 done_testing;
