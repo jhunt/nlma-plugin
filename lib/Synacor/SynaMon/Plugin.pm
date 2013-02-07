@@ -291,23 +291,13 @@ How to install signal handlers for things like timeout (SIGALRM).  Valid
 values are B<posix> and (the default) B<perl>.  For B<posix>, POSIX::SigAction
 will be used.  Otherwise, the Perl %SIG hash is used.
 
-=item B<no_previous_data_ok>
-
-Determines whether or not an alarm should be generated if no previous data
-was found for STORE($path, $obj, as => 'data_archive') calls.
-
-When set to non-zero, no alarm will be generated. Defaults to 0 (generate alarm).
-
-This datapoint only affects the B<data_archive> B<STORE AND RETREIVE FORMATS>.
-
-See B<FETCH SCRIPTS> and B<STORE AND RETRIEVE FORMATS> or more information.
-
 =item B<on_previous_data_missing>
 
 Determines what status level alarm should be generated if no previous data
 was found for a given STORE($path, $obj, as => 'data_archive') call. Similar to
-B<on_timeout>, this accepts values of B<warn>, B<critical>, B<unknown>. The default
-is B<warn>.
+B<on_timeout>, this accepts values of B<warn>, B<critical>, B<unknown>, and B<ok>.
+The default is B<warn>. If B<ok> is specified, no message will be generated for
+cases where the previous datafile was missing.
 
 This datapoint only affects the B<data_archive> B<STORE AND RETREIVE FORMATS>.
 
@@ -576,7 +566,7 @@ Formats using the C<as> keyword have been available since 1.11.
 
 B<STORE> and  B<RETRIEVE> provide shortcuts for saving/retreiving data in different
 formats. These are specified by passing the 'as' key to the %options argument of
-those functions. The values are case insensitive, and are limited ot the following
+those functions. The values are case insensitive, and are limited to the following
 formats:
 
 =over 8
@@ -839,16 +829,14 @@ will be generated. This is configurable via the B<on_previous_data_missing> sett
 
     SET on_previous_data_missing => 'unknown';
 
-If you wish to disable alarms for previous data being missing, use the
-B<no_previous_data_ok> setting:
-
-    SET no_previous_data_ok => 1;
-
 Data Retention for B<fetch_*> scripts defaults to deleting datapoints that are older
 than 24 hours. To alter this behavior, use the B<delete_after> setting (set in seconds);
 
     SET delete_after => 120;               # delete after 2 minutes
     SET delete_after => 60 * 60 * 24 * 30; # delete after 30 days
+
+See the B<SETTINGS> section for more details on how B<delete_after> and
+B<on_previous_data_missing> behave.
 
 =head1 DEBUGGING
 

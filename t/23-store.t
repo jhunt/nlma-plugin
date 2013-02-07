@@ -265,7 +265,7 @@ ok_plugin(0, "BADFMT OK - good", undef, "RETRIEVE handles malformed JSON/YAML", 
 });
 
 ok_plugin(0, "STOREBULK OK - good", undef,
-	"STORE as data_archive: no_previous_data_ok suppresses alarm for missing data.",
+	"STORE as data_archive: on_previous_data_missing ok suppresses alarm for missing data.",
 	sub {
 		use Synacor::SynaMon::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
@@ -273,7 +273,7 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 		PLUGIN name => 'storebulk';
 		START;
 
-		SET(no_previous_data_ok => 1);
+		SET(on_previous_data_missing => 'ok');
 
 		my $obj = { val1 => 1, val2 => 2 };
 		STORE($STORE_FILE, $obj, as => 'data_archive');
@@ -283,7 +283,7 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 	});
 
 ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
-	"STORE as data_archive: default no_previous_data_ok and on_previous_data_missing return a warning message.",
+	"STORE as data_archive: default on_previous_data_missing returns a warning message.",
 	sub {
 		use Synacor::SynaMon::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
@@ -299,7 +299,7 @@ ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
 	});
 
 ok_plugin(3, "STOREBULK UNKNOWN - No previous data found.", undef,
-	"STORE as data_archive: on_previous_data_missing behaves properly",
+	"STORE as data_archive: on_previous_data_missing behaves properly when set to non-'ok' value",
 	sub {
 		use Synacor::SynaMon::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
@@ -327,7 +327,7 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 		PLUGIN name => 'storebulk';
 		START;
 
-		SET(no_previous_data_ok => 1);
+		SET(on_previous_data_missing => 'ok');
 
 		my $obj = { val1 => 1, val2 => 2 };
 		my $time = time;

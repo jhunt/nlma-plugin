@@ -121,28 +121,17 @@ sub set
 	for my $key (keys %vars) {
 		my $value = $vars{$key};
 
-		if ($key eq 'on_timeout' || $key eq 'on_previous_data_missing') {
-			if ($value =~ m/^warn/i) {
-				$value = NAGIOS_WARNING;
-			} elsif ($value =~ m/^crit/i) {
-				$value = NAGIOS_CRITICAL;
-			} elsif ($value =~ m/^unk/i) {
-				$value = NAGIOS_UNKNOWN;
-			} else {
-				$self->debug("CODE ISSUE: Bad value for `$key` setting",
-				             "  '$value' not one of (warning|critical|unknown)");
-
-				$self->bail(NAGIOS_UNKNOWN,
-					"check plugin BUG detected: run again with --debug");
+		if ($key eq 'on_timeout') {
+			my $tmp_val = _nagios_code_for($value);
+			if ($tmp_val) {
+				$value = $tmp_val;
+			}  else {
+				$self->_bad_setting($key, $value, "(warning|critical|unknown)");
 			}
 
 		} elsif ($key eq 'signals') {
 			if ($value !~ m/^perl|posix$/) {
-				$self->debug("CODE ISSUE: Bad value for `signals` settings",
-				             "  '$value' not one of (perl|posix)");
-
-				$self->bail(NAGIOS_UNKNOWN,
-					"check plugin BUG detected: run again with --debug");
+				$self->_bad_setting($key, $value, "(perl|posix)");
 			}
 
 			if ($value ne $self->{settings}{$key}) {
@@ -154,9 +143,44 @@ sub set
 				# Forcibly re-issue the timeout, under new settings
 				$self->start_timeout($self->stop_timeout);
 			}
+		} elsif ($key eq "on_previous_data_missing" ) {
+			my $tmp_val = _nagios_code_for($value);
+			if ($tmp_val) {
+				$value = $tmp_val;
+			} else {
+				if ($value =~ /^ok/i) {
+					$value = NAGIOS_OK;
+				} else {
+					$self->_bad_setting($key, $value, "(warning|critical|unknown|ok)");
+				}
+			}
 		}
 
 		$self->{settings}{$key} = $value;
+	}
+}
+
+sub _bad_setting
+{
+	my ($self, $key, $val, $allowed) = @_;
+	$self->debug("CODE ISSUE: Bad value for `$key` settings",
+		"  '$val' not one of $allowed");
+
+	$self->bail(NAGIOS_UNKNOWN,
+		"check plugin BUG detected: run again with --debug");
+}
+
+sub _nagios_code_for
+{
+	my ($str) = @_;
+	if ($str =~ /^warn/i) {
+		return NAGIOS_WARNING;
+	} elsif ($str =~ /^crit/i) {
+		return NAGIOS_CRITICAL;
+	} elsif ($str =~ /^unk/i) {
+		return NAGIOS_UNKNOWN;
+	} else {
+		return undef;
 	}
 }
 
@@ -491,13 +515,11 @@ sub _process_bulk_data
 	my ($self, $path, $obj) = @_;
 	my $status = defined $self->{settings}{on_previous_data_missing} ?
 		$self->{settings}{on_previous_data_missing} : NAGIOS_WARNING;
-	my $nodata_ok = defined $self->{settings}{no_previous_data_ok} ?
-		$self->{settings}{no_previous_data_ok} : 0;
 	my $age_limit = defined $self->{settings}{delete_after} ?
 		$self->{settings}{delete_after} : (24 * 60 * 60);
 
-	my $data_history = eval {from_json($self->retrieve($path))}
-		or do { $self->status($status, "No previous data found.") unless $nodata_ok; };
+	my $data_history = eval {from_json(($self->retrieve($path) || ""))}
+		or do { $self->status($status, "No previous data found.") if $status; };
 
 	foreach my $time (sort keys %{$data_history}) {
 		$self->debug("Testing $time against $age_limit");
@@ -1064,15 +1086,11 @@ The behavior of this setting can be modified by customizing the following settin
 Sets the retention policy for bulk data. B<store_bulk_data> will auto-delete datapoints
 older than B<delete_after>. Defaults to 876400 (one day). This value is set in seconds.
 
-=item B<no_previous_data_ok>
-
-If this is set (default is false), B<store_bulk_data> will not generate messages if there
-was no previous data found.
-
 =item B<on_previous_data_missing>
 
-Sets the behavior of the message generated for "on_previous_data_missing". Possible values
-are 'warning', 'critical', 'unknown'. Defaults to 'warning'.
+Sets the behavior of the message generated when the store file did not previously exist.
+Possible values are 'warning', 'critical', 'unknown', and 'ok. Defaults to 'warning'. If
+'ok' is specified, no message will be generated.
 
 =back
 
