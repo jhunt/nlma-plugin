@@ -290,6 +290,7 @@ ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
 		my $STORE_FILE = "store_bulk";
 		PLUGIN name => 'storebulk';
 		START;
+		CRITICAL("Test bad, $STORE_FILE still exists") if -f STATE_FILE_PATH($STORE_FILE);
 
 		my $obj = { val1 => 1, val2 => 2 };
 		STORE($STORE_FILE, $obj, as => 'data_archive');
@@ -306,6 +307,7 @@ ok_plugin(3, "STOREBULK UNKNOWN - No previous data found.", undef,
 		my $STORE_FILE = "store_bulk";
 		PLUGIN name => 'storebulk';
 		START;
+		CRITICAL("Test bad, $STORE_FILE still exists") if -f STATE_FILE_PATH($STORE_FILE);
 
 		SET(on_previous_data_missing => 'unknown');
 
@@ -316,9 +318,14 @@ ok_plugin(3, "STOREBULK UNKNOWN - No previous data found.", undef,
 		OK "good";
 	});
 
+open FILE, ">t/data/tmp/mon_store_bulk";
+print FILE '{"'.(time - 1200).'":{"val2":0,"val1":0}}';
+close FILE;
+
 ok_plugin(0, "STOREBULK OK - good", undef,
 	"STORE as data_archive trims old data and stores current properly",
 	sub {
+		use strict;
 		use Synacor::SynaMon::Plugin qw(:easy);
 		use Test::Deep::NoTest;
 		use JSON;
@@ -326,29 +333,22 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 		my $STORE_FILE = "store_bulk";
 		PLUGIN name => 'storebulk';
 		START;
-
-		SET(on_previous_data_missing => 'ok');
-
+		SET delete_after => 600;
 		my $obj = { val1 => 1, val2 => 2 };
 		my $time = time;
 		STORE($STORE_FILE, $obj, as => 'data_archive');
 
-		my $retr_obj = RETRIEVE($STORE_FILE, as => 'json');
-		CRITICAL("Stored object doesn't match expected for initial datapoint."
-			. " Got '".to_json($retr_obj)."'. Expected '".to_json({ $time => $obj })."'")
-			unless (eq_deeply($retr_obj, { $time => $obj }));
-
 		sleep 2;
-		SET(delete_after => 0);
 
 		my $newobj = { val1 => 2, val2 => 3};
 		my $newtime = time;
 		STORE($STORE_FILE, $newobj, as => 'data_archive');
 
-		$retr_obj = RETRIEVE($STORE_FILE, as => 'json');
+		my $retr_obj = RETRIEVE($STORE_FILE, as => 'json');
+		my $expected = { $time => $obj, $newtime => $newobj };
 		CRITICAL("Stored object doesn't match expected for second datapoint."
-			. " Got '".to_json($retr_obj)."'. Expected '".to_json({ $newtime => $newobj })."'")
-			unless (eq_deeply($retr_obj, { $newtime => $newobj }));
+			. " Got '".to_json($retr_obj)."'. Expected '".to_json($expected)."'")
+			unless (eq_deeply($retr_obj, $expected));
 
 		unlink STATE_FILE_PATH($STORE_FILE);
 

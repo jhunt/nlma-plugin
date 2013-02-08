@@ -485,6 +485,13 @@ sub store
 	my ($self, $path, $data, %options) = @_;
 	return unless defined $data;
 
+
+	# do this part before re-opening the state file (and losing all our previous data that _process_bulk_data will try to read in)
+	my $archive_data;
+	if ($options{as} && $options{as} =~ m/^data_archive$/i) {
+		eval { $archive_data = JSON->new->allow_nonref->encode($self->_process_bulk_data($path, $data)); };
+	}
+
 	$path = $self->state_file_path($path);
 
 	open my $fh, ">", $path or
@@ -496,7 +503,8 @@ sub store
 		} elsif ($options{as} =~ m/^json$/i) {
 			eval { $data = JSON->new->allow_nonref->encode($data); };
 		} elsif ($options{as} =~ m/^data_archive$/i) {
-			eval { $data = JSON->new->allow_nonref->encode($self->_process_bulk_data($path, $data)); };
+			#keep this section so that
+			$data = $archive_data;
 		} else {
 			$self->UNKNOWN("Unknown format for STORE: $options{as}");
 		}
@@ -518,8 +526,8 @@ sub _process_bulk_data
 	my $age_limit = defined $self->{settings}{delete_after} ?
 		$self->{settings}{delete_after} : (24 * 60 * 60);
 
-	my $data_history = eval {from_json(($self->retrieve($path) || ""))}
-		or do { $self->status($status, "No previous data found.") if $status; };
+	my $data_history = $self->retrieve($path, as => 'json');
+	$self->status($status, "No previous data found.") if ($status && ! defined $data_history);
 
 	foreach my $time (sort keys %{$data_history}) {
 		$self->debug("Testing $time against $age_limit");
@@ -546,6 +554,8 @@ sub retrieve
 	if ($options{touch} && -e $path) {
 		utime(undef, undef, $path);
 	}
+
+	$self->debug("Using '$path' for retrieval");
 
 	open my $fh, "<", $path or do {
 		$self->debug("FAILED to open '$path' for reading: $!");
