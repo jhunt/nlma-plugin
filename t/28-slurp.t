@@ -10,7 +10,7 @@ do "t/common.pl";
 ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
-	START default => 'retrieve normal';
+	START default => 'slurped as scalar';
 
 	my $scalar_output = SLURP("data/slurp/normal");
 
@@ -21,7 +21,7 @@ ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
-	START default => 'retrieve normal';
+	START default => 'slurped as array';
 
 	my @array_test   = ("first line" ,"second line");
 	my @array_output = SLURP("data/slurp/normal");
@@ -37,7 +37,7 @@ ok_plugin(0, "SLURP OK - undef input", undef, "Undef SLURP", sub {
 
 	my $output = SLURP(undef);
 
-	CRITICAL "Output is defined when it should not be" if defined($output);
+	CRITICAL "Output is defined when there should be none" if defined($output);
 	DONE;
 });
 
@@ -48,18 +48,31 @@ ok_plugin(0, "SLURP OK - null iput", undef, "Null SLURP", sub {
 
 	my $output = SLURP("");
 
-	CRITICAL "Not null output" if defined($output);
+	CRITICAL "Not null output when there should be none" if defined($output);
 	DONE;
 });
 
-ok_plugin(0, "SLURP OK - File not readable", undef, "File unreadable", sub {
+ok_plugin(0, "SLURP OK - File not found", undef, "File not found", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
-	START default => "File not readable";
+	START default => "File not found";
 
-	my $output = SLURP("unreadable-input");
+	my $output = SLURP("missing-input");
 
-	CRITICAL "Found readable output when it should not be" if defined $output;
+	CRITICAL "Found output when there should be none" if defined $output;
+	DONE;
+});
+
+ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable" sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "SLURP";
+	START default => "File unreadable";
+
+	chmod 0000, "data/slurp/unreadable";
+	my $output = SLURP("data/slurp/unreadable");
+	chmod 0755, "data/slurp/unreadable";
+
+	CRITICAL "Output from unreadable input" if defined $output;
 	DONE;
 });
 
