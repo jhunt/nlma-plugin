@@ -14,7 +14,7 @@ ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 
 	my $scalar_output = SLURP("data/slurp/normal");
 
-	CRITICAL "output of slurp is not scalar" unless $scalar_output eq "first line\nsecond line\n");
+	CRITICAL "output of slurp is not scalar" unless $scalar_output eq "first line\nsecond line\n";
 	DONE;
 });
 
