@@ -23,7 +23,7 @@ our @EXPORT = qw/
 	STAGE START_TIMEOUT STOP_TIMEOUT
 	STAGE_TIME TOTAL_TIME
 
-	STORE RETRIEVE STATE_FILE_PATH
+	STORE RETRIEVE SLURP STATE_FILE_PATH
 	CREDENTIALS CRED_KEYS
 
 	RUN
@@ -70,6 +70,7 @@ sub TOTAL_TIME { $plugin->total_time(@_); }
 
 sub STORE { $plugin->store(@_); }
 sub RETRIEVE { $plugin->retrieve(@_); }
+sub SLURP { $plugin->slurp(@_); }
 sub STATE_FILE_PATH { $plugin->state_file_path(@_); }
 
 sub CREDENTIALS { $plugin->credentials(@_); }
