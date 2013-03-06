@@ -41,7 +41,7 @@ ok_plugin(0, "SLURP OK - undef input", undef, "Undef SLURP", sub {
 	DONE;
 });
 
-ok_plugin(0, "SLURP OK - null iput", undef, "Null SLURP", sub {
+ok_plugin(0, "SLURP OK - null input", undef, "Null SLURP", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'null input';
