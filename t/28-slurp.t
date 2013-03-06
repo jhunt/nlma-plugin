@@ -70,7 +70,7 @@ ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable" sub {
 
 	chmod 0000, "data/slurp/unreadable";
 	my $output = SLURP("data/slurp/unreadable");
-	chmod 0755, "data/slurp/unreadable";
+	chmod 0644, "data/slurp/unreadable";
 
 	CRITICAL "Output from unreadable input" if defined $output;
 	DONE;
