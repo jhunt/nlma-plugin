@@ -8,6 +8,7 @@ do "t/common.pl";
 # SLURP
 
 ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
+	use strict;
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'slurped as scalar';
@@ -19,6 +20,7 @@ ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 });
 
 ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
+	use strict;
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'slurped as array';
@@ -31,6 +33,7 @@ ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 });
 
 ok_plugin(0, "SLURP OK - undef input", undef, "Undef SLURP", sub {
+	use strict;
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'undef input';
@@ -42,6 +45,7 @@ ok_plugin(0, "SLURP OK - undef input", undef, "Undef SLURP", sub {
 });
 
 ok_plugin(0, "SLURP OK - null input", undef, "Null SLURP", sub {
+	use strict;
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'null input';
@@ -53,6 +57,7 @@ ok_plugin(0, "SLURP OK - null input", undef, "Null SLURP", sub {
 });
 
 ok_plugin(0, "SLURP OK - File not found", undef, "File not found", sub {
+	use strict;
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => "File not found";
@@ -64,6 +69,7 @@ ok_plugin(0, "SLURP OK - File not found", undef, "File not found", sub {
 });
 
 ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable", sub {
+	use strict;
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "SLURP";
 	START default => "File unreadable";
