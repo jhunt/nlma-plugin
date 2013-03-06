@@ -82,4 +82,4 @@ ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable", sub {
 	DONE;
 });
 
-done testing;
+done_testing;
