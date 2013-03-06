@@ -7,19 +7,19 @@ do "t/common.pl";
 ###################################################################
 # SLURP
 
-ok_plugin(0, "SLURP OK - slurped as scalar", undef, "scalar SLURP", sub {
+ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'retrieve normal';
 
 	my $scalar_output = SLURP("data/slurp/normal");
 
-	CRITICAL "output of slurp is not scalar" unless $scalar_output eq "first line\nsecond line\n"); 
+	CRITICAL "output of slurp is not scalar" unless $scalar_output eq "first line\nsecond line\n");
 	DONE;
 });
 
 
-ok_plugin(0, "SLURP OK - slurped as array", undef, "array SLURP", sub {
+ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'retrieve normal';
@@ -31,14 +31,36 @@ ok_plugin(0, "SLURP OK - slurped as array", undef, "array SLURP", sub {
 	DONE;
 });
 
-ok_plugin(0, "SLURP OK - slurped null", undef, "null SLURP", sub {
+ok_plugin(0, "SLURP OK - slurped undef", undef, "undef SLURP", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
-	START default => '';
+	START default => 'undef input';
 
 	my $scalar = SLURP(undef);
 
-	CRITICAL "Not defined scalar" unless !defined($scalar);
+	CRITICAL "Defined scalar" unless !defined($scalar);
+	DONE;
+});
+
+ok_plugin(0, "SLURP OK - slurped null", undef, "null SLURP", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => 'SLURP';
+	START default => 'null input';
+
+	my $scalar = SLURP("");
+
+	CRITICAL "Not null scalar" unless !defined($scalar);
+	DONE;
+});
+
+
+ok_plugin(0, "SLURP UNKNOWN - File not readable", undef, "File unreadable", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => 'SLURP';
+	START;
+
+	SLURP("data/slurp/unreadable");
+
 	DONE;
 });
 
