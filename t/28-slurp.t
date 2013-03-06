@@ -63,7 +63,7 @@ ok_plugin(0, "SLURP OK - File not found", undef, "File not found", sub {
 	DONE;
 });
 
-ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable" sub {
+ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "SLURP";
 	START default => "File unreadable";
