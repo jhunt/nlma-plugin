@@ -473,9 +473,20 @@ sub total_time
 
 sub slurp
 {
-	my ($self, $path, $data) = @_;
-	return unless defined $data;
+	my ($self, $path) = @_;
+	return unless defined $path;
+	open my $fh, '<', $path;
 
+	my @lines = ();
+	my $string;
+	while (<$fh>) {
+		my $line = $_;
+		$string .= $line;
+		chomp($line);
+		push(@lines, $line);
+	}
+	close $fh;
+	return wantarray ? @lines : $string;
 }
 
 sub state_file_path
