@@ -471,6 +471,13 @@ sub total_time
 	return gettimeofday - $self->{plugin_started};
 }
 
+sub slurp
+{
+	my ($self, $path, $data) = @_;
+	return unless defined $data;
+
+}
+
 sub state_file_path
 {
 	my ($self, $path) = @_;
