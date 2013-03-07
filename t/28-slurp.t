@@ -1,7 +1,6 @@
 #!perl
 
 use Test::More;
-use Test::Deep::NoTest;
 do "t/common.pl";
 
 ###################################################################
@@ -14,14 +13,15 @@ ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 	START default => 'slurped as scalar';
 
 	my $scalar_output = SLURP("t/data/slurp/normal");
-
-	CRITICAL "output of slurp is not scalar: \"$scalar_output\"" unless $scalar_output eq "first line\nsecond line\n";
+		CRITICAL "output of slurp is not scalar: \"".chomp($scalar_output)."\""
+			unless "first line\nsecond line\n" eq $scalar_output;
 	DONE;
 });
 
 ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 	use strict;
 	use Synacor::SynaMon::Plugin qw(:easy);
+	use Test::Deep::NoTest;
 	PLUGIN name => 'SLURP';
 	START default => 'slurped as array';
 
@@ -30,7 +30,7 @@ ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 	my $error_string = join(", ", @array_output);
 	my $test_string  = join(", ", @array_test);
 
-	CRITICAL "Output is not array: \"".$error_string."\" does not match test: \"".$test_string."\"" unless is_deeply(\@array_test, \@array_output);
+	CRITICAL "Output is not array: \"".$error_string."\" does not match test: \"".$test_string."\"" unless eq_deeply(\@array_test, \@array_output,"slurped as array");
 	DONE;
 });
 
