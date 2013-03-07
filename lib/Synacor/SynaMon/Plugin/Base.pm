@@ -1047,6 +1047,16 @@ Returns the (HiRes) number of seconds since the current stage began.
 
 Returns the (HiRes) number of seconds since the first stage began.
 
+=head2 slurp
+
+Takes a string file path and returns the contents as a scalar or as an array
+of the lines in the file.
+
+The scalar output will include new line characters.
+
+If called as an array each element in the output will correspond to a line
+in the slurped file, there will be no newline characters in this output.
+
 =head2 state_file_path
 
 Generate the absolute path to a state file, based on package configuration,

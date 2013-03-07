@@ -197,6 +197,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::stage_time>.
 
 Wrapper around B<Synacor::SynaMon::Plugin::total_time>.
 
+=head2 SLURP
+
+Wrapper around B<Synacor::SynaMon::Plugin::slurp>.
+
 =head2 STORE
 
 Wrapper around B<Synacor::SynaMon::Plugin::store>.
