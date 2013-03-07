@@ -13,9 +13,9 @@ ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 	PLUGIN name => 'SLURP';
 	START default => 'slurped as scalar';
 
-	my $scalar_output = SLURP("data/slurp/normal");
+	my $scalar_output = SLURP("t/data/slurp/normal");
 
-	CRITICAL "output of slurp is not scalar" unless $scalar_output eq "first line\nsecond line\n";
+	CRITICAL "output of slurp is not scalar: \"$scalar_output\"" unless $scalar_output eq "first line\nsecond line\n";
 	DONE;
 });
 
@@ -25,10 +25,12 @@ ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 	PLUGIN name => 'SLURP';
 	START default => 'slurped as array';
 
-	my @array_test   = ("first line" ,"second line");
-	my @array_output = SLURP("data/slurp/normal");
+	my @array_test   = ("first line", "second line");
+	my @array_output = SLURP("t/data/slurp/normal");
+	my $error_string = join(", ", @array_output);
+	my $test_string  = join(", ", @array_test);
 
-	CRITICAL "Output is not array" unless eq_deeply(@array_test, @array_output);
+	CRITICAL "Output is not array: \"".$error_string."\" does not match test: \"".$test_string."\"" unless is_deeply(\@array_test, \@array_output);
 	DONE;
 });
 
