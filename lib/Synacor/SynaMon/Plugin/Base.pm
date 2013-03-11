@@ -253,8 +253,13 @@ sub status
 {
 	my ($self, $status, @message) = @_;
 	$self->{did_stuff}++;
-	my ($code, $name) = ($STATUS_CODES{$status}, $STATUS_NAMES{$status});
-
+	my ($code, $name);
+	if (defined $status && defined $STATUS_CODES{$status} && defined $STATUS_NAMES{$status}) {
+		($code, $name) = ($STATUS_CODES{$status}, $STATUS_NAMES{$status});
+	} else {
+		$status = "undef";
+		($code, $name) = ($STATUS_CODES{"UNKNOWN"}, $STATUS_NAMES{"UNKNOWN"});
+	}
 	my $msg = join('', @message);
 	$self->debug("Adding $name ($code) from [$status] message: $msg");
 
