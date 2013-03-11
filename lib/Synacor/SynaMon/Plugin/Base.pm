@@ -257,9 +257,11 @@ sub status
 	if (defined $status && defined $STATUS_CODES{$status} && defined $STATUS_NAMES{$status}) {
 		($code, $name) = ($STATUS_CODES{$status}, $STATUS_NAMES{$status});
 	} else {
-		$status = "undef";
 		($code, $name) = ($STATUS_CODES{"UNKNOWN"}, $STATUS_NAMES{"UNKNOWN"});
 	}
+
+	$status = "undef" unless defined $status;
+
 	my $msg = join('', @message);
 	$self->debug("Adding $name ($code) from [$status] message: $msg");
 
@@ -289,13 +291,10 @@ sub bail
 sub evaluate
 {
 	my ($self, $status, @message) = @_;
-	return unless defined $status;
-	my $code = $STATUS_CODES{$status};
-
-	return unless defined $code;
 	$self->{did_stuff}++;
-	return if $code == NAGIOS_OK;
-
+	if ( defined $status && defined $STATUS_NAMES{$status} && defined $STATUS_CODES{$status} ) {
+		return if $STATUS_CODES{$status} == NAGIOS_OK;
+	}
 	$self->status($status, @message);
 }
 
