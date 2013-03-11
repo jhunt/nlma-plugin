@@ -198,16 +198,28 @@ ok_plugin(2, "EVAL CRITICAL - triggered", undef, "evaluate test with non-OK", su
 	DONE;
 });
 
-ok_plugin(0, "EVAL OK - edge cases", undef, "evaluate test with bad status values", sub {
+ok_plugin(3, "EVAL UNKNOWN - undef", undef, "evaluate test with undef status values", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "eval";
 	START;
-	EVALUATE undef, "/undef/ is not a valid status code value";
-	EVALUATE "WTF?", "'WTF?' is not really a status code name";
-	EVALUATE "UP", "UP is a code but not a name";
-	OK "edge cases";
+	EVALUATE undef, "undef";
 	DONE;
 });
 
+ok_plugin(3, "EVAL UNKNOWN - Missing Status", undef, "evaluate test with missing status values", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "eval";
+	START;
+	EVALUATE "MISSING", "Missing Status";
+	DONE;
+});
+
+ok_plugin(3, "EVAL UNKNOWN - Missing Status - name", undef, "evaluate test with missing name status values", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "eval";
+	START;
+	EVALUATE "UP", "Missing Status - name";
+	DONE;
+});
 
 done_testing;
