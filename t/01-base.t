@@ -117,6 +117,30 @@ ok_plugin(3, "TEST UNKNOWN - ???", undef, "Dummy STATUS UNKNOWN", sub {
 	DONE;
 });
 
+ok_plugin(3, "TEST UNKNOWN - undef", undef, "Dummy STATUS undef", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS undef, "undef";
+	DONE;
+});
+
+ok_plugin(3, "TEST UNKNOWN - Missing Status", undef, "Dummy STATUS missing", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "MISSING", "Missing Status";
+	DONE;
+});
+
+ok_plugin(3, "TEST UNKNOWN - Missing Status - Name", undef, "Dummy STATUS missing", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UP", "Missing Status - Name";
+	DONE;
+});
+
 ###################################################################
 
 ok_plugin(2, "BAIL CRITICAL - bail early", undef, "Bail early", sub {
@@ -180,6 +204,7 @@ ok_plugin(0, "EVAL OK - edge cases", undef, "evaluate test with bad status value
 	START;
 	EVALUATE undef, "/undef/ is not a valid status code value";
 	EVALUATE "WTF?", "'WTF?' is not really a status code name";
+	EVALUATE "UP", "UP is a code but not a name";
 	OK "edge cases";
 	DONE;
 });
