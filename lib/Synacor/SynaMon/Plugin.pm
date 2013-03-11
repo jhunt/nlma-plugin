@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.14";
+our $VERSION = "1.15";
 
 use Exporter;
 use base qw(Exporter);
@@ -776,6 +776,13 @@ If username and password are both set, HTTP authentication will be
 requested, using these credentials.
 
 =back
+
+=head2 SLURP
+
+SLURP provides the simple ability to read in a file and grab all
+of its contents. This is something we do often in various check plugins,
+so has been frameworked to provide a common codebase. This feature has
+been available since 1.15.
 
 =head2 FETCH SCRIPTS
 
