@@ -500,7 +500,8 @@ sub state_file_path
 	my $dir    = $ENV{MONITOR_STATE_FILE_DIR}    || "/var/tmp";
 	my $prefix = $ENV{MONITOR_STATE_FILE_PREFIX} || "mon";
 	$path =~ s|.*/||;
-	"$dir/${prefix}_$path";
+	$path =~ s/[!@#\$%\^&\*\(\)\|\}\{\[\]\/'"><\s\x0b]+/_/g;
+	return "$dir/${prefix}_$path";
 }
 
 sub store
