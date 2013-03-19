@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.15";
+our $VERSION = "1.16";
 
 use Exporter;
 use base qw(Exporter);
@@ -189,6 +189,7 @@ A short description of what the plugin checks, e.g.
 =head2 OPTION
 
 Available since framework version 1.0.
+('B<=%>' style specs have been available to OPTION since version 1.16)
 
 To make check plugins more flexible, you can set up command-line
 arguments and flags to defer configuration until the plugin is run.
@@ -206,7 +207,7 @@ Here we have defined two command-line options, one to enable debug
 messages and the other to specify an environment to run against.
 
 The first argument to an B<OPTION> call should be the option spec,
-a string in GetOpt style format ("long>|<short>[=<type>]").  For flags that
+a string in GetOpt style format ("<long>|<short>[=<type>]").  For flags that
 are either on or off (like --debug), the "=<type>" part should be
 omitted.  For arguments, the B<<type>> identifies the type of data to
 be expected with that argument. Valid type values are anything GetOpt

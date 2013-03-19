@@ -907,7 +907,7 @@ Otherwise, definition mode is invoked.
 
 =over
 
-=item Retrieval 
+=item Retrieval
 
 B<option> also gives you access to the passed values, as a hash
 reference, when called with no arguments:
@@ -947,9 +947,11 @@ in additional keys being added to the hashref to be returned by this option.
 
 See B<Synacor::SynaMon::Plugin> for extensive examples of how to use the specs.
 
+'B<=%>' style option specs have been available since version 1.16.
+
 =item options
 
-The remainder of the arguments passed to the options() sub  represent 
+The remainder of the arguments passed to the options() sub represent
 contraints and extra information about this option.  The following keys are valid:
 
 =over
