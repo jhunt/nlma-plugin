@@ -248,19 +248,21 @@ sub _reformat_hash_option
 	foreach my $instance (@instances) {
 		my ($name, $rest) = split(/:/, $instance, 2);
 		my $values = { warn => undef, crit => undef, perf => 1};
-		my @vals = split(/,/, $rest);
-		foreach my $val (@vals) {
-			my ($key, $value) = split(/=/, $val);
-			return "$name:$val\nSub-option keys must be one of '$allowed_keys'."
-				unless $key =~ /^$allowed_keys$/;
-			if ($key eq 'perf') {
-				if (defined $value && ($value eq '0' || $value eq 'no')) {
-					$value = 0;
-				} else {
-					$value = 1;
+		if ($rest) {
+			my @vals = split(/,/, $rest);
+			foreach my $val (@vals) {
+				my ($key, $value) = split(/=/, $val);
+				return "$name:$val\nSub-option keys must be one of '$allowed_keys'."
+					unless $key =~ /^$allowed_keys$/;
+				if ($key eq 'perf') {
+					if (defined $value && ($value eq '0' || $value eq 'no')) {
+						$value = 0;
+					} else {
+						$value = 1;
+					}
 				}
+				$values->{$key} = $value;
 			}
-			$values->{$key} = $value;
 		}
 		$opt{$name} = $values;
 	}
