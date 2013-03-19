@@ -202,19 +202,23 @@ sub option
 			$self->{legacy}{opts}{timeout} = $opts{default} if $opts{default};
 			return;
 		}
+
 		if ($spec =~ /^(\S+?)(\|\S+)?=%$/) {
 			push @percent_style_opts, $1;
 			$spec =~ s/=%$/=s\@/;
 		}
+
 		if (exists $opts{usage}) {
 			push @{$self->{usage_list}}, _spec2usage($opts{usage}, $opts{required});
 
 			$opts{help} = $opts{usage} . (exists $opts{help} ? "\n   " . $opts{help} : "");
-			if (exists $opts{default}) {
-				$opts{help} .= " (default: $opts{default})";
-			}
 			delete $opts{usage};
 		}
+
+		if (exists $opts{default}) {
+			$opts{help} .= " (default: $opts{default})";
+		}
+
 		return $self->{legacy}->add_arg(
 			spec => $spec,
 			%opts

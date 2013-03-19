@@ -29,7 +29,7 @@ $USAGE
  -N, --nousage
    Option with no usage
  --nousage-default=STRING
-   Default / no usage
+   Default / no usage (default: the-default)
  --debug, -D
    Turn on debug mode
  -t, --timeout=INTEGER
@@ -100,7 +100,7 @@ $USAGE
  -N, --nousage
    Option with no usage
  --nousage-default=STRING
-   Default / no usage
+   Default / no usage (default: the-default)
  --debug, -D
    Turn on debug mode
  -t, --timeout=INTEGER
