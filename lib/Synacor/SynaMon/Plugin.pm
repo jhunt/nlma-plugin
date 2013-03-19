@@ -206,11 +206,40 @@ Here we have defined two command-line options, one to enable debug
 messages and the other to specify an environment to run against.
 
 The first argument to an B<OPTION> call should be the option spec,
-a string in the format "<long>|<short>[=<type>]".  For flags that
+a string in GetOpt style format ("long>|<short>[=<type>]").  For flags that
 are either on or off (like --debug), the "=<type>" part should be
 omitted.  For arguments, the B<<type>> identifies the type of data to
-be expected with that argument.  Valid type values are B<s> for text,
-and B<i> for numbers.
+be expected with that argument. Valid type values are anything GetOpt
+supports, with the addition of '=%', which will enable an array of
+calls to the argument, which then get processed into a hashref for specifying
+multiple thresholds inside the plugin.
+
+Given the following specs:
+
+   warning|w=s
+   debug
+   check|c=%
+
+And the following check arguments:
+
+   -w 5 --debug --check 'cpu:warn=10,crit=20', \
+   --check 'io_in:warn=:10,crit=20:,perf=asdf' \
+   -C 'io_out:warn=10,crit=20:30,perf=0' \
+   -C 'mem:warn=10,crit=~:20,perf=no' \
+   -C 'perf:warn,crit,perf'
+
+You can access the B<option>s like so:
+
+   OPTION->warning;  # Returns '5'
+   OPTION->debug;    # Returns 1 (true)
+   OPTION->check;    # Returns hashref of below syntax
+   # {
+   #    cpu    => { warn => '10',  crit => '2',     perf => '1' }, # default
+   #    io_in  => { warn => '10',  crit => '20',    perf => '1' }, # perf=asdf
+   #    io_out => { warn => '10',  crit => '20:30', perf => '0' }, # perf=no
+   #    mem    => { warn => '10',  crit => '~:20',  perf => '0' }, # perf=0
+   #    perf   => { warn => undef, crit => undef,   perf => '1' }, # perf
+   # }
 
 Remaining arguments either provide more information about the option,
 or influence its behavior.
