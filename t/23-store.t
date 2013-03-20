@@ -355,4 +355,18 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 		OK "good";
 	});
 
+ok_plugin(0, "STATE_FILE_PATH OK", undef, "No special characters in path", sub {
+	use strict;
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "state_file_path";
+	START;
+	my $should_be = "_hello_world_";
+	my $input = '!@#$%^hello&*()|world$$$}{[]';
+	my $output = STATE_FILE_PATH($input);
+	$output =~ s/t\/data\/tmp\/mon_//;
+	BAIL("CRITICAL","Gummed Up, expected: $should_be (".length($should_be)." ".length($input).") got: $output (".length($output).")") unless $should_be eq $output;
+	OK;
+	DONE;
+	});
+
 done_testing;

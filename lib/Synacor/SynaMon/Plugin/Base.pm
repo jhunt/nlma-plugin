@@ -252,19 +252,21 @@ sub _reformat_hash_option
 	foreach my $instance (@instances) {
 		my ($name, $rest) = split(/:/, $instance, 2);
 		my $values = { warn => undef, crit => undef, perf => $name};
-		my @vals = split(/,/, $rest);
-		foreach my $val (@vals) {
-			my ($key, $value) = split(/=/, $val);
-			return "$name:$val\nSub-option keys must be one of '$allowed_keys'."
-				unless $key =~ /^$allowed_keys$/;
-			if ($key eq 'perf') {
-				if (defined $value && ($value eq '0' || $value eq 'no')) {
-					$value = 0;
-				} else {
-					$value = $value || $name;
+		if ($rest) {
+			my @vals = split(/,/, $rest);
+			foreach my $val (@vals) {
+				my ($key, $value) = split(/=/, $val);
+				return "$name:$val\nSub-option keys must be one of '$allowed_keys'."
+					unless $key =~ /^$allowed_keys$/;
+				if ($key eq 'perf') {
+					if (defined $value && ($value eq '0' || $value eq 'no')) {
+						$value = 0;
+					} else {
+						$value = $value || $name;
+					}
 				}
+				$values->{$key} = $value;
 			}
-			$values->{$key} = $value;
 		}
 		$opt{$name} = $values;
 	}
@@ -544,7 +546,8 @@ sub state_file_path
 	my $dir    = $ENV{MONITOR_STATE_FILE_DIR}    || "/var/tmp";
 	my $prefix = $ENV{MONITOR_STATE_FILE_PREFIX} || "mon";
 	$path =~ s|.*/||;
-	"$dir/${prefix}_$path";
+	$path =~ s/[!@#\$%\^&\*\(\)\|\}\{\[\]\/'"><\s\x0b]+/_/g;
+	return "$dir/${prefix}_$path";
 }
 
 sub store
@@ -948,7 +951,7 @@ defaults to B<keyN>, and allows you to override it to '0' or 'no' to turn off
 perfdata reporting, or with a custom value for use with custom perfdata
 labelling. B<warn>/B<crit> default to undefined values. B<keyN>
 values can be any you desire, and will be used as keys in the hashref returned
-when this option is called in B<Retrieve> mode. Subsequent calls of 
+when this option is called in B<Retrieve> mode. Subsequent calls of
 B<--parameter_name> would result in additional keys being added to the hashref
 to be returned by this option.
 

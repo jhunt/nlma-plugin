@@ -35,6 +35,7 @@ ok_plugin(0, "OPTION OK - done", undef, "option processing", sub {
 			io_out   => { warn => 10,    crit => '20:30', perf => 0},
 			mem      => { warn => 10,    crit => '~:20',  perf => 0},
 			perf     => { warn => undef, crit => undef,   perf => 'perf'},
+			fd_pct   => { warn => undef, crit => undef,   perf => 'fd_pct'},
 		};
 
 	unless (eq_deeply($expect, OPTION->check)) {
@@ -53,6 +54,7 @@ ok_plugin(0, "OPTION OK - done", undef, "option processing", sub {
 		"-C", 'io_out:warn=10,crit=20:30,perf=0',
 		"-C", 'mem:warn=10,crit=~:20,perf=no',
 		"-C", 'perf:warn,crit,perf',
+		"-C", 'fd_pct',
 	]
 );
 
