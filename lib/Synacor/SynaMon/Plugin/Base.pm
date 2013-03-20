@@ -193,6 +193,7 @@ sub _spec2usage
 	$usage;
 }
 
+my @percent_style_opts = ();
 sub option
 {
 	my ($self, $spec, %opts) = @_;
@@ -200,6 +201,10 @@ sub option
 		if ($spec eq "timeout|t=i") {
 			$self->{legacy}{opts}{timeout} = $opts{default} if $opts{default};
 			return;
+		}
+		if ($spec =~ /^(\S+?)(\|\S+)?=%$/) {
+			push @percent_style_opts, $1;
+			$spec =~ s/=%$/=s\@/;
 		}
 		if (exists $opts{usage}) {
 			push @{$self->{usage_list}}, _spec2usage($opts{usage}, $opts{required});
@@ -234,6 +239,33 @@ sub track_value
 		@data);
 }
 
+sub _reformat_hash_option
+{
+	my @instances = @_;
+	my %opt = ();
+	my $allowed_keys = '(warn|crit|perf)';
+
+	foreach my $instance (@instances) {
+		my ($name, $rest) = split(/:/, $instance, 2);
+		my $values = { warn => undef, crit => undef, perf => 1};
+		my @vals = split(/,/, $rest);
+		foreach my $val (@vals) {
+			my ($key, $value) = split(/=/, $val);
+			return "$name:$val\nSub-option keys must be one of '$allowed_keys'."
+				unless $key =~ /^$allowed_keys$/;
+			if ($key eq 'perf') {
+				if (defined $value && ($value eq '0' || $value eq 'no')) {
+					$value = 0;
+				} else {
+					$value = 1;
+				}
+			}
+			$values->{$key} = $value;
+		}
+		$opt{$name} = $values;
+	}
+	return \%opt;
+}
 sub getopts
 {
 	my ($self) = @_;
@@ -246,6 +278,14 @@ sub getopts
 	open STDERR, ">&STDOUT";
 	$self->{legacy}->getopts;
 	$self->{legacy}->opts->{_attr}{usage} = $self->usage ;
+	foreach my $hash_opt (@percent_style_opts) {
+		my $processed_opt = _reformat_hash_option(@{$self->{legacy}->opts->{$hash_opt}});
+		if (ref($processed_opt) eq "HASH") {
+			$self->{legacy}->opts->{$hash_opt} = $processed_opt;
+		} else {
+			$self->{legacy}->opts->_die("Invalid sub-option: --$hash_opt=$processed_opt\n". $self->usage. "\n");
+		}
+	}
 	open STDERR, ">&", \*OLDERR;
 }
 
@@ -862,7 +902,25 @@ for a full list of settings, legal values and their purpose.
 
 =head2 option
 
-Define a command-line argument for the check script.
+The B<option> function supports two modes. Retrieval of option data, and defining
+options. If no arguments are passed to the B<option> call, retrieval mode is invoked.
+Otherwise, definition mode is invoked.
+
+=over
+
+=item Retrieval
+
+B<option> also gives you access to the passed values, as a hash
+reference, when called with no arguments:
+
+  if ($plugin->option->mode == "mysql") {
+    # do stuff specific to MySQL...
+  }
+
+=item Definition
+
+Define a command-line argument for the check script. Based on two parts: spec,
+and options.
 
   $plugin->option('dbname|n=s',
     usage => "--dbname, -n <table name>",
@@ -870,10 +928,32 @@ Define a command-line argument for the check script.
     required => 1
   );
 
-The first argument is the GetOpt-style argument spec.
+=over
 
-The remainder of the arguments represent contraints and extra information
-about this option.  The following keys are valid:
+=item spec
+
+The first argument is the GetOpt-style argument spec, with one exception.
+Unlike GetOpt, plugins support a '=%' style specification, which is somewhat
+similar to '=s@' specs, but with additional parsing, to turn a specifically
+formatted parameter into a hashref of data related to the name specified. Format
+is as follows:
+
+  --parameter_name key1:opt1=val,opt2=val,...
+
+Possible values for B<optN> names are B<warn>, B<crit>, and B<perf>. B<perf>
+defaults to true, and B<warn>/B<crit> default to undefined values. B<keyN> values
+can be any you desire, and will be used as keys in the hashref returned when this option
+is called in B<Retrieve> mode. Subsequent calls of B<--parameter_name> would result
+in additional keys being added to the hashref to be returned by this option.
+
+See B<Synacor::SynaMon::Plugin> for extensive examples of how to use the specs.
+
+'B<=%>' style option specs have been available since version 1.16.
+
+=item options
+
+The remainder of the arguments passed to the options() sub represent
+contraints and extra information about this option.  The following keys are valid:
 
 =over
 
@@ -897,12 +977,9 @@ not supplied.
 
 =back
 
-B<option> also gives you access to the passed values, as a hash
-reference, when called with no arguments:
+=back
 
-  if ($plugin->option->mode == "mysql") {
-    # do stuff specific to MySQL...
-  }
+=back
 
 =head2 track_value
 
