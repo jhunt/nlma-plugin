@@ -101,6 +101,8 @@ $USAGE
    Option with no usage
  --nousage-default=STRING
    Default / no usage (default: the-default)
+ --helpless=STRING
+   (default: yes)
  --debug, -D
    Turn on debug mode
  -t, --timeout=INTEGER
@@ -133,6 +135,9 @@ EOF
 		OPTION "nousage-default=s",
 			help => "Default / no usage",
 			default => 'the-default';
+
+		OPTION "helpless=s",
+			default => "yes";
 
 		START;
 		DONE;
