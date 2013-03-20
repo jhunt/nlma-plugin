@@ -540,7 +540,7 @@ sub state_file_path
 	my $dir    = $ENV{MONITOR_STATE_FILE_DIR}    || "/var/tmp";
 	my $prefix = $ENV{MONITOR_STATE_FILE_PREFIX} || "mon";
 	$path =~ s|.*/||;
-	$path =~ s/[!@#\$%\^&\*\(\)\|\}\{\[\]\/'"><\s\V]+/_/g;
+	$path =~ s/[!@#\$%\^&\*\(\)\|\}\{\[\]\/'"><\s\x0b]+/_/g;
 	return "$dir/${prefix}_$path";
 }
 
