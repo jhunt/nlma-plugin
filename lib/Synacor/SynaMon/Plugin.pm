@@ -235,11 +235,11 @@ You can access the B<option>s like so:
    OPTION->debug;    # Returns 1 (true)
    OPTION->check;    # Returns hashref of below syntax
    # {
-   #    cpu    => { warn => '10',  crit => '2',     perf => '1' }, # default
-   #    io_in  => { warn => '10',  crit => '20',    perf => '1' }, # perf=asdf
-   #    io_out => { warn => '10',  crit => '20:30', perf => '0' }, # perf=no
-   #    mem    => { warn => '10',  crit => '~:20',  perf => '0' }, # perf=0
-   #    perf   => { warn => undef, crit => undef,   perf => '1' }, # perf
+   #  cpu    => { warn => '10',  crit => '2',     perf => 'cpu' }, # default
+   #  io_in  => { warn => '10',  crit => '20',    perf => 'asdf' }, # perf=asdf
+   #  io_out => { warn => '10',  crit => '20:30', perf => '0' }, # perf=no
+   #  mem    => { warn => '10',  crit => '~:20',  perf => '0' }, # perf=0
+   #  perf   => { warn => undef, crit => undef,   perf => 'perf' }, # perf
    # }
 
 Remaining arguments either provide more information about the option,

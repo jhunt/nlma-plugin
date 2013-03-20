@@ -30,11 +30,11 @@ ok_plugin(0, "OPTION OK - done", undef, "option processing", sub {
 	OPTION->critical == 10 or CRITICAL "--critical was not 10";
 
 	my $expect = {
-			cpu      => { warn => 10,    crit => 20,      perf => 1},
-			io_in    => { warn => ':10', crit => '20:',   perf => 1},
+			cpu      => { warn => 10,    crit => 20,      perf => 'cpu'},
+			io_in    => { warn => ':10', crit => '20:',   perf => 'asdf'},
 			io_out   => { warn => 10,    crit => '20:30', perf => 0},
 			mem      => { warn => 10,    crit => '~:20',  perf => 0},
-			perf     => { warn => undef, crit => undef,   perf => 1},
+			perf     => { warn => undef, crit => undef,   perf => 'perf'},
 		};
 
 	unless (eq_deeply($expect, OPTION->check)) {

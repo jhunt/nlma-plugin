@@ -251,7 +251,7 @@ sub _reformat_hash_option
 
 	foreach my $instance (@instances) {
 		my ($name, $rest) = split(/:/, $instance, 2);
-		my $values = { warn => undef, crit => undef, perf => 1};
+		my $values = { warn => undef, crit => undef, perf => $name};
 		my @vals = split(/,/, $rest);
 		foreach my $val (@vals) {
 			my ($key, $value) = split(/=/, $val);
@@ -261,7 +261,7 @@ sub _reformat_hash_option
 				if (defined $value && ($value eq '0' || $value eq 'no')) {
 					$value = 0;
 				} else {
-					$value = 1;
+					$value = $value || $name;
 				}
 			}
 			$values->{$key} = $value;
@@ -944,10 +944,13 @@ is as follows:
   --parameter_name key1:opt1=val,opt2=val,...
 
 Possible values for B<optN> names are B<warn>, B<crit>, and B<perf>. B<perf>
-defaults to true, and B<warn>/B<crit> default to undefined values. B<keyN> values
-can be any you desire, and will be used as keys in the hashref returned when this option
-is called in B<Retrieve> mode. Subsequent calls of B<--parameter_name> would result
-in additional keys being added to the hashref to be returned by this option.
+defaults to B<keyN>, and allows you to override it to '0' or 'no' to turn off
+perfdata reporting, or with a custom value for use with custom perfdata
+labelling. B<warn>/B<crit> default to undefined values. B<keyN>
+values can be any you desire, and will be used as keys in the hashref returned
+when this option is called in B<Retrieve> mode. Subsequent calls of 
+B<--parameter_name> would result in additional keys being added to the hashref
+to be returned by this option.
 
 See B<Synacor::SynaMon::Plugin> for extensive examples of how to use the specs.
 
