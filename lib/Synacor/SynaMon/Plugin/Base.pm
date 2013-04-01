@@ -584,7 +584,7 @@ sub store
 	print $fh $data;
 	close $fh;
 
-	my (undef, undef, $uid, $gid) = getpwnam($ENV{MONITOR_STATE_FILE_OWNER} || 'nagios');
+	my (undef, undef, $uid, $gid) = getpwnam($ENV{MONITOR_STATE_FILE_OWNER} || 'nlma');
 	chown $uid, $gid, $path;
 }
 
@@ -667,7 +667,7 @@ sub _credstore_path
 	return $ENV{MONITOR_CRED_STORE} if exists $ENV{MONITOR_CRED_STORE};
 	my $homedir = _userdir($ENV{SUDO_USER}) || _userdir(getpwuid($>));
 	return "$homedir/.creds" if $homedir;
-	"/usr/local/groundwork/users/nagios/.creds"; # evil default
+	"/home/nlma/.creds";
 }
 
 sub credentials
