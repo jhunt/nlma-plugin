@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.17";
+our $VERSION = "1.18";
 
 use Exporter;
 use base qw(Exporter);
@@ -587,6 +587,14 @@ optional format for serialization / deserialization.
   my $state = RETRIEVE "state", as => "YAML";
 
 See B<STORE AND RETRIEVE FORMATS> for more information on values for the 'as' key.
+
+Starting with version 1.18, STORE and RETRIEVE (and by extension, STATE_FILE_PATH)
+accept an C<in> option that can specify a path under either /tmp or /var/tmp,
+where the state file should exist (for RETRIEVE) or be created (for STORE).
+
+Note that if you specify a directory structure underneath /tmp or /var/tmp, all
+intervening directories will need to be created beforehand for the STORE or
+RETRIEVE to work.
 
 STORE and RETRIEVE have been available since version 1.0.
 
