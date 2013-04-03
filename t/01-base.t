@@ -14,6 +14,27 @@ ok_plugin(0, "01-BASE.T OK - done", undef, "auto-detect plugin name", sub {
 	DONE;
 });
 
+ok_plugin(0, "BASE OK - done", undef, "ITM-2217 - strip CHECK_ prefix", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "CHECK_BASE";
+	OK "done";
+	DONE;
+});
+
+ok_plugin(0, "BASE OK - done", undef, "ITM-2217 - strip FETCH_ prefix", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "FETCH_BASE";
+	OK "done";
+	DONE;
+});
+
+ok_plugin(0, "BASE_CHECK_FETCH_STUFF OK - done", undef, "ITM-2217 - don't strip prefix", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "BASE_CHECK_FETCH_STUFF";
+	OK "done";
+	DONE;
+});
+
 ###################################################################
 
 ok_plugin(0, "DEFAULT OK - default message", undef, "default OK", sub {
