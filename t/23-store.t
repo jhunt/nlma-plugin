@@ -9,6 +9,10 @@ do "t/common.pl";
 my $plugin = Synacor::SynaMon::Plugin::Base->new;
 isa_ok($plugin, 'Synacor::SynaMon::Plugin::Base');
 is($plugin->state_file_path("test.out"), "/var/tmp/mon_test.out", "Default state file path generation");
+
+is($plugin->state_file_path("test.out", in => "/tmp/other"),
+   "/tmp/other/mon_test.out", "Override location with 'in' option");
+
 $ENV{MONITOR_STATE_FILE_DIR} = "/env";
 $ENV{MONITOR_STATE_FILE_PREFIX} = "PRE";
 is($plugin->state_file_path("test.out"), "/env/PRE_test.out", "Overrides state file path generation");
@@ -368,5 +372,46 @@ ok_plugin(0, "STATE_FILE_PATH OK", undef, "No special characters in path", sub {
 	OK;
 	DONE;
 	});
+
+mkdir "/tmp/mpf-test" unless -d "/tmp/mpf-test";
+unlink "/tmp/mpf-test/mon_altpath" if -f "/tmp/mpf-test/mon_altpath";
+ok_plugin(0, "ALT_PATH OK", undef, "Alternate paths work", sub {
+	use strict;
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "alt_path";
+	START;
+
+	delete $ENV{MONITOR_STATE_FILE_DIR};
+	UNKNOWN "mon_altpath exists in /tmp/mpf-test (sanity check)" if -f "/tmp/mpf-test/mon_altpath";
+	UNKNOWN "default mon_altpath exists (sanity check)" if -f STATE_FILE_PATH("altpath");
+
+	STORE("altpath", "test data 4242", in => "/tmp/mpf-test");
+	UNKNOWN "mon_altpath incorrectly created in default path" if -f STATE_FILE_PATH("altpath");
+	UNKNOWN "mon_altpath not created in overridden /tmp/mpf-test path" unless -f "/tmp/mpf-test/mon_altpath";
+	OK;
+});
+
+ok_plugin(3, "ALT_PATH UNKNOWN - Tried to STORE into /etc (Framework Violation)", undef,
+	"Failed attempt to STORE into an unsafe directory", sub {
+
+	use strict;
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "alt_path";
+	START default => "failed by succeeding";
+
+	delete $ENV{MONITOR_STATE_FILE_DIR};
+	STORE("test", "test data 4242", in => "/etc");
+});
+ok_plugin(3, "ALT_PATH UNKNOWN - Tried to RETRIEVE from /etc (Framework Violation)", undef,
+	"Failed attempt to STORE into an unsafe directory", sub {
+
+	use strict;
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "alt_path";
+	START default => "failed by succeeding";
+
+	delete $ENV{MONITOR_STATE_FILE_DIR};
+	RETRIEVE("test", in => "/etc");
+});
 
 done_testing;

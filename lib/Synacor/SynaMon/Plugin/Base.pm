@@ -542,8 +542,8 @@ sub slurp
 
 sub state_file_path
 {
-	my ($self, $path) = @_;
-	my $dir    = $ENV{MONITOR_STATE_FILE_DIR}    || "/var/tmp";
+	my ($self, $path, %options) = @_;
+	my $dir    = $ENV{MONITOR_STATE_FILE_DIR} || $options{in} || "/var/tmp";
 	my $prefix = $ENV{MONITOR_STATE_FILE_PREFIX} || "mon";
 	$path =~ s|.*/||;
 	$path =~ s/[!@#\$%\^&\*\(\)\|\}\{\[\]\/'"><\s\x0b]+/_/g;
@@ -562,7 +562,10 @@ sub store
 		eval { $archive_data = JSON->new->allow_nonref->encode($self->_process_bulk_data($path, $data)); };
 	}
 
-	$path = $self->state_file_path($path);
+	$self->bail(NAGIOS_UNKNOWN, "Tried to STORE into $options{in} (Framework Violation)")
+		if $options{in} and $options{in} !~ m|^(/var)?/tmp(/.*)?$|;
+
+	$path = $self->state_file_path($path, %options);
 
 	open my $fh, ">", $path or
 		$self->bail(NAGIOS_UNKNOWN, "Could not open '$path' for writing");
@@ -619,7 +622,11 @@ sub _process_bulk_data
 sub retrieve
 {
 	my ($self, $path, %options) = @_;
-	$path = $self->state_file_path($path);
+
+	$self->bail(NAGIOS_UNKNOWN, "Tried to RETRIEVE from $options{in} (Framework Violation)")
+		if $options{in} and $options{in} !~ m|^(/var)?/tmp(/.*)?$|;
+
+	$path = $self->state_file_path($path, %options);
 
 	if ($options{touch} && -e $path) {
 		utime(undef, undef, $path);
@@ -1158,6 +1165,13 @@ For example:
   my $state = $plugin->state_file_path("save.state");
 
 May generate a file path like I</var/tmp/mon_save.state>.
+
+This function also handles the C<in> option that B<store> and B<retrieve>
+support, for determining where the state file should exist on the filesystem:
+
+  my $state = $plugin->state_file_path("save.state", in => "/tmp/other");
+
+Will generate the path I</tmp/other/mon_save.state>.
 
 =head2 store
 
