@@ -279,6 +279,10 @@ sub getopts
 		usage => "--debug, -D",
 		help  => "Turn on debug mode"
 	);
+	$self->option("noop",
+		usage => "--noop",
+		help  => "Dry-run mode"
+	);
 	$self->{legacy}->opts->{_attr}{usage} = $self->usage;
 	open OLDERR, ">&", \*STDERR;
 	open STDERR, ">&STDOUT";
@@ -377,6 +381,7 @@ sub start
 	$ALL_DONE = 0;
 
 	$self->{debug} = $self->option->debug;
+	$self->{noop}  = $self->option->noop;
 	$self->debug("Starting ".$self->mode." execution");
 
 	if (exists $opts{default}) {
@@ -426,6 +431,12 @@ sub check_value
 	$self->debug("Threshold check yielded status $stat");
 	return $stat, $message if $skip_OK && $stat == NAGIOS_OK;
 	$self->status($stat, $message);
+}
+
+sub noop
+{
+	my ($self) = @_;
+	return $self->{noop};
 }
 
 sub debug
@@ -566,6 +577,11 @@ sub store
 		if $options{in} and $options{in} !~ m|^(/var)?/tmp(/.*)?$|;
 
 	$path = $self->state_file_path($path, %options);
+
+	if ($self->noop) {
+		$self->debug("Running in NOOP mode; not writing to state files");
+			return;
+	}
 
 	open my $fh, ">", $path or
 		$self->bail(NAGIOS_UNKNOWN, "Could not open '$path' for writing");
@@ -1095,6 +1111,11 @@ free, and can focus on adding to that where it makes sense.
 
 Intelligently dump a list of objects, but only if the B<--debug>
 flag was specified.
+
+=head2 noop
+
+Helper function that returns true of the --noop argument was
+specified.
 
 =head2 stage
 

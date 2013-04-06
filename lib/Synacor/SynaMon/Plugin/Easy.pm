@@ -37,7 +37,7 @@ our @EXPORT = qw/
 
 	JSON_DECODE
 
-	DEBUG DUMP
+	DEBUG DUMP NOOP
 /;
 
 our $plugin;
@@ -80,6 +80,7 @@ sub RUN { $plugin->run(@_); }
 
 sub DEBUG { $plugin->debug(@_) if $plugin }
 sub DUMP  { $plugin->dump(@_); }
+sub NOOP  { $plugin->noop(@_); }
 
 sub MECH         { $plugin->mech(@_); }
 sub HTTP_REQUEST { $plugin->http_request(@_); }
@@ -234,6 +235,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::debug>.
 =head2 DUMP
 
 Wrapper around B<Synacor::SynaMon::Plugin::dump>.
+
+=head2 NOOP
+
+Wrapper around B<Synacor::SynaMon::Plugin::noop>.
 
 =head2 MECH
 

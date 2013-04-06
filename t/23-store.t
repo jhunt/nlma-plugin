@@ -414,4 +414,21 @@ ok_plugin(3, "ALT_PATH UNKNOWN - Tried to RETRIEVE from /etc (Framework Violatio
 	RETRIEVE("test", in => "/etc");
 });
 
+ok_plugin(0, "NOOP OK", undef, "Noop shouldn't store to state files", sub {
+	use strict;
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "NOOP";
+	START;
+
+	CRITICAL "--noop arg unrecognized" unless NOOP;
+
+	unlink STATE_FILE_PATH("noop-file") if -f STATE_FILE_PATH("noop-file");
+	STORE("noop-file", "that's wrong...");
+	my $data = RETRIEVE("noop-file");
+
+	CRITICAL "Retrieved '$data' somehow"
+		if $data;
+	OK;
+}, ["--noop"]);
+
 done_testing;
