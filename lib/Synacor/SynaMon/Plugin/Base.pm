@@ -435,6 +435,7 @@ sub debug
 	for (@messages) {
 		$_ = (defined($_) ? $_: "undef");
 		s/\n+$//;
+		s/\n/\nDEBUG> /g;
 		print STDERR "DEBUG> $_\n";
 	}
 	print STDERR "\n";
