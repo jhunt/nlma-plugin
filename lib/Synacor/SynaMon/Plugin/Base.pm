@@ -446,6 +446,7 @@ sub debug
 	for (@messages) {
 		$_ = (defined($_) ? $_: "undef");
 		s/\n+$//;
+		s/\n/\nDEBUG> /g;
 		print STDERR "DEBUG> $_\n";
 	}
 	print STDERR "\n";
@@ -898,6 +899,31 @@ sub json_decode
 		$data = $1;
 	}
 	eval { $obj = JSON->new->allow_nonref->decode($data); }
+}
+
+my @UNITS = qw/B KB MB GB TB PB EB YB ZB/;
+sub parse_bytes
+{
+	my ($self, $s) = @_;
+	$s =~ m/^(\d+(?:\.\d+)?)([^\d]+)/i or return undef;
+	my ($num, $unit) = ($1, uc($2));
+	for (@UNITS) {
+		return $num if $unit eq $_ or "${unit}B" eq $_;
+		$num *= 1024;
+	}
+	$self->UNKNOWN("Bad size spec: '$s'");
+}
+
+sub format_bytes
+{
+	my ($self, $b, $fmt) = @_;
+	my $orig = $b+0;
+	$fmt = '%0.2f%s' unless $fmt;
+	for (@UNITS) {
+		return sprintf($fmt, $b, $_) if $b < 1024;
+		$b /= 1024.0;
+	}
+	$self->UNKNOWN("Size $orig is unfathomably large (>1ZB)");
 }
 
 "YAY!";
@@ -1457,6 +1483,16 @@ with all provided parameters.
 Decode JSON serialized data safely.  If an exception is thrown during
 the decode operation, undef will be returned.  Otherwise, the
 de-serialized object will be returned.
+
+=head2 parse_bytes($str)
+
+Parse a string representing a size (like '15M' or '67.8 kb'), and return the
+number of bytes.
+
+=head2 format_bytes($bytes, [$format])
+
+Format a number of bytes into a more manageable, human readable format.  This
+is the reverse operation of B<parse_bytes>.
 
 =head1 AUTHOR
 
