@@ -12,10 +12,10 @@ sub TEST_ALL
 
 sub ok_plugin
 {
-	my ($exit, $summary, $perf, $message, $sub, $args) = @_;
+	my ($exit, $summary, $perf, $message, $sub, $args, %opts) = @_;
 	$args = $args || [];
 
-	my ($e, $s, $p, $output);
+	my ($e, $s, $p, @output);
 	pipe my ($parent, $child);
 	my $pid = fork;
 
@@ -48,11 +48,17 @@ sub ok_plugin
 		fail "$message - Couldn't fork: $!";
 	}
 
-	($s, $p) = map { s/^\s+//; s/\s$//; $_ } split /\|/, $output[0];
+	if ($opts{output} eq 'all') {
+		$s = join('', @output);
+		is($s, $summary, "$message: expected summary output");
+		is($e, $exit,    "$message: expect exit code $exit");
+	} else {
+		($s, $p) = map { s/^\s+//; s/\s$//; $_ } split /\|/, $output[0];
 
-	is($s, $summary, "$message: expected summary output");
-	is($p, $perf,    "$message: expected perfdata output") if $perf;
-	is($e, $exit,    "$message: expect exit code $exit");
+		is($s, $summary, "$message: expected summary output");
+		is($p, $perf,    "$message: expected perfdata output") if $perf;
+		is($e, $exit,    "$message: expect exit code $exit");
+	}
 }
 
 sub ok_plugin_help
