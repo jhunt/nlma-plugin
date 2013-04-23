@@ -109,6 +109,22 @@ ok_plugin(2, "TEST CRITICAL - bad!", undef, "Dummy STATUS CRITICAL", sub {
 	DONE;
 });
 
+ok_plugin(3, "TEST UNKNOWN - %TILDE%", undef, "Dummy STATUS UNKNOWN escape tilda", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UNKNOWN", "~";
+	DONE;
+});
+
+ok_plugin(3, "TEST UNKNOWN - %TILDE%%AMP%%DOLLAR%%LT%%GT%%QUOT%%BTIC%", undef, "Dummy STATUS UNKNOWN escape illegal", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UNKNOWN", "~&\$<>\"`";
+	DONE;
+});
+
 ok_plugin(3, "TEST UNKNOWN - ???", undef, "Dummy STATUS UNKNOWN", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "TEST";

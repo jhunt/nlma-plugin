@@ -315,6 +315,14 @@ sub status
 	my $msg = join('', @message);
 	$self->debug("Adding $name ($code) from [$status] message: $msg");
 
+	$msg =~ s/\&/%AMP%/g;
+	$msg =~ s/\~/%TILDE%/g;
+	$msg =~ s/\$/%DOLLAR%/g;
+	$msg =~ s/\</%LT%/g;
+	$msg =~ s/\>/%GT%/g;
+	$msg =~ s/\"/%QUOT%/g;
+	$msg =~ s/`/%BTIC%/g;
+
 	push @{$self->{messages}{$code}}, $msg;
 	if ($code == NAGIOS_UNKNOWN) {
 		$ALL_DONE = 1;
