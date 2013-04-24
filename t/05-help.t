@@ -32,6 +32,8 @@ $USAGE
    Default / no usage (default: the-default)
  --debug, -D
    Turn on debug mode
+ --noop
+   Dry-run mode
  -t, --timeout=INTEGER
    Seconds before plugin times out (default: 22)
 EOF
@@ -105,6 +107,8 @@ $USAGE
    (default: yes)
  --debug, -D
    Turn on debug mode
+ --noop
+   Dry-run mode
  -t, --timeout=INTEGER
    Seconds before plugin times out (default: 15)
 EOF

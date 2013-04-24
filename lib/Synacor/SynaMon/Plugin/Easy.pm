@@ -37,7 +37,9 @@ our @EXPORT = qw/
 
 	JSON_DECODE
 
-	DEBUG DUMP
+	PARSE_BYTES FORMAT_BYTES BYTES_THOLD
+
+	DEBUG DUMP NOOP
 /;
 
 our $plugin;
@@ -80,6 +82,7 @@ sub RUN { $plugin->run(@_); }
 
 sub DEBUG { $plugin->debug(@_) if $plugin }
 sub DUMP  { $plugin->dump(@_); }
+sub NOOP  { $plugin->noop(@_); }
 
 sub MECH         { $plugin->mech(@_); }
 sub HTTP_REQUEST { $plugin->http_request(@_); }
@@ -89,6 +92,19 @@ sub HTTP_POST    { $plugin->http_post(@_); }
 sub SUBMIT_FORM  { $plugin->submit_form(@_); }
 
 sub JSON_DECODE { $plugin->json_decode(@_); }
+
+sub PARSE_BYTES  { $plugin->parse_bytes(@_); }
+sub FORMAT_BYTES { $plugin->format_bytes(@_); }
+sub BYTES_THOLD
+{
+	my ($thold) = @_;
+	if ($thold) {
+		DEBUG "Converting human-readable size specs in '$thold'";
+		$thold =~ s/\s*(\d+(?:\.\d+)?)\s*([kmgtpezy]?b)/PARSE_BYTES("$1$2")/egi;
+		DEBUG "Converted threshold to '$thold'";
+	}
+	return $thold;
+}
 
 END {
 	$plugin->finalize("END block") if $plugin;
@@ -235,6 +251,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::debug>.
 
 Wrapper around B<Synacor::SynaMon::Plugin::dump>.
 
+=head2 NOOP
+
+Wrapper around B<Synacor::SynaMon::Plugin::noop>.
+
 =head2 MECH
 
 Wrapper around B<Synacor::SynaMon::Plugin::mech>.
@@ -262,6 +282,21 @@ Wrapper around B<Synacor::SynaMon::Plugin::submit_form>.
 =head2 JSON_DECODE
 
 Wrapper around B<Synacor::SynaMon::Plugin::json_decode>.
+
+=head2 PARSE_BYTES
+
+Wrapper around B<Synacor::SynaMon::Plugin::parse_bytes>.
+
+=head2 FORMAT_BYTES
+
+Wrapper around B<Synacor::SynaMon::Plugin::format_bytes>.
+
+=head2 BYTES_THOLD
+
+Convert human-readable size specs in a threshold (like "4kb:8kb")
+and turns them into raw byte thresholds, (i.e. "4096:8192").
+
+Otherwise, the threshold string will remain as-is.
 
 =head1 AUTHOR
 

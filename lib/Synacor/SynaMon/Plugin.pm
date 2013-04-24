@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.18";
+our $VERSION = "1.19";
 
 use Exporter;
 use base qw(Exporter);
@@ -904,6 +904,25 @@ The B<DUMP> function dumps out a formatted representation of one or more
 variables, using Data::Dumper:
 
   DUMP($http_headers, $json_response);
+
+=head1 DRY-RUN MODE
+
+When debugging checks, it can be useful to run the check plugin in such a way
+that the live running system (i.e. state files) is not affected.
+
+For this use case, the globally defined B<--noop> flag will turn on a mode
+where calls to B<STORE> perform no real work.  Note that B<RETRIEVE> still
+works in noop mode, since reading is free.
+
+To alter your plugin's behavior based on whether or not dry-run mode is active,
+use the B<NOOP> function (and don't forget to B<DEBUG>!):
+
+  if (NOOP) {
+      DEBUG "Running in NOOP mode; skipping destructive action!";
+
+  } else {
+      run_destructive_action;
+  }
 
 =head1 AUTHOR
 
