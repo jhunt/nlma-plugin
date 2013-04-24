@@ -1,3 +1,5 @@
+use strict;
+use warnings;
 use Test::LongString;
 use POSIX qw(WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED);
 
@@ -14,6 +16,7 @@ sub ok_plugin
 {
 	my ($exit, $summary, $perf, $message, $sub, $args, %opts) = @_;
 	$args = $args || [];
+	$opts{output} ||= "";
 
 	my ($e, $s, $p, @output);
 	pipe my ($parent, $child);
@@ -66,6 +69,7 @@ sub ok_plugin_help
 	my ($expect, $message, $sub, $args) = @_;
 	pipe my ($parent, $child);
 	my $pid = fork;
+	my ($e, $output);
 
 	if ($pid) {
 		close $child;
@@ -97,3 +101,5 @@ sub ok_plugin_help
 	my $exit = 3; # always 3...
 	is($e, $exit, "$message: expect exit code $exit");
 }
+
+1;

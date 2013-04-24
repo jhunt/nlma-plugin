@@ -1,7 +1,7 @@
 #!perl
 
 use Test::More;
-do "t/common.pl";
+require "t/common.pl";
 use Test::LongString;
 
 use constant TEST_SEND_NSCA => "t/bin/send_nsca";
