@@ -132,7 +132,7 @@ ok_plugin(0, "HTTP OK - JSON", undef, "JSON HTTP ops", sub {
 	DONE;
 });
 
-ok_plugin(3, "HTTP UNKNOWN - HTTP_PUT called incorrectly; \$data not a scalar reference", undef, "PUT with bad data ref", sub {
+ok_plugin(3, "HTTP UNKNOWN - HTTP_PUT called incorrectly; %DOLLAR%data not a scalar reference", undef, "PUT with bad data ref", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "oops... fell through to OK";
@@ -141,7 +141,7 @@ ok_plugin(3, "HTTP UNKNOWN - HTTP_PUT called incorrectly; \$data not a scalar re
 	DONE;
 });
 
-ok_plugin(3, "HTTP UNKNOWN - HTTP_POST called incorrectly; \$data not a scalar reference", undef, "POST with bad data ref", sub {
+ok_plugin(3, "HTTP UNKNOWN - HTTP_POST called incorrectly; %DOLLAR%data not a scalar reference", undef, "POST with bad data ref", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "oops... fell through to OK";
