@@ -1,7 +1,7 @@
 #!perl
 
 use Test::More;
-do "t/common.pl";
+require "t/common.pl";
 
 ###################################################################
 # SLURP

@@ -1,7 +1,7 @@
 #!perl
 
 use Test::More;
-do "t/common.pl";
+require "t/common.pl";
 use Test::LongString;
 
 use constant TEST_SEND_NSCA => "t/bin/send_nsca";
@@ -76,9 +76,9 @@ ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA a few times", sub {
 	OK "sent";
 });
 is_string_nows(slurp(TEST_NSCA_OUT),
-	"b-host\t0\tits up!\n".
-	"a-host\t1\tits broke!\n".
-	"a-host\tcpu\t2\tKinda High...\n",
+	"b-host\t0\tits up!\n\x17".
+	"a-host\t1\tits broke!\n\x17".
+	"a-host\tcpu\t2\tKinda High...\n\x17",
 		"send_nsca output is correct");
 
 ###################################################################
@@ -113,9 +113,9 @@ ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA / bad status", sub {
 	OK "sent";
 });
 is_string_nows(slurp(TEST_NSCA_OUT),
-	"host\tservice\t3\tits broke!\n".
-	"host\tservice\t3\tits broke!\n".
-	"host\tservice\t3\tits broke!\n",
+	"host\tservice\t3\tits broke!\n\x17".
+	"host\tservice\t3\tits broke!\n\x17".
+	"host\tservice\t3\tits broke!\n\x17",
 		"send_nsca output is correct");
 
 ###################################################################

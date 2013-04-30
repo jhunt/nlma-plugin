@@ -1,7 +1,7 @@
 #!perl
 
 use Test::More;
-do "t/common.pl";
+require "t/common.pl";
 
 ok_plugin(0, "RUN OK", undef, "simple run", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);

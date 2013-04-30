@@ -67,7 +67,7 @@ sub new
 	my $bin = do{my $n=$0;$n=~s|.*/||;$n};
 
 	# Play nice with Nagios::Plugin
-	$options{shortname} = uc($options{name} || $bin);
+	($options{shortname} = uc($options{name} || $bin)) =~ s/^(CHECK|FETCH)_//;
 	delete $options{name};
 
 	if (exists $options{summary}) {
