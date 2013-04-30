@@ -141,6 +141,8 @@ sub HOSTS
 {
 	my (%options) = @_;
 
+	$options{dedupe} = 1 unless defined $options{dedupe};
+
 	$options{file}     = "/etc/icinga/defs/local/hosts.lst"     unless $options{file};
 	$options{alt_file} = "/etc/icinga/defs.old/local/hosts.lst" unless $options{alt_file};
 
@@ -155,8 +157,13 @@ sub HOSTS
 	while (<$fh>) {
 		chomp;
 		my ($ip, $name) = split/\s+/, $_, 2;
-		$h{$ip}   = $name if  $BY_ADDRESS;
-		$h{$name} = $ip   if !$BY_ADDRESS;
+		my ($key, $value) = $BY_ADDRESS ? ($ip, $name) : ($name, $ip);
+
+		if ($options{dedupe}) {
+			$h{$key} = $value;
+		} else {
+			push @{$h{$key}}, $value;
+		}
 	}
 
 	return wantarray ? keys %h : \%h;
@@ -247,6 +254,17 @@ Path to the primary file and the alternate file to use for lookups.
 
 These default to C</etc/icinga/defs/local/hosts.lst> and
 C</etc/icinga/defs.old/local/hosts.lst>, respectively.
+
+=item B<dedupe>
+
+By default, multiple values for a key will be ignored; the last value
+seen in the file (sequentially) will overwrite previous values.
+
+You can avoid this behavior (and always gets arrayref values) by passing
+B<dedupe> as false.
+
+Note that this has no effect on a call to B<HOSTS> in list context, since
+the keys must be unique in a hash.
 
 =back
 

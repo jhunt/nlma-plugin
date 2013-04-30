@@ -372,6 +372,52 @@ ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing", sub {
 	OK;
 });
 
+ok_plugin(0, "FEEDER OK", undef, "dedupe", sub {
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	#open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	my $file = "t/data/hosts.dup";
+	my $hash;
+
+	$hash = HOSTS file => $file, by => 'name';
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find host1.example.com in deduped, by-name listing"
+		unless $hash->{'host1.example.com'} and $hash->{'host1.example.com'} eq '10.10.10.1';
+	WARNING "Did not find host2.example.com in deduped, by-name listing"
+		unless $hash->{'host2.example.com'} and $hash->{'host2.example.com'} eq '10.10.10.1';
+
+	$hash = HOSTS file => $file, by => 'ip'; # dedupe by default
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Expected 10.10.10.1 => host2.example.com in deduped by-IP listing"
+		unless $hash->{'10.10.10.1'} and $hash->{'10.10.10.1'} eq 'host2.example.com';
+
+	$hash = HOSTS file => $file, by => 'ip', dedupe => 0;
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	CRITICAL "res{10.10.10.1} was not an array ref"
+		unless ref($hash->{'10.10.10.1'}) and ref($hash->{'10.10.10.1'}) eq 'ARRAY';
+	WARNING "More than two results for 10.10.10.1"
+		unless @{$hash->{'10.10.10.1'}} == 2;
+	WARNING "Expected 10.10.10.1[0] => host1.example.com in non-deduped, by-IP listing"
+		unless $hash->{'10.10.10.1'}[0] and $hash->{'10.10.10.1'}[0] eq 'host1.example.com';
+	WARNING "Expected 10.10.10.1[1] => host2.example.com in non-deduped, by-IP listing"
+		unless $hash->{'10.10.10.1'}[1] and $hash->{'10.10.10.1'}[1] eq 'host2.example.com';
+
+	CRITICAL "res{127.0.0.1} was not an array ref"
+		unless ref($hash->{'127.0.0.1'}) and ref($hash->{'127.0.0.1'}) eq 'ARRAY';
+	WARNING "More than one restult for 127.0.0.1"
+		unless @{$hash->{'127.0.0.1'}} == 1;
+	WARNING "Expected 127.0.0.1[0] => localhost in non-deduped, by-IP listing"
+		unless $hash->{'127.0.0.1'}[0] and $hash->{'127.0.0.1'}[0] eq 'localhost';
+
+
+	OK;
+});
+
 ok_plugin(3, "FEEDER UNKNOWN - Failed to open /path/to/nowhere (or /path.alt/to/nowhere): No such file or directory", undef, "bad hosts file", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
