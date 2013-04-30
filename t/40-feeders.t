@@ -316,6 +316,85 @@ like(slurp(TEST_LOG_FILE), qr/via HT_TRACE/m, "found evidence of env var debuggi
 delete $ENV{HT_TRACE};
 
 ###################################################################
+# HOSTS FILE PARSING
+
+ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing", sub {
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	my $file = "t/data/hosts.lst";
+	my ($hash, @keys);
+
+	$hash = HOSTS file => $file;
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find 127.0.0.1 => localhost"
+		unless $hash->{'127.0.0.1'} and $hash->{'127.0.0.1'} eq 'localhost';
+
+	@keys = HOSTS file => $file;
+	WARNING "Did not find 127.0.0.1 in IP list"
+		unless $keys[0] and $keys[0] eq "127.0.0.1";
+
+	$hash = HOSTS file => $file, by => 'address';
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find 127.0.0.1 => localhost (by => address)"
+		unless $hash->{'127.0.0.1'} and $hash->{'127.0.0.1'} eq 'localhost';
+
+	@keys = HOSTS file => $file, by => 'ip';
+	WARNING "Did not find 127.0.0.1 in IP list (by => ip)"
+		unless $keys[0] and $keys[0] eq "127.0.0.1";
+
+
+	$hash = HOSTS file => $file, by => 'name';
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find localhost => 127.0.0.1"
+		unless $hash->{localhost} and $hash->{localhost} eq "127.0.0.1";
+
+	@keys = HOSTS file => $file, by => 'fqdn';
+	WARNING "Did not find localhost in Hostname list"
+		unless $keys[0] and $keys[0] eq "localhost";
+
+
+	$hash = HOSTS file => "/path/to/nowhere", alt_file => $file, by => 'name';
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find localhost => 127.0.0.1"
+		unless $hash->{localhost} and $hash->{localhost} eq "127.0.0.1";
+
+	@keys = HOSTS file => "/path/to/nowhere", alt_file => $file, by => 'fqdn';
+	WARNING "Did not find localhost in Hostname list"
+		unless $keys[0] and $keys[0] eq "localhost";
+
+	OK;
+});
+
+ok_plugin(3, "FEEDER UNKNOWN - Failed to open /path/to/nowhere (or /path.alt/to/nowhere): No such file or directory", undef, "bad hosts file", sub {
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	HOSTS file => "/path/to/nowhere", alt_file => "/path.alt/to/nowhere";
+
+	OK;
+});
+
+ok_plugin(3, "FEEDER UNKNOWN - Failed to open /etc/icinga/defs/local/hosts.lst (or /etc/icinga/defs.old/local/hosts.lst): No such file or directory", undef, "bad hosts file", sub {
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	HOSTS;
+
+	OK;
+});
+
+###################################################################
 # cleanup
 
 unlink TEST_LOG_FILE;
