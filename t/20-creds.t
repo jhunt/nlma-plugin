@@ -2,7 +2,7 @@
 
 use Test::More;
 use Test::Deep;
-do "t/common.pl";
+require "t/common.pl";
 
 ###################################################################
 

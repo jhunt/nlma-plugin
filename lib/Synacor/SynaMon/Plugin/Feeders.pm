@@ -50,7 +50,7 @@ sub FLUSH_NSCA
 	my $cmd = "$NSCA{bin} -H $NSCA{host} -c $NSCA{config} -p $NSCA{port} $NSCA{args}";
 	if ($NSCA{noop}) {
 		DEBUG "NOOP `$chunk -- $cmd`";
-		DEBUG "NOOP >> '$_\\n'\n" for @RESULTS;
+		DEBUG "NOOP >> '$_\\n\\x17'\n" for @RESULTS;
 		return;
 	}
 
@@ -61,8 +61,8 @@ sub FLUSH_NSCA
 		or BAIL "Exec failed: $!";
 
 	for (@RESULTS) {
-		DEBUG "NSCA >> '$_\\n'\n";
-		print $pipe "$_\n"
+		DEBUG "NSCA >> '$_\\n\\x17'\n";
+		print $pipe "$_\n\x17"
 			or BAIL "SEND_NSCA failed: $!";
 	}
 	close $pipe;
