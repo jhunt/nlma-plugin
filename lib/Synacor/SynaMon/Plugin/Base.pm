@@ -24,6 +24,10 @@ use constant NAGIOS_WARNING  => 1;
 use constant NAGIOS_CRITICAL => 2;
 use constant NAGIOS_UNKNOWN  => 3;
 
+use constant MESSAGE_TRUNCATED  => ' (alert truncated @4k)';
+use constant MESSAGE_MAX_TOTAL  => 4000; # for some wiggle room
+use constant MESSAGE_MAX_SINGLE => 500;
+
 our %STATUS_NAMES = (
 	OK       => "OK",
 	WARNING  => "WARNING",
@@ -76,16 +80,15 @@ sub new
 	}
 
 	$options{usage} = "$options{shortname} [OPTIONS]";
-
 	my $self = {
 		messages => {
-			NAGIOS_OK       => [],
-			NAGIOS_WARNING  => [],
-			NAGIOS_CRITICAL => [],
-			NAGIOS_UNKNOWN  => [],
+			UNKNOWN  => { len => 0, list => [], over => 0 },
+			OK       => { len => 0, list => [], over => 0 },
+			WARNING  => { len => 0, list => [], over => 0 },
+			CRITICAL => { len => 0, list => [], over => 0 },
 		},
 		name => $bin,
-		bin  => $bin, # name may change drop the 'check_' prefix...
+		shortname => $options{shortname},
 		usage_list => [],
 		did_stuff => 0, # ticked for every STATUS message
 		options => {},
@@ -312,7 +315,14 @@ sub status
 
 	$status = "undef" unless defined $status;
 
-	my $msg = join('', @message);
+	my $msg = join('', @message) || '';
+
+	my $len = length($msg);
+	if ($len > MESSAGE_MAX_SINGLE) {
+		$len = MESSAGE_MAX_SINGLE;
+		$msg = substr($msg, 0, $len);
+	}
+
 	$self->debug("Adding $name ($code) from [$status] message: $msg");
 
 	$msg =~ s/&/%AMP%/g;
@@ -323,12 +333,22 @@ sub status
 	$msg =~ s/"/%QUOT%/g;
 	$msg =~ s/`/%BTIC%/g;
 
-	push @{$self->{messages}{$code}}, $msg;
 	if ($code == NAGIOS_UNKNOWN) {
 		$ALL_DONE = 1;
 		$self->{legacy}->nagios_exit(NAGIOS_UNKNOWN, $msg);
+
 	} else {
-		$self->{legacy}->add_message($code, $msg);
+		# store the message and update length
+		push (@{$self->{messages}{$name}{list}}, $msg);
+		$self->{messages}{$name}{len} += $len + 1;
+
+		# make sure we don't go over our 4k limit
+		while ($self->{messages}{$name}{len} - 1  > MESSAGE_MAX_TOTAL) {
+			$self->{messages}{$name}{over} = 1;
+
+			my $drop = shift @{$self->{messages}{$name}{list}};
+			$self->{messages}{$name}{len} -= length($drop) + 1;
+		}
 	}
 
 	return $code, $msg;
@@ -409,6 +429,14 @@ sub finalize
 	if (!$self->{did_stuff}) {
 		$self->UNKNOWN("Check appears to be broken; no problems triggered");
 	}
+	for my $name (keys %{$self->{messages}}) {
+		next unless @{$self->{messages}{$name}{list}};
+		my $msg = join(' ', @{$self->{messages}{$name}{list}});
+
+		$msg .= MESSAGE_TRUNCATED if $self->{messages}{$name}{over};
+		$self->{legacy}->add_message($STATUS_CODES{$name}, $msg);
+	}
+
 	$self->{legacy}->nagios_exit($self->{legacy}->check_messages);
 }
 

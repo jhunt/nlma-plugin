@@ -101,7 +101,7 @@ sub LOG
 		$ENV{HT_DEBUG} = "DEBUG";
 	}
 
-	my $service = $Synacor::SynaMon::Plugin::Easy::plugin->{bin};
+	my $service = $Synacor::SynaMon::Plugin::Easy::plugin->{name};
 	DEBUG "Setting up Log4perl for $service";
 
 	my $config = $ENV{HT_LOG_CONFIG} || HT_LOG_CONFIG;
