@@ -80,7 +80,6 @@ sub new
 	}
 
 	$options{usage} = "$options{shortname} [OPTIONS]";
-	my $message_overhead = length($options{shortname}) + 4 + length(MESSAGE_TRUNCATED);
 	my $self = {
 		messages => {
 			UNKNOWN  => { len => 0, list => [], over => 0 },
