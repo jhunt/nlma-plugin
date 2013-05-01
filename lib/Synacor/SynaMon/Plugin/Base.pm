@@ -634,8 +634,8 @@ sub store
 		} else {
 			$self->UNKNOWN("Unknown format for STORE: $options{as}");
 		}
-	} elsif (ref($data) eq "ARRAY") { # RAW lines...
-		$data = join('', @$data);
+	} elsif (ref($data)) {
+		$self->bail(NAGIOS_UNKNOWN, "Tried to store ".ref($data).", which is not a simple scalar value");
 	}
 	print $fh $data;
 	close $fh;
@@ -692,11 +692,10 @@ sub retrieve
 		return undef;
 	};
 
-	my @lines = <$fh>;
+	my $data = do { local $/; <$fh> };
 	close $fh;
 
 	if ($options{as} && $options{as} !~ m/^raw$/i) {
-		my $data = join('', @lines);
 		$self->debug("Retrieved RAW data:");
 		$self->dump($data);
 
@@ -710,7 +709,7 @@ sub retrieve
 
 		$self->UNKNOWN("Unknown format for RETRIEVE: $options{as}");
 	}
-	wantarray ? @lines : join('', @lines);
+	return $data;
 }
 
 sub _userdir

@@ -598,7 +598,7 @@ accept an C<in> option that can specify a path under either /tmp or /var/tmp,
 where the state file should exist (for RETRIEVE) or be created (for STORE).
 
 Note that if you specify a directory structure underneath /tmp or /var/tmp, all
-intervening directories will need to be created beforehand for the STORE or
+intervening directories will need to be created beforehand for STORE or
 RETRIEVE to work.
 
 STORE and RETRIEVE have been available since version 1.0.
@@ -628,7 +628,9 @@ Formats data as JSON.
 
 =item B<raw>
 
-Stores raw data into a file. Don't forget newlines if passing an array of strings!
+Stores raw data into a file.  Non-scalar values (including hash- and array-refs)
+are no longer permitted by STORE.  If you need to STORE/RETRIEVE complicated
+data structures, consider using the B<yaml> or B<json> formats.
 
 =item B<data_archive>
 
