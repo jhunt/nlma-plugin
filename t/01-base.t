@@ -80,6 +80,14 @@ ok_plugin(0, "TEST OK - okay", undef, "Dummy OK", sub {
 	DONE;
 });
 
+ok_plugin(0, "TEST OK", undef, "Message-less OK", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	OK;
+	DONE;
+});
+
 ok_plugin(1, "TEST WARNING - warn", undef, "Dummy WARN", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "TEST";
@@ -127,6 +135,22 @@ ok_plugin(2, "TEST CRITICAL - bad!", undef, "Dummy STATUS CRITICAL", sub {
 	PLUGIN name => "TEST";
 	START;
 	STATUS "CRITICAL", "bad!";
+	DONE;
+});
+
+ok_plugin(3, "TEST UNKNOWN - %TILDE%", undef, "Dummy STATUS UNKNOWN escape tilda", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UNKNOWN", "~";
+	DONE;
+});
+
+ok_plugin(3, "TEST UNKNOWN - %TILDE%%AMP%%DOLLAR%%LT%%GT%%QUOT%%BTIC%", undef, "Dummy STATUS UNKNOWN escape illegal", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UNKNOWN", "~&\$<>\"`";
 	DONE;
 });
 
@@ -199,6 +223,48 @@ ok_plugin(1, "BAIL WARNING - warning failure??", undef, "Bail with alternate syn
 	OK "all good"; # never reached
 	DONE;
 });
+
+
+###################################################################
+
+my $X = 'x' x 9; # +1 = 10
+my $size_msg = "SIZE OK - ".("$X " x 400).'(alert truncated @4k)';
+ok_plugin(0, $size_msg, undef, "Truncate Messages", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "size";
+	START;
+
+	CRITICAL "length descrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
+	for (1 .. 600) { OK $X; }
+	DONE;
+});
+
+$X = 'x' x 39; # +1 = 40
+$size_msg = 'SIZE OK - '.("$X " x 100).'(alert truncated @4k)';
+ok_plugin(0, $size_msg, undef, "Bigger Truncate Messages", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "size";
+	START;
+
+	CRITICAL "length descrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
+	for (1 .. 600) { OK $X; }
+	DONE;
+});
+
+$X = 'x' x 500;
+$size_msg = "SIZE OK - $X $X $X";
+ok_plugin(0, $size_msg, undef, "Maximum single message size", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "size";
+	START;
+
+	CRITICAL "length descrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
+	OK 'x' x 1024;
+	OK 'x' x 2024;
+	OK 'x' x 8192;
+	DONE;
+});
+
 
 ###################################################################
 

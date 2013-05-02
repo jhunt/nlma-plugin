@@ -415,6 +415,11 @@ The hierarchy of problem types, from most severe to least, is:
 
 =back
 
+A single status message can only be up to 500 characters long.  Overall, the
+total number of characters that any plugin will output is limited to around 4000.
+These limits are set to protect other parts of the monitoring system, and are
+high enough to accommodate normal, sane usage.
+
 UNKNOWN, CRITICAL, WARNING and OK have been available since version 1.0.
 
 =head1 CHECKING THRESHOLDS
