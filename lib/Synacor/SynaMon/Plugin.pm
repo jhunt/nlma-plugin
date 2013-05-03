@@ -96,7 +96,7 @@ implementing functionality.  For that reason, and to avoid headache and unnecess
 breakage, the framework features a system of deprecating features.
 
 If you use a deprecated feature or behavior, the framework will (by default) print
-a deprecation notice, like this one:
+a deprecation notice to standard error, like this one:
 
     DEPRECATION NOTICE: The FOOBAR feature is deprecated as of v1.25
 
