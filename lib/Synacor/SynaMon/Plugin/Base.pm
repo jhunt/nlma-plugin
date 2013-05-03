@@ -502,7 +502,7 @@ sub deprecated
 	if ($ENV{MONITOR_FAIL_ON_DEPRECATION}) {
 		$self->UNKNOWN("DEPRECATION NOTICE: $msg");
 	} else {
-		$self->debug("DEPRECATION NOTICE: $msg");
+		print STDERR "DEPRECATION NOTICE: $msg\n";
 	}
 }
 
