@@ -13,6 +13,8 @@ our @EXPORT = qw/
 	SEND_NSCA
 	FLUSH_NSCA
 
+	HOSTS
+
 	LOG
 /;
 
@@ -135,6 +137,38 @@ sub LOG
 	return $LOG;
 }
 
+sub HOSTS
+{
+	my (%options) = @_;
+
+	$options{dedupe} = 1 unless defined $options{dedupe};
+
+	$options{file}     = "/etc/icinga/defs/local/hosts.lst"     unless $options{file};
+	$options{alt_file} = "/etc/icinga/defs.old/local/hosts.lst" unless $options{alt_file};
+
+	my $fh;
+	open $fh, "<", $options{file} or
+		open $fh, "<", $options{alt_file} or
+			UNKNOWN "Failed to open $options{file} (or $options{alt_file}): $!";
+
+	my $BY_ADDRESS = !$options{by} || $options{by} =~ m/^(address|ip)$/;
+
+	my %h = ();
+	while (<$fh>) {
+		chomp;
+		my ($ip, $name) = split/\s+/, $_, 2;
+		my ($key, $value) = $BY_ADDRESS ? ($ip, $name) : ($name, $ip);
+
+		if ($options{dedupe}) {
+			$h{$key} = $value;
+		} else {
+			push @{$h{$key}}, $value;
+		}
+	}
+
+	return wantarray ? keys %h : \%h;
+}
+
 END {
 	if ($Synacor::SynaMon::Plugin::MODE eq "feeder") {
 		DEBUG "Flushing ".@RESULTS." NSCA results\n";
@@ -184,6 +218,55 @@ values are treated as 3/UNKNOWN.
 
 Send all batched results to the local monitoring server instance (or
 whatever you set I<hostname> to via B<SET_NSCA>).
+
+=head2 HOSTS %options
+
+Retrieve host names and/or IP addresses from a hosts.lst file.  If
+the hosts cannot be read from the first file, an alternate file will
+be consulted.  If that does not exist (or cannot otherwise be read),
+the feeder will exit with an UNKNOWN.
+
+Called in list mode, this will return a single list of either IP addresses
+or host names (depending on the B<by> value).
+
+In scalar mode, returns a hashref that is keyed according to B<by>.
+
+B<HOSTS> has been available since version 1.20.
+
+Here are the available options:
+
+=over
+
+=item B<by>
+
+The keying mode of the host lookup.  If set to C<ip> or C<address>,
+the IP addresses will be the keys in the scalar context, and the values
+returned in list context.  If set to C<name> (or anything else), hostnames
+will be preferred.
+
+Defaults to C<ip>.
+
+=item B<file>
+
+=item B<alt_file>
+
+Path to the primary file and the alternate file to use for lookups.
+
+These default to C</etc/icinga/defs/local/hosts.lst> and
+C</etc/icinga/defs.old/local/hosts.lst>, respectively.
+
+=item B<dedupe>
+
+By default, multiple values for a key will be ignored; the last value
+seen in the file (sequentially) will overwrite previous values.
+
+You can avoid this behavior (and always gets arrayref values) by passing
+B<dedupe> as false.
+
+Note that this has no effect on a call to B<HOSTS> in list context, since
+the keys must be unique in a hash.
+
+=back
 
 =head2 LOG
 
