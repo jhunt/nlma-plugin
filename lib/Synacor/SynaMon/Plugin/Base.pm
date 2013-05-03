@@ -496,6 +496,16 @@ sub dump
 	print STDERR "\n";
 }
 
+sub deprecated
+{
+	my ($self, $msg) = @_;
+	if ($ENV{MONITOR_FAIL_ON_DEPRECATION}) {
+		$self->UNKNOWN("DEPRECATION NOTICE: $msg");
+	} else {
+		$self->debug("DEPRECATION NOTICE: $msg");
+	}
+}
+
 sub stage
 {
 	my ($self, $action) = @_;
@@ -634,8 +644,9 @@ sub store
 		} else {
 			$self->UNKNOWN("Unknown format for STORE: $options{as}");
 		}
-	} elsif (ref($data)) {
-		$self->bail(NAGIOS_UNKNOWN, "Tried to store ".ref($data).", which is not a simple scalar value");
+	} elsif (ref($data) eq "ARRAY") { # RAW lines...
+		$self->deprecated("STORE(ref) is deprecated as of v1.20; use 'as => yaml' or 'as => json'");
+		$data = join('', @$data);
 	}
 	print $fh $data;
 	close $fh;
@@ -708,6 +719,10 @@ sub retrieve
 		}
 
 		$self->UNKNOWN("Unknown format for RETRIEVE: $options{as}");
+	}
+	if (wantarray) {
+		$self->deprecated("RETRIEVE in list context is deprecated");
+		return map { "$_\n" } split /\n/, $data;
 	}
 	return $data;
 }
@@ -1172,6 +1187,19 @@ free, and can focus on adding to that where it makes sense.
 
 Intelligently dump a list of objects, but only if the B<--debug>
 flag was specified.
+
+=head2 deprecated($message)
+
+Handle deprecation of features.  This is an internal method that is
+only intended to be used by other parts of this module, and not by
+plugins written in the framework.
+
+In normal mode, deprecation notices are printed directly to standard
+error, for diagnostic purposes.
+
+If the MONITOR_FAIL_ON_DEPRECATION environment value is set to a non-zero,
+non-empty value, the plugin will exit immediately with an UNKNOWN status
+when it encounters a call to this function.
 
 =head2 noop
 

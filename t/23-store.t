@@ -65,26 +65,64 @@ ok_plugin(3, "STORE UNKNOWN - Could not open 't/ENOENT/mon_test.fail' for writin
 	DONE;
 });
 
-ok_plugin(3, "STORE UNKNOWN - Tried to store HASH, which is not a simple scalar value", undef, "Store and retrieve HASH ref fails", sub {
+ok_plugin(0, "STORE OK - arrays work", undef, "Store and retrieve arrays", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "store";
 	START;
-	STORE("test.list", { key => 'value' });
-	OK "failed to fail";
+
+	my @list = ("first\n", "second\n", "third\n");
+	STORE("test.list", \@list);
+
+	my $read_scalar = RETRIEVE("test.list");
+	$read_scalar eq "first\nsecond\nthird\n" or CRITICAL "STORE(list) / RETRIEVE(scalar) fails: $read_scalar";
+
+	my @read_list = RETRIEVE("test.list");
+	$read_list[0] eq "first\n"  or CRITICAL "RETRIEVE(list)[0] is $read_list[0]";
+	$read_list[1] eq "second\n" or CRITICAL "RETRIEVE(list)[1] is $read_list[1]";
+	$read_list[2] eq "third\n"  or CRITICAL "RETRIEVE(list)[2] is $read_list[2]";
+
+	OK "arrays work";
 	DONE;
 });
-ok_plugin(3, "STORE UNKNOWN - Tried to store ARRAY, which is not a simple scalar value", undef, "Store and retrieve ARRAY ref fails", sub {
+
+my $notice = "DEPRECATION NOTICE: RETRIEVE in list context is deprecated";
+ok_plugin(0, "RETRIEVE OK - deprecation ignored", undef, "Ignore deprecation notices for RETRIEVE in list context", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => "retrieve";
+	START;
+	my @list = RETRIEVE("test.list");
+	OK "deprecation ignored";
+	DONE;
+});
+ok_plugin(3, "RETRIEVE UNKNOWN - $notice", undef, "DEPRECATION of RETRIEVE in list context", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	$ENV{MONITOR_FAIL_ON_DEPRECATION} = 1;
+	PLUGIN name => "retrieve";
+	START;
+	my @list = RETRIEVE("test.list");
+	OK "failed to fail";
+	DONE;
+});
+
+$notice = "DEPRECATION NOTICE: STORE(ref) is deprecated; use 'as =%GT% yaml' or 'as =%GT% json'";
+ok_plugin(3, "STORE UNKNOWN - $notice", undef, "STORE(ref) deprecation notice", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	$ENV{MONITOR_FAIL_ON_DEPRECATION} = 1;
 	PLUGIN name => "store";
 	START;
 	STORE("test.list", [1,2,3]);
 	OK "failed to fail";
 	DONE;
 });
+
 
 unlink "t/data/tmp/mon_retr.new" if -f "t/data/tmp/mon_retr.new";
 ok(! -f "t/data/tmp/mon_retr.new", "mon_retr.new should not exist");

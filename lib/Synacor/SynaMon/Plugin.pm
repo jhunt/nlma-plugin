@@ -89,6 +89,26 @@ For example, to require framework version 1.56 or later:
 This documentation should define, for each function, what version of the framework
 that function first appeared in.
 
+=head1 DEPRECATION OF FEATURES
+
+Sometimes, we just can't help it, and we make mistakes in designing APIs and
+implementing functionality.  For that reason, and to avoid headache and unnecessary
+breakage, the framework features a system of deprecating features.
+
+If you use a deprecated feature or behavior, the framework will (by default) print
+a deprecation notice, like this one:
+
+    DEPRECATION NOTICE: The FOOBAR feature is deprecated as of v1.25
+
+The plugin will then soldier on, doing what you asked it to.
+
+If you are a plugin developer, and want to make sure that your plugin doesn't rely
+on deprecated features, you can set the B<MONITOR_FAIL_ON_DEPRECATION> environment
+variable.  At that point, plugins will bail when they trigger deprecation notices.
+
+For a list of things that have been deprecated, and when, see the section
+B<DEPRECATED FEATURES LIST>, at the end of this document.
+
 =head1 AN EXAMPLE PLUGIN
 
 To get started, let's look at an example plugin that checks the age of a file:
@@ -629,8 +649,8 @@ Formats data as JSON.
 =item B<raw>
 
 Stores raw data into a file.  Non-scalar values (including hash- and array-refs)
-are no longer permitted by STORE.  If you need to STORE/RETRIEVE complicated
-data structures, consider using the B<yaml> or B<json> formats.
+are no longer permitted by STORE (they were until v1.20).  If you need to handle
+complicated data structures, consider using the B<yaml> or B<json> formats.
 
 =item B<data_archive>
 
@@ -930,6 +950,20 @@ use the B<NOOP> function (and don't forget to B<DEBUG>!):
   } else {
       run_destructive_action;
   }
+
+=head1 DEPRECATED FEATURES LIST
+
+=head2 STORE/RETRIEVE of scalar values (v1.20)
+
+Prior to 1.20, B<STORE> and B<RETRIEVE> would transparently handle Perl array
+references and calling context for raw format read/writes.  When STORE was
+given an array reference, and no explicit format, it would join the array items
+together (without a delimiter).  If RETRIEVE was called in list context, it
+split the lines out of the state file and returned those as a list.
+
+This behavior predates storage formats like YAML and JSON.  Storage formats are
+also superior, and provide more readability to people trying to troubleshoot
+check plugin state files.
 
 =head1 AUTHOR
 
