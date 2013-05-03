@@ -110,7 +110,7 @@ ok_plugin(3, "RETRIEVE UNKNOWN - $notice", undef, "DEPRECATION of RETRIEVE in li
 	DONE;
 });
 
-$notice = "DEPRECATION NOTICE: STORE(ref) is deprecated; use 'as =%GT% yaml' or 'as =%GT% json'";
+$notice = "DEPRECATION NOTICE: STORE(ref) is deprecated as of v1.20; use 'as =%GT% yaml' or 'as =%GT% json'";
 ok_plugin(3, "STORE UNKNOWN - $notice", undef, "STORE(ref) deprecation notice", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
