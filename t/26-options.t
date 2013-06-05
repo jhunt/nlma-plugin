@@ -6,6 +6,30 @@ require "t/common.pl";
 ###################################################################
 # option support
 
+ok_plugin(3, "OPTION UNKNOWN - Reserved option drops%PIPE%D=s used; this plugin is buggy.", undef, "override -D", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "drops|D=s";
+	START default => "good";
+	DONE;
+});
+
+ok_plugin(3, "OPTION UNKNOWN - Reserved option debug used; this plugin is buggy.", undef, "override --debug", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "debug";
+	START default => "good";
+	DONE;
+});
+
+ok_plugin(3, "OPTION UNKNOWN - Reserved option noop used; this plugin is buggy.", undef, "override --noop", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "noop";
+	START default => "good";
+	DONE;
+});
+
 ok_plugin(0, "OPTION OK - done", undef, "option processing", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	use Test::Deep::NoTest;

@@ -206,6 +206,11 @@ sub option
 			return;
 		}
 
+		if (!exists($opts{framework}) and $spec =~ m/\b(debug|noop|D)\b/) {
+			$self->status('UNKNOWN', "Reserved option $spec used; this plugin is buggy.");
+		}
+		delete $opts{framework};
+
 		if ($spec =~ /^(\S+?)(\|\S+)?=%$/) {
 			push @percent_style_opts, $1;
 			$spec =~ s/=%$/=s\@/;
@@ -280,11 +285,13 @@ sub getopts
 	my ($self) = @_;
 	$self->option("debug|D",
 		usage => "--debug, -D",
-		help  => "Turn on debug mode"
+		help  => "Turn on debug mode",
+		framework => 1,
 	);
 	$self->option("noop",
 		usage => "--noop",
-		help  => "Dry-run mode"
+		help  => "Dry-run mode",
+		framework => 1,
 	);
 	$self->{legacy}->opts->{_attr}{usage} = $self->usage;
 	open OLDERR, ">&", \*STDERR;
@@ -332,6 +339,7 @@ sub status
 	$msg =~ s/>/%GT%/g;
 	$msg =~ s/"/%QUOT%/g;
 	$msg =~ s/`/%BTIC%/g;
+	$msg =~ s/\|/%PIPE%/g;
 
 	if ($code == NAGIOS_UNKNOWN) {
 		$ALL_DONE = 1;
