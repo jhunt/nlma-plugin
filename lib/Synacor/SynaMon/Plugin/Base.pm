@@ -206,8 +206,11 @@ sub option
 			return;
 		}
 
-		if (!exists($opts{framework}) and $spec =~ m/\b(debug|noop|D)\b/) {
-			$self->status('UNKNOWN', "Reserved option $spec used; this plugin is buggy.");
+		if (!exists($opts{framework})) {
+			for (qw/debug|D   noop/) {
+				next unless $spec =~ m/\b($_)\b/;
+				$self->status('UNKNOWN', "Option spec $spec conflicts with built-in $_ option");
+			}
 		}
 		delete $opts{framework};
 
