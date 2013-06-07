@@ -207,7 +207,10 @@ sub option
 		}
 
 		if (!exists($opts{framework})) {
-			for (qw/debug|D   noop/) {
+			if ($spec =~ m/\busage\b/ || $spec =~ m/^\?/ || $spec =~ m/\|\?/) {
+				$self->status('UNKNOWN', "Option spec $spec conflicts with built-in usage|? option");
+			}
+			for (qw/debug|D   noop   help|h/) {
 				next unless $spec =~ m/\b($_)\b/;
 				$self->status('UNKNOWN', "Option spec $spec conflicts with built-in $_ option");
 			}
