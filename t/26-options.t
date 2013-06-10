@@ -6,6 +6,54 @@ require "t/common.pl";
 ###################################################################
 # option support
 
+ok_plugin(3, "OPTION UNKNOWN - Option spec drops%PIPE%D=s conflicts with built-in debug%PIPE%D option", undef, "override -D", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "drops|D=s";
+	START default => "good";
+	DONE;
+});
+
+ok_plugin(3, "OPTION UNKNOWN - Option spec debug conflicts with built-in debug%PIPE%D option", undef, "override --debug", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "debug";
+	START default => "good";
+	DONE;
+});
+
+ok_plugin(3, "OPTION UNKNOWN - Option spec host%PIPE%h conflicts with built-in help%PIPE%h option", undef, "override -h", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "host|h", help => 'host to connect to';
+	START default => "good";
+	DONE;
+});
+
+ok_plugin(3, "OPTION UNKNOWN - Option spec usage%PIPE%U conflicts with built-in usage%PIPE%? option", undef, "override -h", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "usage|U", help => 'usage';
+	START default => "good";
+	DONE;
+});
+
+ok_plugin(3, "OPTION UNKNOWN - Option spec what%PIPE%? conflicts with built-in usage%PIPE%? option", undef, "override -h", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "what|?", help => 'what???';
+	START default => "good";
+	DONE;
+});
+
+ok_plugin(3, "OPTION UNKNOWN - Option spec noop conflicts with built-in noop option", undef, "override --noop", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "noop";
+	START default => "good";
+	DONE;
+});
+
 ok_plugin(0, "OPTION OK - done", undef, "option processing", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	use Test::Deep::NoTest;
