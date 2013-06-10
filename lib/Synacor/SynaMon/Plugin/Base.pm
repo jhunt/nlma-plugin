@@ -206,6 +206,17 @@ sub option
 			return;
 		}
 
+		if (!exists($opts{framework})) {
+			if ($spec =~ m/\busage\b/ || $spec =~ m/^\?/ || $spec =~ m/\|\?/) {
+				$self->status('UNKNOWN', "Option spec $spec conflicts with built-in usage|? option");
+			}
+			for (qw/debug|D   noop   help|h/) {
+				next unless $spec =~ m/\b($_)\b/;
+				$self->status('UNKNOWN', "Option spec $spec conflicts with built-in $_ option");
+			}
+		}
+		delete $opts{framework};
+
 		if ($spec =~ /^(\S+?)(\|\S+)?=%$/) {
 			push @percent_style_opts, $1;
 			$spec =~ s/=%$/=s\@/;
@@ -280,11 +291,13 @@ sub getopts
 	my ($self) = @_;
 	$self->option("debug|D",
 		usage => "--debug, -D",
-		help  => "Turn on debug mode"
+		help  => "Turn on debug mode",
+		framework => 1,
 	);
 	$self->option("noop",
 		usage => "--noop",
-		help  => "Dry-run mode"
+		help  => "Dry-run mode",
+		framework => 1,
 	);
 	$self->{legacy}->opts->{_attr}{usage} = $self->usage;
 	open OLDERR, ">&", \*STDERR;
@@ -332,6 +345,7 @@ sub status
 	$msg =~ s/>/%GT%/g;
 	$msg =~ s/"/%QUOT%/g;
 	$msg =~ s/`/%BTIC%/g;
+	$msg =~ s/\|/%PIPE%/g;
 
 	if ($code == NAGIOS_UNKNOWN) {
 		$ALL_DONE = 1;
