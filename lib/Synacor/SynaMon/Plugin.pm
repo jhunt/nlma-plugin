@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.20";
+our $VERSION = "1.21";
 
 use Exporter;
 use base qw(Exporter);
@@ -649,7 +649,7 @@ Formats data as JSON.
 =item B<raw>
 
 Stores raw data into a file.  Non-scalar values (including hash- and array-refs)
-are no longer permitted by STORE (they were until v1.20).  If you need to handle
+are no longer permitted by STORE (they were until v1.21).  If you need to handle
 complicated data structures, consider using the B<yaml> or B<json> formats.
 
 =item B<data_archive>
@@ -953,9 +953,9 @@ use the B<NOOP> function (and don't forget to B<DEBUG>!):
 
 =head1 DEPRECATED FEATURES LIST
 
-=head2 STORE/RETRIEVE of scalar values (v1.20)
+=head2 STORE/RETRIEVE of scalar values (v1.21)
 
-Prior to 1.20, B<STORE> and B<RETRIEVE> would transparently handle Perl array
+Prior to 1.21, B<STORE> and B<RETRIEVE> would transparently handle Perl array
 references and calling context for raw format read/writes.  When STORE was
 given an array reference, and no explicit format, it would join the array items
 together (without a delimiter).  If RETRIEVE was called in list context, it
