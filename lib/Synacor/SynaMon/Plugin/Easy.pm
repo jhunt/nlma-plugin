@@ -27,6 +27,7 @@ our @EXPORT = qw/
 	CREDENTIALS CRED_KEYS
 
 	RUN
+	SSH
 
 	MECH
 	HTTP_REQUEST
@@ -79,6 +80,7 @@ sub CREDENTIALS { $plugin->credentials(@_); }
 sub CRED_KEYS { $plugin->cred_keys(@_); }
 
 sub RUN { $plugin->run(@_); }
+sub SSH { $plugin->ssh(@_); }
 
 sub DEBUG { $plugin->debug(@_) if $plugin }
 sub DUMP  { $plugin->dump(@_); }
@@ -242,6 +244,10 @@ Introduced in 1.09
 =head2 RUN
 
 Wrapper around B<Synacor::SynaMon::Plugin::run>.
+
+=head2 SSH
+
+Wrapper around B<Synacor::SynaMon::Plugin::ssh>.
 
 =head2 DEBUG
 

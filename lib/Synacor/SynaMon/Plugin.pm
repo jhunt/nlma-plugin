@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.21";
+our $VERSION = "1.22";
 
 use Exporter;
 use base qw(Exporter);
@@ -441,6 +441,53 @@ These limits are set to protect other parts of the monitoring system, and are
 high enough to accommodate normal, sane usage.
 
 UNKNOWN, CRITICAL, WARNING and OK have been available since version 1.0.
+
+=head1 RUNNING EXTERNAL COMMANDS
+
+Sometimes a check plugin needs to use an outside command to perform its validation.
+For that, we have provides RUN(). In the most basic use, RUN() will take a command
+argument, and options to determine how it is run. RUN returns the output of a command
+either in scalar or list context. Return codes are automatically checked, and STDERR
+is forwarded to the check plugin's STDERR to be caught by the calling program.
+
+One of RUN()'s options is the 'via' option, which lets the caller run commands over
+different transport mechanisms. If no 'via' option is specified, it defaults to running
+locally via a shell. The following transport mechanisms are currently supported:
+
+=over
+
+=item shell
+
+Do not provide a 'via' option to engage running commands via a local shell.
+
+=item Net::SSH::Perl
+
+Provide a Net::SSH::Perl object to 'via' when calling RUN to execute the command
+over the SSH session.
+
+=back
+
+RUN($cmd, via => $obj) has been available sinze version 1.22.
+SSH and Net::SSH::Perl support for RUN have been available since version 1.22.
+
+=head2 RUN Examples
+
+  # Run a command locally in list context
+  my @output = RUN("ls -1");
+  # Returns: ('myfile', 'myfile2', 'myfile3')
+
+  # Run a command locally in scalar context
+  my $output = RUN("ls -1");
+  # Returns: 'myfile\nmyfile1\nmyfile3\n'
+
+  # Run a command via an ssh session in list context
+  my $ssh = SSH($host, $user, $pass, { ssh_option => 'ssh_opt_value' });
+  my @output = RUN("ls -1", via => $ssh);
+  # Returns: ('remotefile', 'remotefile2', 'remotefile3')
+
+  # Run a command via an ssh session in scalar context
+  my $output = RUN("ls -1", via => $ssh);
+  # Returns 'remotefile\nremotefile2\nremotefile3\n'
 
 =head1 CHECKING THRESHOLDS
 

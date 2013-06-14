@@ -829,6 +829,21 @@ sub cred_keys
 sub run
 {
 	my ($self, $command, %opts) = @_;
+	if ($opts{via}) {
+		if ($opts{via}->isa("Net::SSH::Perl")){
+			my $ssh = delete $opts{via};
+			$self->_run_via_ssh($ssh, $command, %opts);
+		} else {
+			$self->bail(NAGIOS_UNKNOWN, "Unsupported RUN mechanism: '".ref($opts{via})."'");
+		}
+	} else {
+		$self->_run_via_shell($command, %opts);
+	}
+}
+
+sub _run_via_shell
+{
+	my ($self, $command, %opts) = @_;
 	my $bin = $command;
 	$bin =~ s/\s+.*//;
 
@@ -869,6 +884,51 @@ sub run
 	}
 
 	return wantarray ? (map { chomp; $_ } @lines) : join('', @lines);
+}
+
+sub _run_via_ssh
+{
+	my ($self, $ssh, $cmd, %opts) = @_;
+	my ($stdout, $stderr, $rc);
+	$self->debug("Executing: '$cmd'");
+	eval {
+		($stdout, $stderr, $rc) = $ssh->cmd($cmd);
+		if (! $opts{failok} && $rc != 0) {
+			$self->CRITICAL("'$cmd' did not execute successfully (rc: $rc).");
+		}
+		$stdout =~ s/\r\n/\n/g;
+		$stderr =~ s/\r\n/\n/g;
+		print STDERR $stderr if $stderr;
+		1;
+	} or do {
+		$@ =~ s/(.*) at \S+ line \d+/$1/;
+		$self->bail("CRITICAL", "Could not run '$cmd' on $ssh->{host}: $@");
+	};
+	$stdout .= "\n" unless $stdout =~ /\n$/;
+	return wantarray ? split(/\n/, $stdout) : $stdout;
+}
+
+sub ssh
+{
+	my ($self, $hostname, $user, $pass, $opts) = @_;
+
+	$opts->{debug} = "1" if $self->{debug};
+	if ($hostname =~ s/:(\d+)//) {
+		$opts->{port} = $1;
+	}
+
+	my $ssh;
+	eval {
+		$ssh = Net::SSH::Perl->new($hostname, %$opts)
+			or $self->bail("CRITICAL", "Couldn't connect to $hostname");
+		$ssh->login($user, $pass)
+			or $self->bail("CRITICAL", "Could not log in to $hostname as $user");
+		1;
+	} or do {
+		$@ =~ s/(.*) at \S+ line \d+/$1/;
+		$self->bail("CRITICAL", "Could not ssh to $hostname as $user: $@");
+	};
+	return $ssh;
 }
 
 sub mech
@@ -1434,6 +1494,28 @@ susbsequent search mechanism for keys.
 
 =head2 run
 
+Dispatches commands based on how they were called. Returns the output as
+returned by the dispatched function (usually, in scalar context returns
+stdout as a scalar; and in list context returns stdout as an array of stdout
+split across newlines).
+
+In default context (no 'via' option), commands are dispatched to run via
+the shell (see B<run_via_shell>).
+
+If 'via' is set to a Net::SSH::Perl object, the command will be executed
+against that ssh session.
+
+  # run a regular command
+  $plugin->run("ls /");
+
+  # run via ssh
+  my $ssh = $plugin->ssh($host, $user, $pass);
+  $plugin->run("ls /", via => $ssh);
+
+No other 'via' mechanisms are currently supported aside from Net::SSH::Perl.
+
+=head2 run_via_shell
+
 Run a command (or a command pipeline) and retrieve the output.  Some
 internal sanity tests will be performed on the command to be runned.
 
@@ -1456,6 +1538,32 @@ some sanity checks on it.  If the command is an absolute path to
 an executable or script, the framework will check that the file
 exists and is actually executable.  If these tests fail, the whole
 check will be aborted as an UNKNOWN.
+
+=head2 run_via_ssh
+
+Run a command (or commmand pipeline) and retrieve the output via an
+ssh session.
+
+Output will be returned as a list of lines (without the traiing '\n')
+if called in list context, or a string containing newline-separated lines
+in scalar context. This behavior is very similar to run_via_shell's behavior.
+
+=head2 ssh
+
+Creates a Net::SSH::Perl object for use with the run($cmd, via => $obj)
+function. Accepts hostname, username, password, and Net::SSH::Perl options.
+
+This will add CRITs upon errors to instantiate the ssh object, and on errors
+logging in.
+
+If using an ssh key, use the appropriate ssh options for Net::SSH::Perl to pass
+in the identity files to be used.
+
+  # create new SSH object passing in port 22 to Net::SSH::Perl
+  my $ssh = $plugin->ssh($hostname, $user, $pass, { port => 22 });
+
+  # auto-determine port from hostname
+  my $ssh = $plugin->ssh("myhost:22", $user, $pass, {});
 
 =head2 mech
 
