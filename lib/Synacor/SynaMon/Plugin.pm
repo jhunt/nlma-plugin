@@ -445,7 +445,7 @@ UNKNOWN, CRITICAL, WARNING and OK have been available since version 1.0.
 =head1 RUNNING EXTERNAL COMMANDS
 
 Sometimes a check plugin needs to use an outside command to perform its validation.
-For that, we have provides RUN(). In the most basic use, RUN() will take a command
+For that, we have provided RUN(). In the most basic use, RUN() will take a command
 argument, and options to determine how it is run. RUN returns the output of a command
 either in scalar or list context. Return codes are automatically checked, and STDERR
 is forwarded to the check plugin's STDERR to be caught by the calling program.
@@ -458,19 +458,9 @@ locally via a shell. The following transport mechanisms are currently supported:
 
 =item shell
 
-Do not provide a 'via' option to engage running commands via a local shell.
-
-=item Net::SSH::Perl
-
-Provide a Net::SSH::Perl object to 'via' when calling RUN to execute the command
-over the SSH session.
-
-=back
-
-RUN($cmd, via => $obj) has been available sinze version 1.22.
-SSH and Net::SSH::Perl support for RUN have been available since version 1.22.
-
-=head2 RUN Examples
+The default transport mechanism is to run via a local shell. You may omit the
+'via' option to RUN to run via a local shell, or you may explicitly pass in the
+string 'shell' for the same results.
 
   # Run a command locally in list context
   my @output = RUN("ls -1");
@@ -480,6 +470,31 @@ SSH and Net::SSH::Perl support for RUN have been available since version 1.22.
   my $output = RUN("ls -1");
   # Returns: 'myfile\nmyfile1\nmyfile3\n'
 
+  # Run command in shell specifying 'via'
+  my $output = RUN("ls -l", via => 'shell');
+  # Returns: 'myfile\nmyfile1\nmyfile3\n'
+
+RUN will fail in shell mode under the following circumstances:
+
+=over
+
+=item * If the command does not exist as a file, or is not executable
+
+=item * If the command could not be run
+
+=item * If the command exited non-zero (through normal operations, a kill signal, oranabnormal exit)
+
+=back
+
+=item Net::SSH::Perl
+
+Provide a Net::SSH::Perl object to 'via' when calling RUN to execute the command
+over the SSH session. Takes hostname, username, password, and a hashref of ssh_options
+to be passed to Net::SSH::Perl.
+
+NOTE: If the port is specified in the hostname parameter, it will override any value
+set in the ssh_options parameter.
+
   # Run a command via an ssh session in list context
   my $ssh = SSH($host, $user, $pass, { ssh_option => 'ssh_opt_value' });
   my @output = RUN("ls -1", via => $ssh);
@@ -488,6 +503,35 @@ SSH and Net::SSH::Perl support for RUN have been available since version 1.22.
   # Run a command via an ssh session in scalar context
   my $output = RUN("ls -1", via => $ssh);
   # Returns 'remotefile\nremotefile2\nremotefile3\n'
+
+RUN will fail in Net::SSH::Perl mode under the following circumstances:
+
+=over
+
+=item * If the command could not be run on the remote host
+
+=item * If the command exited non-zero when run on the remote host
+
+=back
+
+=back
+
+RUN($cmd, via => $obj) has been available since version 1.22.
+Net::SSH::Perl support for RUN has been available since version 1.22.
+
+=head2 SSH
+
+In order to obtain an SSH connection with standard error checking/alerting
+on connection issues, use the SSH call. This was implemented for use with the
+RUN call, to allow for running external commands via SSH.
+
+  my $ssh = SSH($host, $user, $pass, { ssh_option => 'value' });
+
+CRITICAL alerts will be generated if there are errors connecting to $host,
+if the credentials were invalid, or if for some reason perl was unable to
+instantiate the Net::SSH::Perl object.
+
+SSH has been available since version 1.22.
 
 =head1 CHECKING THRESHOLDS
 

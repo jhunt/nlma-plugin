@@ -82,14 +82,53 @@ ok_plugin(0, "RUN OK - return list", undef, "list context for RUN call", sub {
 	DONE;
 });
 
-ok_plugin(3, "RUNVIA UNKNOWN - Unsupported RUN mechanism: 'My::Protocol'", undef, "run via unsupported type fails", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
-	PLUGIN name => "RUNVIA";
-	START;
-	my $ssh = My::Protocol->new;
-	RUN "ls", via => $ssh;
-	OK "this should not have returned ok...";
-	DONE;
+# test unsported object as transport mechanism
+ok_plugin(3,
+	"RUNVIA UNKNOWN - Unsupported RUN mechanism: 'My::Protocol'",
+	undef,
+	"run via unsupported type fails",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "RUNVIA";
+		START;
+		my $ssh = My::Protocol->new;
+		RUN "ls", via => $ssh;
+		OK "this should not have returned ok...";
+		DONE;
+});
+
+# test unsupported scalar as transport mechanism
+ok_plugin(3,
+	"RUNVIA UNKNOWN - Unsupported RUN mechanism: 'testing'",
+	undef,
+	"run via unsupported scalar fails",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => 'RUNVIA';
+		START;
+		RUN "ls", via => 'testing';
+		OK "this should not have returned ok...";
+		DONE;
+});
+
+# test RUN's default transport mechanism
+ok_plugin(0, "RUNVIA OK - ls worked", undef, "test default transport mechanism for RUN", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => 'RUNVIA';
+		START;
+		RUN "ls";
+		OK "ls worked";
+		DONE;
+});
+
+# test explicit setting of default transport mechanism
+ok_plugin(0, "RUNVIA OK - explicit ls worked", undef, "test explicit 'shell' transport mechanism for RUN", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => 'RUNVIA';
+		START;
+		RUN "ls", via => 'shell';
+		OK "explicit ls worked";
+		DONE;
 });
 
 # test running ssh command
