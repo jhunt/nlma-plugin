@@ -11,6 +11,7 @@ use YAML::XS qw(LoadFile);
 use JSON;
 use Data::Dumper qw(Dumper);
 use WWW::Mechanize;
+use Net::SSH::Perl;
 use POSIX qw/
 	WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED
 	SIGALRM
