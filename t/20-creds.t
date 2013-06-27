@@ -280,6 +280,11 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 		 "LDAP/*/test",
 		 "LDAP" ],
 		"Generate LDAP credentials keys");
+
+	cmp_deeply([$plugin->cred_keys("TYPE", "10.10.10.10")],
+		["TYPE/10.10.10.10",
+		 "TYPE" ],
+		"Generate TYPE credentials based on IP");
 }
 
 system("chmod 644 t/data/creds*");

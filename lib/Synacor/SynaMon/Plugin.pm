@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.22";
+our $VERSION = "1.23";
 
 use Exporter;
 use base qw(Exporter);
@@ -797,6 +797,22 @@ This code searches for the following keys in the credstore:
 =item LDAP/*/role
 
 =item LDAP
+
+=back
+
+As of version 1.23, B<CRED_KEYS> also supports an IP address instead of hostname.
+It can be used like this:
+
+  my $ip = "10.10.10.10";
+  my ($u, $p) = CREDENTIALS( CRED_KEYS("MYTEST", $ip) );
+
+This returns the following keys:
+
+=over 8
+
+=item MYTEST/10.10.10.10
+
+=item MYTEST
 
 =back
 

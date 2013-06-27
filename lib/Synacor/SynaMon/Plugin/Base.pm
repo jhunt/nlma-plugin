@@ -814,17 +814,26 @@ sub cred_keys
 	my ($self, $type, $hostname) = @_;
 
 	$self->debug("Generating candidate cred keys for $type/$hostname");
-	$hostname =~ m/^([a-z]+)[^\.]*\.(.*)/;
-	my ($role, $cluster) = ($1, $2);
-	$cluster =~ s/\.synacor\.com$//;
 
-	return (
-		"$type/$hostname",       # host-specific
-		"$type/$cluster/$role",  # cluster / role specific
-		"$type/$cluster/*",      # cluster-global
-		"$type/*/$role",         # role-global
-		$type,                   # ...
-	);
+	my @keys;
+
+	if ($hostname =~ /^\d+\.\d+\.\d+\.\d+$/) {
+		@keys = ("$type/$hostname", $type); # $hostname is an IP here..
+	} else {
+		$hostname =~ m/^([a-z]+)[^\.]*\.(.*)/;
+		my ($role, $cluster) = ($1, $2);
+		$cluster =~ s/\.synacor\.com$//;
+
+		@keys = (
+			"$type/$hostname",       # host-specific
+			"$type/$cluster/$role",  # cluster / role specific
+			"$type/$cluster/*",      # cluster-global
+			"$type/*/$role",         # role-global
+			$type,                   # ...
+		);
+	}
+
+	return @keys;
 }
 
 sub run
@@ -1493,10 +1502,21 @@ the following list will be generated for md01.atl.synacor.com, type POP:
 
 =item POP
 
-This list can be passed to the B<credentials> function, activating its
-susbsequent search mechanism for keys.
+=back
+
+Alternatively, if you send an IP address to cred_keys, rather than hostname,
+it will return back a list of keys like this:
+
+=over 8
+
+=item POP/10.10.10.10
+
+=item POP
 
 =back
+
+This list can be passed to the B<credentials> function, activating its
+susbsequent search mechanism for keys.
 
 =head2 run
 
