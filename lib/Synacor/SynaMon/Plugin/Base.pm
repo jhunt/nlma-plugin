@@ -908,6 +908,8 @@ sub _run_via_ssh
 	$self->debug("Executing: '$cmd'");
 	eval {
 		($stdout, $stderr, $rc) = $ssh->cmd($cmd);
+		$stdout = "" unless defined $stdout;
+		$stderr = "" unless defined $stderr;
 		if (! $opts{failok} && $rc != 0) {
 			$self->CRITICAL("'$cmd' did not execute successfully (rc: $rc).");
 		}
