@@ -18,6 +18,8 @@ use POSIX qw/
 	sigaction
 /;
 use Time::HiRes qw(gettimeofday);
+use utf8;
+
 $Data::Dumper::Pad = "DEBUG> ";
 
 use constant NAGIOS_OK       => 0;
@@ -918,6 +920,7 @@ sub _run_via_ssh
 		print STDERR $stderr if $stderr;
 		1;
 	} or do {
+		$self->debug("Exception caught: $@");
 		$@ =~ s/ at \S+ line \d+//;
 		$self->bail("CRITICAL", "Could not run '$cmd' on $ssh->{host}: $@");
 	};
@@ -936,12 +939,18 @@ sub ssh
 
 	my $ssh;
 	eval {
+		# Depending on the underlying mechanism pulling in user/password info, data
+		# may be in utf8. Net::SSH::Perl handles this poorly, so decode it all just
+		# in case before passing to Net::SSH::Perl.
+		utf8::decode($user);
+		utf8::decode($pass);
 		$ssh = Net::SSH::Perl->new($hostname, %$opts)
 			or $self->bail("CRITICAL", "Couldn't connect to $hostname");
 		$ssh->login($user, $pass)
 			or $self->bail("CRITICAL", "Could not log in to $hostname as $user");
 		1;
 	} or do {
+		$self->debug("Exception caught: $@");
 		$@ =~ s/ at \S+ line \d+//;
 		$self->bail("CRITICAL", "Could not ssh to $hostname as $user: $@");
 	};
