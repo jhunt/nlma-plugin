@@ -154,6 +154,30 @@ ok_plugin(3, "TEST UNKNOWN - %TILDE%%AMP%%DOLLAR%%LT%%GT%%QUOT%%BTIC%", undef, "
 	DONE;
 });
 
+ok_plugin(3, "TEST UNKNOWN - Test status", undef, "Dummy STATUS UNKNOWN remove newlines", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UNKNOWN", "Test \n\nstatus\n\n\n";
+	DONE;
+});
+
+ok_plugin(3, "TEST UNKNOWN - Test status", undef, "Dummy STATUS UNKNOWN remove carriage return", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UNKNOWN", "Test \rstatus";
+	DONE;
+});
+
+ok_plugin(3, "TEST UNKNOWN - Test status extended", undef, "Dummy STATUS UNKNOWN remove vertical whitespace", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	STATUS "UNKNOWN", "Test \x0bstatus\x0b extended";
+	DONE;
+});
+
 ok_plugin(3, "TEST UNKNOWN - ???", undef, "Dummy STATUS UNKNOWN", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "TEST";

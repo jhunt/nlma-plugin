@@ -349,6 +349,7 @@ sub status
 	$msg =~ s/"/%QUOT%/g;
 	$msg =~ s/`/%BTIC%/g;
 	$msg =~ s/\|/%PIPE%/g;
+	$msg =~ s/[\r\n\x0b]//g;
 
 	if ($code == NAGIOS_UNKNOWN) {
 		$ALL_DONE = 1;
