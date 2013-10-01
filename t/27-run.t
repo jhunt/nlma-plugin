@@ -60,6 +60,28 @@ ok_plugin(2, "RUN CRITICAL - Command './t/run/exit_code 2' exited with code 2.",
 	DONE;
 });
 
+$ENV{TEST_PLUGINS} = 1;
+$ENV{TEST_CHROOT}  = "./t/run";
+ok_plugin(2, "RUN CRITICAL - Command './t/run/exit_code 2' exited with code 2.", undef, "TEST_PLUGINS + TEST_CHROOT", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "RUN";
+	START;
+	RUN "/exit_code 2";
+	OK "failure is OK";
+	DONE;
+});
+delete $ENV{TEST_PLUGINS};
+ok_plugin(3, "RUN UNKNOWN - /exit_code: no such file", undef, "TEST_CHROOT without TEST_PLUGINS", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "RUN";
+	START;
+	RUN "/exit_code 0";
+	OK;
+	DONE;
+});
+delete $ENV{TEST_PLUGINS};
+delete $ENV{TEST_CHROOT};
+
 ok_plugin(0, "RUN OK - failure is OK", undef, "failok", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "RUN";
