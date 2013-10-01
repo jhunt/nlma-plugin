@@ -861,6 +861,10 @@ sub run
 sub _run_via_shell
 {
 	my ($self, $command, %opts) = @_;
+	if ($ENV{TEST_PLUGINS} and $ENV{TEST_CHROOT} and -d $ENV{TEST_CHROOT}) {
+		$self->debug("TEST_PLUGINS and TEST_CHROOT are set; using commands in $ENV{TEST_CHROOT}");
+		$command = "$ENV{TEST_CHROOT}$command";
+	}
 	my $bin = $command;
 	$bin =~ s/\s+.*//;
 
