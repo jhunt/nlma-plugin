@@ -210,6 +210,14 @@ ok_plugin(3, "TEST UNKNOWN - Missing Status - Name", undef, "Dummy STATUS missin
 	DONE;
 });
 
+ok_plugin(2, "TEST CRITICAL - %TILDE%%TILDE%%TILDE%", undef, "Critical bail properly formats messages", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TEST";
+	START;
+	BAIL(CRITICAL "~~~");
+	DONE;
+});
+
 ###################################################################
 
 ok_plugin(2, "BAIL CRITICAL - bail early", undef, "Bail early", sub {

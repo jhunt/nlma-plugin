@@ -354,7 +354,6 @@ sub status
 	if ($code == NAGIOS_UNKNOWN) {
 		$ALL_DONE = 1;
 		$self->{legacy}->nagios_exit(NAGIOS_UNKNOWN, $msg);
-
 	} else {
 		# store the message and update length
 		push (@{$self->{messages}{$name}{list}}, $msg);
@@ -378,8 +377,9 @@ sub bail
 	$ALL_DONE = 1;
 	if (! defined $message) {
 		$message = $status unless defined $message;
+		$status = 'UNKNOWN';
 	}
-	my $code = $STATUS_CODES{$status} || $STATUS_CODES{"UNKNOWN"};
+	(my $code, $message) = $self->status($status, $message);
 	$self->debug("Bailing $status ($code) from message: $message");
 	$self->{legacy}->nagios_exit($code, $message);
 }

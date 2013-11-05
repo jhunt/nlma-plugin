@@ -207,7 +207,7 @@ ok_plugin(0, "RUNVIA OK - explicit ls worked", undef, "test explicit 'shell' tra
 
 	# dies are caught + bail crit
 	ok_plugin(2,
-		"SSHRUN CRITICAL - Could not run 'test dying cmd' on testhost: ->cmd dying should be caught properly.",
+		"SSHRUN CRITICAL - Could not run 'test dying cmd' on testhost: -%GT%cmd dying should be caught properly.",
 		undef,
 		"dies are caught/handled properly in run_via_ssh",
 		sub {
