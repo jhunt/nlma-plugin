@@ -600,6 +600,10 @@ sub total_time
 sub slurp
 {
 	my ($self, $path) = @_;
+	if ($ENV{TEST_PLUGINS} and $ENV{TEST_CHROOT} and -d $ENV{TEST_CHROOT}) {
+		$self->debug("TEST_PLUGINS and TEST_CHROOT are set; using files in $ENV{TEST_CHROOT}");
+		$path = "$ENV{TEST_CHROOT}$path";
+	}
 	return unless defined $path && -f $path && -r $path;
 	open my $fh, '<', $path;
 
