@@ -96,6 +96,17 @@ ok_plugin(0, "SLURP OK - failure is not OK", undef, "TEST_PLUGINS + TEST_CHROOT"
 	DONE;
 });
 
+$ENV{TEST_SLURP_FILE}  = "./t/data/slurp/normal";
+ok_plugin(0, "SLURP OK - failure is not OK", undef, "TEST_PLUGINS + TEST_SLURP_FILE", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "SLURP";
+	START;
+	my $data = SLURP "/normal";
+	CRITICAL "is failed, NOT OK data is: ".chomp($data) unless $data eq "first line\nsecond line\n";
+	OK "failure is not OK";
+	DONE;
+});
+delete $ENV{TEST_SLURP_FILE};
 delete $ENV{TEST_PLUGINS};
 ok_plugin(0, "SLURP OK", undef, "TEST_CHROOT without TEST_PLUGINS", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
