@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.23";
+our $VERSION = "1.24";
 
 use Exporter;
 use base qw(Exporter);

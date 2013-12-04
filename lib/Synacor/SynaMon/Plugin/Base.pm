@@ -655,8 +655,8 @@ sub store
 			return;
 	}
 
-	open my $fh, ">", $path or
-		$self->bail(NAGIOS_UNKNOWN, "Could not open '$path' for writing");
+	open my $fh, ">", "$path.tmp" or
+		$self->bail(NAGIOS_UNKNOWN, "Could not open '$path.tmp' for writing");
 
 	if ($options{as} && $options{as} !~ m/^raw$/i) {
 		if ($options{as} =~ m/^ya?ml$/i) {
@@ -675,6 +675,7 @@ sub store
 	}
 	print $fh $data;
 	close $fh;
+	rename "$path.tmp", $path;
 
 	my (undef, undef, $uid, $gid) = getpwnam($ENV{MONITOR_STATE_FILE_OWNER} || 'nlma');
 	chown $uid, $gid, $path;
