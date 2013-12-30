@@ -113,6 +113,9 @@ sub new
 	}
 	$self->{legacy}{opts}{_args} = \@new_args;
 
+	# ITM-2948 - reset global default timeout to 45s
+	$self->{legacy}{opts}{timeout} = 45;
+
 	bless($self, $class);
 }
 

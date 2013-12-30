@@ -110,7 +110,7 @@ $USAGE
  --noop
    Dry-run mode
  -t, --timeout=INTEGER
-   Seconds before plugin times out (default: 15)
+   Seconds before plugin times out (default: 45)
 EOF
 
 	sub help_plugin_no_default
