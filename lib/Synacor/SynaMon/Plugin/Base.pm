@@ -1092,6 +1092,38 @@ sub format_bytes
 	$self->UNKNOWN("Size $orig is unfathomably large (>1ZB)");
 }
 
+sub parse_time
+{
+	my ($self, $s) = @_;
+	my $t = 0;
+	while ($s =~ m/\G\s*(\d+(?:\.\d+)?)\s*([a-zA-Z])/g) {
+		my $x = $1;
+		$x *= 60    if $2 eq 'm';
+		$x *= 3600  if $2 eq 'h';
+		$x *= 86400 if $2 eq 'd';
+		$t += $x;
+	}
+	$t;
+}
+
+sub format_time
+{
+	my ($self, $s, $fmt) = @_;
+	$fmt = '%i%s' unless $fmt;
+
+	my $u = 's';
+	return sprintf($fmt, $s, $u) if $s < 120;
+	$s /= 60; $u = 'm';
+
+	return sprintf($fmt, $s, $u) if $s < 120;
+	$s /= 60; $u = 'h';
+
+	return sprintf($fmt, $s, $u) if $s < 36;
+	$s /= 24; $u = 'd';
+
+	return sprintf($fmt, $s, $u);
+}
+
 "YAY!";
 
 =head1 NAME
@@ -1759,6 +1791,16 @@ number of bytes.
 
 Format a number of bytes into a more manageable, human readable format.  This
 is the reverse operation of B<parse_bytes>.
+
+=head2 parse_time($str)
+
+Parse a string representing an amount of time (like '6m' or 3.5h') and return
+the number of seconds.
+
+=head2 format_time($seconds, [$format])
+
+Format a number of seconds into a more manageable, human readable format.
+This is the reverse operation of B<parse_time>.
 
 =head1 AUTHOR
 

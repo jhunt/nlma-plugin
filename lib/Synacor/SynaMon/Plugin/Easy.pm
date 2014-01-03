@@ -39,6 +39,7 @@ our @EXPORT = qw/
 	JSON_DECODE
 
 	PARSE_BYTES FORMAT_BYTES BYTES_THOLD
+	PARSE_TIME  FORMAT_TIME  TIME_THOLD
 
 	DEBUG DUMP NOOP
 /;
@@ -107,6 +108,20 @@ sub BYTES_THOLD
 	}
 	return $thold;
 }
+
+sub PARSE_TIME  { $plugin->parse_time(@_); }
+sub FORMAT_TIME { $plugin->format_time(@_); }
+sub TIME_THOLD
+{
+	my ($thold) = @_;
+	if ($thold) {
+		DEBUG "Converting human-readable time specs in '$thold'";
+		$thold =~ s/\s*(\d+(?:\.\d+)?)\s*([mhd])\b/PARSE_TIME("$1$2")/egi;
+		DEBUG "Converted threshold to '$thold'";
+	}
+	return $thold;
+}
+
 
 END {
 	$plugin->finalize("END block") if $plugin;
@@ -301,6 +316,21 @@ Wrapper around B<Synacor::SynaMon::Plugin::format_bytes>.
 
 Convert human-readable size specs in a threshold (like "4kb:8kb")
 and turns them into raw byte thresholds, (i.e. "4096:8192").
+
+Otherwise, the threshold string will remain as-is.
+
+=head2 PARSE_TIME
+
+Wrapper around B<Synacor::SynaMon::Plugin::parse_time>.
+
+=head2 FORMAT_TIME
+
+Wrapper around B<Synacor::SynaMon::Plugin::format_time>.
+
+=head2 TIME_THOLD
+
+Convert human-readable time specs in a threshold (like "5m:10m")
+and turns them into raw time thresholds in seconds, (i.e. "300:600").
 
 Otherwise, the threshold string will remain as-is.
 
