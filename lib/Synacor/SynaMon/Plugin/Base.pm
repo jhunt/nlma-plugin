@@ -20,8 +20,6 @@ use POSIX qw/
 use Time::HiRes qw(gettimeofday);
 use utf8;
 
-$Data::Dumper::Pad = "DEBUG> ";
-
 use constant NAGIOS_OK       => 0;
 use constant NAGIOS_WARNING  => 1;
 use constant NAGIOS_CRITICAL => 2;
@@ -295,7 +293,7 @@ sub _reformat_hash_option
 sub getopts
 {
 	my ($self) = @_;
-	$self->option("debug|D",
+	$self->option("debug|D+",
 		usage => "--debug, -D",
 		help  => "Turn on debug mode",
 		framework => 1,
@@ -513,6 +511,31 @@ sub dump
 {
 	my ($self, @vars) = @_;
 	return unless $self->{debug};
+
+	local $Data::Dumper::Pad = "DEBUG> ";
+	print STDERR Dumper(@vars);
+	print STDERR "\n";
+}
+
+sub trace
+{
+	my ($self, @messages) = @_;
+	return unless $self->{debug} && $self->{debug} >= 3;
+	for (@messages) {
+		$_ = (defined($_) ? $_: "undef");
+		s/\n+$//;
+		s/\n/\nTRACE> /g;
+		print STDERR "TRACE> $_\n";
+	}
+	print STDERR "\n";
+}
+
+sub trace_dump
+{
+	my ($self, @vars) = @_;
+	return unless $self->{debug} >= 3;
+
+	local $Data::Dumper::Pad = "TRACE> ";
 	print STDERR Dumper(@vars);
 	print STDERR "\n";
 }
@@ -1463,6 +1486,23 @@ free, and can focus on adding to that where it makes sense.
 
 Intelligently dump a list of objects, but only if the B<--debug>
 flag was specified.
+
+=head2 trace
+
+Print trace-level debugging statements, which are intended for check plugin
+authors, as a debugging aide.  Trace output should be reserved for verbose
+things that most people won't care about (like the internals for the plugin
+framework).
+
+Unless B<--trace> and B<--debug> are enabled, trace-messages will be
+skipped.
+
+All trace output is prefixed with 'TRACE> ' to differentiate it from normal
+output and debugging output.
+
+=head2 trace_dump
+
+Just like B<dump()>, but works at the same level as B<trace()>.
 
 =head2 deprecated($message)
 

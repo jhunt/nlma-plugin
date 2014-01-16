@@ -46,6 +46,7 @@ our @EXPORT = qw/
 	JOLOKIA_SEARCH
 
 	DEBUG DUMP NOOP
+	TRACE TDUMP
 /;
 
 our $plugin;
@@ -90,6 +91,8 @@ sub SSH { $plugin->ssh(@_); }
 sub DEBUG { $plugin->debug(@_) if $plugin }
 sub DUMP  { $plugin->dump(@_); }
 sub NOOP  { $plugin->noop(@_); }
+sub TRACE { $plugin->trace(@_) if $plugin }
+sub TDUMP { $plugin->trace_dump(@_); }
 
 sub MECH         { $plugin->mech(@_); }
 sub HTTP_REQUEST { $plugin->http_request(@_); }
@@ -282,6 +285,14 @@ Wrapper around B<Synacor::SynaMon::Plugin::dump>.
 =head2 NOOP
 
 Wrapper around B<Synacor::SynaMon::Plugin::noop>.
+
+=head2 TRACE
+
+Wrapper around B<Synacor::SynaMon::Plugin::trace>.
+
+=head2 TDUMP
+
+Wrapper around B<Synacor::SynaMon::Plugin::trace_dump>.
 
 =head2 MECH
 

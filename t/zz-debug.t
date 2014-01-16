@@ -84,4 +84,102 @@ ok_plugin(0, "DEBUG> \$VAR1 = 'test';", undef, "object dump", sub {
 	DONE;
 }, ["-D"]);
 
+ok_plugin(0, "DEBUG OK", undef, "no trace without -D", sub {
+	# Temporarily redirect STDERR to /dev/null, since we don't want
+	# any of the debug messages that START prints.
+	open STDERR, ">", "/dev/null";
+
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START;
+
+	open STDERR, ">&", STDOUT;
+	TRACE "trace output";
+
+	OK;
+	DONE;
+}, [""]);
+
+ok_plugin(0, "DEBUG> debug output", undef, "no trace with just -D", sub {
+	# Temporarily redirect STDERR to /dev/null, since we don't want
+	# any of the debug messages that START prints.
+	open STDERR, ">", "/dev/null";
+
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START;
+
+	open STDERR, ">&", STDOUT;
+	TRACE "trace output";
+	DEBUG "debug output";
+
+	OK;
+	DONE;
+}, ["-D"]);
+
+ok_plugin(0, "DEBUG> debug output", undef, "no trace with just -DD", sub {
+	# Temporarily redirect STDERR to /dev/null, since we don't want
+	# any of the debug messages that START prints.
+	open STDERR, ">", "/dev/null";
+
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START;
+
+	open STDERR, ">&", STDOUT;
+	TRACE "trace output";
+	DEBUG "debug output";
+
+	OK;
+	DONE;
+}, ["-DD"]);
+
+ok_plugin(0, "TRACE> trace output", undef, "start TRACE-ing at -DDD", sub {
+	# Temporarily redirect STDERR to /dev/null, since we don't want
+	# any of the debug messages that START prints.
+	open STDERR, ">", "/dev/null";
+
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START;
+
+	open STDERR, ">&", STDOUT;
+	TRACE "trace output";
+
+	OK;
+	DONE;
+}, ["-D", "-D", "-D"]);
+
+ok_plugin(0, "TRACE> trace output", undef, "keep TRACE-ing past -DDDD", sub {
+	# Temporarily redirect STDERR to /dev/null, since we don't want
+	# any of the debug messages that START prints.
+	open STDERR, ">", "/dev/null";
+
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START;
+
+	open STDERR, ">&", STDOUT;
+	TRACE "trace output";
+
+	OK;
+	DONE;
+}, ["-DDDDDDDD"]);
+
+ok_plugin(0, "TRACE> \$VAR1 = 'test';", undef, "object trace dump", sub {
+	# Temporarily redirect STDERR to /dev/null, since we don't want
+	# any of the debug messages that START prints.
+	open STDERR, ">", "/dev/null";
+
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START default => "done";
+
+	open STDERR, ">&", STDOUT;
+	TDUMP "test";
+
+	DONE;
+}, ["-DDDD"]);
+
+
 done_testing;
