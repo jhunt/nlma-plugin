@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.25";
+our $VERSION = "1.26";
 
 use Exporter;
 use base qw(Exporter);
@@ -44,7 +44,7 @@ sub import {
 	}
 }
 
-"Make your time...";
+1;
 
 =head1 NAME
 
@@ -361,6 +361,14 @@ This defaults to 86400 seconds (24 hours).
 This datapoint only affects the B<data_archive> B<STORE AND RETREIVE FORMATS>.
 
 See B<FETCH SCRIPTS> and B<STORE AND RETRIEVE FORMATS> or more information.
+
+=item B<ignore_jolokia_failures>
+
+Normally, when the JOLOKIA_* methods are called, they will BAIL at the first
+sign of trouble.  Often, this is exactly what we want; if we get a bad
+request from the Jolokia proxy, chances are we can't continue, and should
+alert someone that something is wrong.  When it isn't what you want, flip
+this on and you'll get empty results from failed Jolokia/JMX operations.
 
 =back
 
@@ -955,6 +963,59 @@ SLURP provides the simple ability to read in a file and grab all
 of its contents. This is something we do often in various check plugins,
 so has been frameworked to provide a common codebase. This feature has
 been available since 1.15.
+
+=head2 JOLOKIA / REMOTE JMX
+
+For monitoring our Java platforms, we have settled on the Java Management
+eXtensions, or JMX, to expose and collect data.  To access JMX data from
+Perl, the monitoring team maintains a proxying / gateway service that wraps
+Remote JMX up in a RESTful, HTTP API.  This proxy is called B<Jolokia>.
+
+To use JMX, your plugin will need to call B<JOLOKIA_CONNECT> with the proper
+target host and port:
+
+    JOLOKIA_CONNECT host => "mq01.appfoo.synacor.com",
+                    port => 1105;
+
+You can optionally sepcify a B<creds> parameter to JOLOKIA_CONNECT for
+determine what credentials should be used to talk to the Jolokia proxy;
+usually, however, the default (C<remote_jmx>) is sufficient.
+
+Once connected, you can ask for specific MBeans by their fully-qualified
+names (i.e. "$domain:$name") using the B<JOLOKIA_READ> function:
+
+    my $data = JOLOKIA_READ 'java.lang:type=Memory';
+    my $usage = $data->{'java.lang:type=Memory'}{HeapMemoryUsed};
+    CHECK_VALUE $usage, "JVM Heap Usage is $usage",
+                warning  => 80,
+                critical => 90;
+
+JOLOKIA_READ returns a hashref of all the MBeans you asked for (and you
+B<can> ask for multiple).  The second level of the hashref contains the
+attributes of each MBean (in this case, I<HeapMemoryUsed> is an attribute of
+the I<type=Memory> MBean in the I<java.lang> domain).
+
+You can also dynamically lookup beans based on Perl-compatible regular
+expression, by way of B<JOLOKIA_SEARCH>:
+
+   my @beans
+
+   # get *ALL* the beans!
+   @beans = JOLOKIA_SEARCH;
+
+   # or, just get the ones for com.synacor.*
+   @beans = JOLOKIA_SEARCH '^com.synacor.';
+
+These two functions are designed to work together seamlessly, so that you
+can do this:
+
+    my $data = JOLOKIA_READ(JOLOKIA_SEARCH m/type=Memory$/);
+
+That is, read all MBeans that have 'type=Memory' in their name, across any
+and all domains.
+
+B<JOLOKIA_CONNECT>, B<JOLOKIA_READ> and B<JOLOKIA_SEARCH>
+have been available since v1.26.
 
 =head2 FETCH SCRIPTS
 

@@ -1124,7 +1124,135 @@ sub format_time
 	return sprintf($fmt, $s, $u);
 }
 
-"YAY!";
+sub jolokia_connect
+{
+	my ($self, %params) = @_;
+	my $ignore = $self->{settings}{ignore_jolokia_failures};
+
+	if (!$params{host}) {
+		$self->debug("No 'host' specified to JOLOKIA_CONNECT, bailing");
+		return if $ignore;
+		$self->bail(NAGIOS_CRITICAL, "No 'host' specified for Jolokia/JMX connection");
+	}
+	if (!$params{port}) {
+		$self->debug("No 'port' specified to JOLOKIA_CONNECT, bailing");
+		return if $ignore;
+		$self->bail(NAGIOS_CRITICAL, "No 'port' specified for Jolokia/JMX connection");
+	}
+
+	my ($user, $pass) = $self->credentials($params{creds} || 'remote_jmx');
+	$params{target} = {
+		user     => $user,
+		password => $pass,
+		url      => "service:jmx:rmi:///jndi/rmi://$params{host}:$params{port}/jmxrmi",
+	};
+
+	$params{proxy} = $ENV{MONITOR_JOLOKIA_PROXY} || "localhost:5080";
+	$self->debug("Jolokia: using proxy '$params{proxy}'");
+	$self->{jolokia} = \%params;
+}
+
+sub jolokia_request
+{
+	my ($self, $request) = @_;
+	my $ignore = $self->{settings}{ignore_jolokia_failures};
+
+	my $url = "http://$self->{jolokia}{proxy}/jolokia/";
+	$self->debug("Making Jolokia request to $url with:");
+	$self->dump($request);
+
+	my ($res, $json) = $self->http_post($url, JSON->new->allow_nonref->encode($request));
+	$self->debug("Jolokia returned a ".$res->status_line." response");
+
+	if (!$res->is_success) {
+		return undef if $ignore;
+		$self->bail(NAGIOS_CRITICAL, "Jolokia returned a ".$res->status_line." response");
+	}
+
+	# FIXME: trace returned JSON data!
+	my $data = $self->json_decode($json) or do {
+		$self->debug("Invalid JSON detected!");
+		return undef if $ignore;
+		$self->bail(NAGIOS_CRITICAL, "Jolokia returned invalid JSON: $@");
+	};
+
+	# FIXME: trace for JSON dump!
+	$data = [$data] if ref($data) eq 'HASH';
+	if (ref($data) ne 'ARRAY') {
+		$self->debug("Returned JSON data is ".ref($data)."-formatted, not an ARRAY");
+		return undef if $ignore;
+		$self->bail(NAGIOS_CRITICAL, "Jolokia returned ".ref($data)."-formatted (wanted an ARRAY)");
+	}
+
+	my @list;
+	my $n = 0;
+	for my $r (@$data) {
+		$n++;
+		if (exists $r->{error}) {
+			my $error = ($r->{request}{mbean} || "Jolokia/JMX Result #$n").
+				" encountered an error: ".($r->{error} || '(unspecified error)');
+
+			$self->debug($error);
+			next if $ignore;
+			$self->bail(NAGIOS_CRITICAL, $error);
+		}
+		push @list, $r;
+	}
+
+	return \@list;
+}
+
+sub jolokia_read
+{
+	my ($self, @beans) = @_;
+	$self->UNKNOWN("Check appears to be broken; JOLOKIA_READ called before JOLOKIA_CONNECT")
+		unless $self->{jolokia};
+
+	my @reqs = ();
+	return {} unless @beans;
+	for my $mbean (@beans) {
+		push @reqs, {
+			target => $self->{jolokia}{target},
+			type   => 'read',
+			mbean  => $mbean,
+		};
+	}
+
+	my $data = $self->jolokia_request(\@reqs)
+		or return {};
+
+	return { map { $_->{request}{mbean} => $_->{value} } @$data };
+}
+
+sub jolokia_search
+{
+	my ($self, $match) = @_;
+	$self->UNKNOWN("Check appears to be broken; JOLOKIA_SEARCH called before JOLOKIA_CONNECT")
+		unless $self->{jolokia};
+
+	my $data = $self->jolokia_request({
+			target => $self->{jolokia}{target},
+			type   => 'list',
+		}) or return wantarray ? () : {};
+
+	# See http://www.jolokia.org/reference/html/protocol.html#list
+	$data = $data->[0]{value};
+	my $results = {};
+	for my $domain (keys %$data) {
+		for my $bean (keys %{$data->{$domain}}) {
+			$self->debug("Checking bean '$domain:$bean'\n".
+			             "      against /$match/") if $match;
+			next if $match && "$domain:$bean" !~ m/$match/i;
+			next unless ref($data->{$domain}{$bean}) && $data->{$domain}{$bean}{attr};
+			for my $attr (keys %{$data->{$domain}{$bean}{attr}}) {
+				$results->{"$domain:$bean"}{$attr} = $data->{$domain}{$bean}{attr}{$attr};
+			}
+		}
+	}
+	return wantarray ? keys %$results : $results;
+}
+
+1;
 
 =head1 NAME
 
@@ -1801,6 +1929,76 @@ the number of seconds.
 
 Format a number of seconds into a more manageable, human readable format.
 This is the reverse operation of B<parse_time>.
+
+=head2 jolokia_connect(%params)
+
+Sets up the current plugin context for connecting to the specified Jolokia
+proxy and target remote host.  The %params hash must contain the following
+keys:
+
+=over
+
+=item B<creds>
+
+Key for the credentials (as stored in the credentials store) for accessing
+the Jolokia proxy service API.
+
+=item B<host>
+
+The FQDN or IP address of the target remote-JMX endpoint (i.e. B<not> the
+Jolokia proxy itself).
+
+=item B<port>
+
+The TCP port of the target remote-JMX endpoint.
+
+=back
+
+Which Jolokia proxy is used is governed by the B<MONITOR_JOLOKIA_PROXY>
+environment variable.  If that isn't set, the default literal value of
+C<localhost:5080> will be used.
+
+=head2 jolokia_request($request)
+
+Requests data from the Jolokia proxy.  This is an internal method that
+should only be called by Plugin::Base, not by plugins.
+
+This method handles the JSON packing of the request payload, submission of
+the request to the proper REST endpoint, and decoding of the result.
+
+=head2 jolokia_read(@beans)
+
+Reads MBean data for the named beans.  Data will be returned as a hashref,
+with the following structure:
+
+    {
+       "{domain}:{mbean name}" => $value,
+       ...
+    }
+
+It is an error to call B<jolokia_read> before calling B<jolokia_connect>,
+and the plugin will bail out with an UNKNOWN.
+
+=head2 jolokia_search($regex)
+
+Search for MBeans whose names match the given Perl-compatible regular
+expression.  An undefined $regex parameter is taken as a request for all
+defined MBeans.
+
+This function is aware of its calling context, and will return a list of
+MBeans in list context, and a hashref in scalar context.  This allows the
+following idiomatic practice:
+
+    for my $bean (JOLOKIA_SEARCH(m/com.synacor./)) {
+        # do something with the beans
+    }
+
+    # and
+
+    my $data = JOLOKIA_READ( JOLOKIA_SEARCH( m/com.synacor./ ) );
+
+It is an error to call B<jolokia_search> before calling B<jolokia_connect>,
+and the plugin will bail out with an UNKNOWN.
 
 =head1 AUTHOR
 

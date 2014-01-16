@@ -41,6 +41,10 @@ our @EXPORT = qw/
 	PARSE_BYTES FORMAT_BYTES BYTES_THOLD
 	PARSE_TIME  FORMAT_TIME  TIME_THOLD
 
+	JOLOKIA_CONNECT
+	JOLOKIA_READ
+	JOLOKIA_SEARCH
+
 	DEBUG DUMP NOOP
 /;
 
@@ -122,13 +126,16 @@ sub TIME_THOLD
 	return $thold;
 }
 
+sub JOLOKIA_CONNECT { $plugin->jolokia_connect(@_); }
+sub JOLOKIA_READ    { $plugin->jolokia_read(@_); }
+sub JOLOKIA_SEARCH  { $plugin->jolokia_search(@_); }
 
 END {
 	$plugin->finalize("END block") if $plugin;
 	$plugin->done if $plugin && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
 }
 
-"Booyah!";
+1;
 
 =head1 NAME
 
@@ -333,6 +340,18 @@ Convert human-readable time specs in a threshold (like "5m:10m")
 and turns them into raw time thresholds in seconds, (i.e. "300:600").
 
 Otherwise, the threshold string will remain as-is.
+
+=head2 JOLOKIA_CONNECT
+
+Wrapper around B<Synacor::SynaMon::Plugin::jolokia_connect>.
+
+=head2 JOLOKIA_READ
+
+Wrapper around B<Synacor::SynaMon::Plugin::jolokia_read>.
+
+=head2 JOLOKIA_SEARCH
+
+Wrapper around B<Synacor::SynaMon::Plugin::jolokia_search>.
 
 =head1 AUTHOR
 

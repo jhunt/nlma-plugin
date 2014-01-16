@@ -1,0 +1,1 @@
+{"timestamp":1389901033,"status":200,"request":{"type":"version"},"value":{"protocol":"6.1","agent":"1.0.5","info":{"product":"jetty","vendor":"Mortbay","version":"6.1.26"}}}
