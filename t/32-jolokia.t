@@ -1,10 +1,18 @@
 #!perl
 
 use Test::More;
-use Test::Fake::HTTPD;
-use JSON;
 use File::Slurp qw/read_file/;
 require "t/common.pl";
+
+BEGIN {
+	eval "use Test::Fake::HTTPD";
+	plan skip_all => "Test::Fake::HTTPD required for testing HTTP primitives"
+		if $@;
+};
+use Test::Fake::HTTPD;
+use JSON;
+
+plan skip_all => 'set TEST_ALL to enable Jolokia/JMX tests' unless TEST_ALL();
 
 ###################################################################
 
@@ -66,6 +74,7 @@ $ENV{MONITOR_JOLOKIA_PROXY} = $HTTPD->endpoint;
 $ENV{MONITOR_JOLOKIA_PROXY} =~ s|^http://||;
 $ENV{MONITOR_JOLOKIA_PROXY} =~ s|/$||;
 $ENV{MONITOR_CRED_STORE} = "t/data/jolokia/creds";
+system("chmod 0400 $ENV{MONITOR_CRED_STORE}");
 
 ok_plugin(0, "JOLO OK", undef, "Jolokia connection is ok", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
