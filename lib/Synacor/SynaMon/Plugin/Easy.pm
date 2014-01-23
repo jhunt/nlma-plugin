@@ -45,6 +45,10 @@ our @EXPORT = qw/
 	JOLOKIA_READ
 	JOLOKIA_SEARCH
 
+	SAR
+
+	DEVNAME
+
 	DEBUG DUMP NOOP
 	TRACE TDUMP
 /;
@@ -132,6 +136,10 @@ sub TIME_THOLD
 sub JOLOKIA_CONNECT { $plugin->jolokia_connect(@_); }
 sub JOLOKIA_READ    { $plugin->jolokia_read(@_); }
 sub JOLOKIA_SEARCH  { $plugin->jolokia_search(@_); }
+
+sub SAR { $plugin->sar(@_); }
+
+sub DEVNAME { $plugin->devname(@_); }
 
 END {
 	$plugin->finalize("END block") if $plugin;
@@ -363,6 +371,14 @@ Wrapper around B<Synacor::SynaMon::Plugin::jolokia_read>.
 =head2 JOLOKIA_SEARCH
 
 Wrapper around B<Synacor::SynaMon::Plugin::jolokia_search>.
+
+=head2 SAR
+
+Wrapper around B<Synacor::SynaMon::Plugin::sar>.
+
+=head2 DEVNAME
+
+Wrapper around B<Synacor::SynaMon::Plugin::devname>.
 
 =head1 AUTHOR
 

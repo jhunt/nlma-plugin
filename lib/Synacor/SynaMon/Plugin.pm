@@ -541,6 +541,77 @@ instantiate the Net::SSH::Perl object.
 
 SSH has been available since version 1.22.
 
+=head1 SAR DATA
+
+The framework has baked-in support for parsing system activity data via the
+sar(1) and sadf(1) facilities.  Using the B<SAR> function, you can ask for
+specific statistics, averaged across the last X samples:
+
+    # get network errors from sar
+    my $sar = SAR "-n DEV";
+    for my $dev (keys %$sar) {
+        next unless $dev =~ m/^eth/; # only Ethernet ifaces
+        OK "Transmitting $dev->{'txpck/s'} packets/s";
+    }
+
+The first argument (C<-n DEV>, in the example above) is a set of flags to
+send to sar(1)/sadf(1), and it controls what statistics you get back.
+
+By default, the last sample will be used.  If you want multiple samples, use
+the B<samples> and optional B<slice> parameters:
+
+    my $sar = SAR "-n DEV", samples => 10;
+
+    # the same, more explicit
+    my $sar = SAR "-n DEV", samples => 10, slice => 60;
+
+The B<slice> parameter indicates how many seconds each sample covers.  At
+Synacor, this is currently 60s, which is the default value.  You should only
+override this value if you know what you are doing and why.
+
+Here are some possible values for the B<SAR> flags argument:
+
+    SAR "-P all";    # aggregate CPU stats
+    SAR "-x <pid>";  # single-process resource stats
+    SAR "-x ALL";    # resource stats for all processes
+
+    SAR "-v";        # inode/file table usage
+    SAR "-d";        # block device activity
+    SAR "-b";        # I/O read/write
+
+    SAR "-n DEV";    # network I/O stats
+    SAR "-n EDEV";   # network interface errors
+
+    SAR "-q";        # process scheduling stats
+
+    SAR "-B";        # kernel MMU paging stats
+    SAR "-r";        # memory/swap utilization
+    SAR "-R";        # memory paging stats
+    SAR "-W";        # swapping stats
+
+For full details, check the sar(1) man page.
+
+SAR has been available since version 1.27.
+
+=head2 Translating Device Names
+
+The B<DEVNAME> function lets you translate one or more block device names,
+coming from sar(1), into absolute device paths.  For example, dev8-1 might
+actually be /dev/sda1 on one system, in which case, the following:
+
+    print DEVNAME "dev8-1"; # prints '/dev/sda1'
+
+This can be useful specifically with the C<-d> flag to use more
+human-friendly device names in output messages:
+
+    my $sar = SAR "-d";
+    for (keys %$sar) {
+        my $dev = DEVNAME $_;
+        OK "something for $dev";
+    }
+
+DEVNAME has been available since version 1.27.
+
 =head1 CHECKING THRESHOLDS
 
 Check plugins often need to selectively trigger a problem based on a range

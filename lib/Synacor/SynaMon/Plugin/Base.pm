@@ -18,6 +18,7 @@ use POSIX qw/
 	sigaction
 /;
 use Time::HiRes qw(gettimeofday);
+use File::Find;
 use utf8;
 
 use constant NAGIOS_OK       => 0;
@@ -1275,6 +1276,79 @@ sub jolokia_search
 	return wantarray ? keys %$results : $results;
 }
 
+sub sar
+{
+	my ($self, $args, %opts) = @_;
+	$opts{slice}   ||= 60; # Synacor uses 1m sadc intervals
+	$opts{samples} ||= 1;  # By default, only care about the last sample
+
+	my $data = {};
+	my $oldest = time - ($opts{samples} * $opts{slice});
+	$self->debug("Ignoring any sar data older than $oldest (now is ".time.")");
+
+	my $command = -x "/usr/bin/sadf"
+		? "/usr/bin/sadf -- $args"   # we have sadf, use that!
+		: "sar -h $args";            # crusty old CentOS 4 doesn't have sadf; use sar -h
+
+	for ($self->run($command)) {
+		# i.e: |vm01.jhunt  58      1390366861      lo      rxerr/s 0.00|
+		next unless m/\S+\s+(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)$/;
+		my ($ival, $ts, $key, $attr, $val) = ($1, $2, $3, $4, $5, $6);
+		next if $ts < $oldest;
+		$data->{$ts}{$key}{$attr} = $val;
+	}
+
+	my $n = 0;
+	my $collapsed = {};
+	for my $ts ((reverse sort keys %$data)[0 .. $opts{samples}-1]) {
+		$n++;
+		for my $key (keys %{$data->{$ts}}) {
+			for my $attr (keys %{$data->{$ts}{$key}}) {
+				$collapsed->{$key}{$attr} += $data->{$ts}{$key}{$attr};
+			}
+		}
+	}
+	if ($n == 0) {
+		$self->CRITICAL("No sar data found via /usr/bin/sadf -- $args");
+		return {};
+	}
+	return $collapsed if $n == 1;
+
+	$self->debug("Collapsed $n SAR samples down to 1");
+	for my $key (keys %$collapsed) {
+		for my $attr (keys %{$collapsed->{$key}}) {
+			$collapsed->{$key}{$attr} = $collapsed->{$key}{$attr} / $n;
+		}
+	}
+	return $collapsed;
+}
+
+my %DEVNAME = ();
+sub _devnames
+{
+	no warnings 'File::Find';
+	find({
+			wanted => sub {
+				return unless -b;
+				my $rdev = (lstat($_))[6];
+				my $min = $rdev % 256;
+				my $maj = int($rdev / 256);
+
+				$DEVNAME{"dev$maj-$min"} = $_;
+			},
+			no_chdir => 1,
+		}, "/dev");
+	use warnings 'File::Find';
+}
+
+sub devname
+{
+	my ($self, @rest) = @_;
+	_devnames;
+	my @a = map { $DEVNAME{$_} } @rest;
+	return wantarray ? @a : $a[0];
+}
+
 1;
 
 =head1 NAME
@@ -2039,6 +2113,48 @@ following idiomatic practice:
 
 It is an error to call B<jolokia_search> before calling B<jolokia_connect>,
 and the plugin will bail out with an UNKNOWN.
+
+=head2 sar($args, %opts)
+
+Gather SAR data, either via sadf (if available) or sar -h (if not).  You can
+set the number of samples you want; they will be averaged down into one
+sample.
+
+The B<$args> parameter should contain the arguments that sar needs to
+extract and report the desired data.  For example, to see device throughput
+statistics, use C<-d>, for network errors, use C<-n EDEV>.
+
+The following options are supported:
+
+=over
+
+=item B<slice>
+
+The number of seconds in a given timeslice.  Defaults to 60s.
+
+=item B<samples>
+
+The number of samples to take and average together.  Defaults to 1.
+
+=back
+
+=head2 devname(@devs)
+
+Turns a series of device names (as returned from SAR) into their
+corresponding filesystem paths, under /dev (based on major and minor
+numbers).
+
+Called in list mode, it will return a list of device paths.  In scalar mode,
+returns only the first, which allows these usage parameters:
+
+    my @devs = DEVNAME @lst;
+
+    # and
+
+    for (@lst) {
+        my $dev = DEVNAME $_;
+        # ...
+    }
 
 =head1 AUTHOR
 
