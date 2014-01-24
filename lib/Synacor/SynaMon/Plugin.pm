@@ -547,7 +547,7 @@ The framework has baked-in support for parsing system activity data via the
 sar(1) and sadf(1) facilities.  Using the B<SAR> function, you can ask for
 specific statistics, averaged across the last X samples:
 
-    # get network errors from sar
+    # get network statistics from sar
     my $sar = SAR "-n DEV";
     for my $dev (keys %$sar) {
         next unless $dev =~ m/^eth/; # only Ethernet ifaces
@@ -568,6 +568,10 @@ the B<samples> and optional B<slice> parameters:
 The B<slice> parameter indicates how many seconds each sample covers.  At
 Synacor, this is currently 60s, which is the default value.  You should only
 override this value if you know what you are doing and why.
+
+The framework does not currently allow you to analyze more than a 24-hour
+period, but it will handle the midnight boundary, when sadc(1) switches from
+one file to the next, transparently.
 
 Here are some possible values for the B<SAR> flags argument:
 

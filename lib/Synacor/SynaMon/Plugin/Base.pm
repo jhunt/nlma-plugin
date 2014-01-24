@@ -1276,19 +1276,13 @@ sub jolokia_search
 	return wantarray ? keys %$results : $results;
 }
 
-sub sar
+sub _get_sar
 {
-	my ($self, $args, %opts) = @_;
-	$opts{slice}   ||= 60; # Synacor uses 1m sadc intervals
-	$opts{samples} ||= 1;  # By default, only care about the last sample
-
-	my $data = {};
-	my $oldest = time - ($opts{samples} * $opts{slice});
-	$self->debug("Ignoring any sar data older than $oldest (now is ".time.")");
+	my ($self, $args, $file, $oldest, $data) = @_;
 
 	my $command = -x "/usr/bin/sadf"
-		? "/usr/bin/sadf -- $args"   # we have sadf, use that!
-		: "sar -h $args";            # crusty old CentOS 4 doesn't have sadf; use sar -h
+		? "/usr/bin/sadf -- $args $file"   # we have sadf, use that!
+		: "sar -h $args -f $file";         # crusty old CentOS 4 doesn't have sadf; use sar -h
 
 	for ($self->run($command)) {
 		# i.e: |vm01.jhunt  58      1390366861      lo      rxerr/s 0.00|
@@ -1297,11 +1291,44 @@ sub sar
 		next if $ts < $oldest;
 		$data->{$ts}{$key}{$attr} = $val;
 	}
+}
+
+sub sar
+{
+	my ($self, $args, %opts) = @_;
+	$opts{slice}   ||= 60; # Synacor uses 1m sadc intervals
+	$opts{samples} ||= 1;  # By default, only care about the last sample
+	my $span = $opts{samples} * $opts{slice};
+	if ($span > 86400) {
+		$self->debug("NOTE - It is ill-advised to ask SAR for more than 24h of data,",
+		             "       Truncating request for $span seconds of data down to 1d.");
+		$span = 86400;
+	}
+
+	my $data = {};
+	my $file;
+	my $now = time;
+	my $oldest   = $now - $span; $oldest -= ($oldest % $opts{slice});
+	my $midnight = $now - ($now % 86400);
+	$self->debug("Ignoring any sar data older than $oldest (now:$now, midnight:$midnight)");
+
+	if ($oldest < $midnight) {
+		$self->debug("Detected midnight rollover; looking at yesterdays data");
+		$file = sprintf("/var/log/sa/sa%02d", (localtime(time - 86400))[3]);
+		$self->_get_sar($args, $file, $oldest, $data);
+	}
+	$file = sprintf("/var/log/sa/sa%02d", (localtime)[3]);
+	$self->_get_sar($args, $file, $oldest, $data);
 
 	my $n = 0;
 	my $collapsed = {};
-	for my $ts ((reverse sort keys %$data)[0 .. $opts{samples}-1]) {
-		$n++;
+	for my $ts (reverse sort keys %$data) {
+		if (!defined $ts or !exists $data->{$ts}) {
+			$self->debug("Did not find ts '$ts' \@$n");
+			next;
+		}
+		$self->trace("Found sample #$n \@$ts");
+		last if $n++ == $opts{samples};
 		for my $key (keys %{$data->{$ts}}) {
 			for my $attr (keys %{$data->{$ts}{$key}}) {
 				$collapsed->{$key}{$attr} += $data->{$ts}{$key}{$attr};
