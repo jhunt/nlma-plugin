@@ -1298,6 +1298,7 @@ sub sar
 	my ($self, $args, %opts) = @_;
 	$opts{slice}   ||= 60; # Synacor uses 1m sadc intervals
 	$opts{samples} ||= 1;  # By default, only care about the last sample
+	$opts{logs}    ||= "/var/log/sa";
 	my $span = $opts{samples} * $opts{slice};
 	if ($span > 86400) {
 		$self->debug("NOTE - It is ill-advised to ask SAR for more than 24h of data,",
@@ -1314,10 +1315,10 @@ sub sar
 
 	if ($oldest < $midnight) {
 		$self->debug("Detected midnight rollover; looking at yesterdays data");
-		$file = sprintf("/var/log/sa/sa%02d", (localtime(time - 86400))[3]);
+		$file = sprintf("%s/sa%02d", $opts{logs}, (localtime($now - 86400))[3]);
 		$self->_get_sar($args, $file, $oldest, $data);
 	}
-	$file = sprintf("/var/log/sa/sa%02d", (localtime)[3]);
+	$file = sprintf("%s/sa%02d", $opts{logs}, (localtime($now))[3]);
 	$self->_get_sar($args, $file, $oldest, $data);
 
 	my $n = 0;
@@ -1328,7 +1329,8 @@ sub sar
 			next;
 		}
 		$self->trace("Found sample #$n \@$ts");
-		last if $n++ == $opts{samples};
+		last if $n == $opts{samples};
+		$n++;
 		for my $key (keys %{$data->{$ts}}) {
 			for my $attr (keys %{$data->{$ts}{$key}}) {
 				$collapsed->{$key}{$attr} += $data->{$ts}{$key}{$attr};
@@ -1339,14 +1341,17 @@ sub sar
 		$self->CRITICAL("No sar data found via /usr/bin/sadf -- $args");
 		return {};
 	}
-	return $collapsed if $n == 1;
-
-	$self->debug("Collapsed $n SAR samples down to 1");
-	for my $key (keys %$collapsed) {
-		for my $attr (keys %{$collapsed->{$key}}) {
-			$collapsed->{$key}{$attr} = $collapsed->{$key}{$attr} / $n;
+	if ($n > 1) {
+		$self->debug("Collapsed $n SAR samples down to 1");
+		for my $key (keys %$collapsed) {
+			for my $attr (keys %{$collapsed->{$key}}) {
+				$collapsed->{$key}{$attr} = $collapsed->{$key}{$attr} / $n;
+			}
 		}
 	}
+	$collapsed = $collapsed->{'-'}
+		if keys %$collapsed == 1 and
+		   exists $collapsed->{'-'};
 	return $collapsed;
 }
 

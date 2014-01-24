@@ -1,0 +1,204 @@
+#!perl
+
+BEGIN {
+	# don't try this at home, kids
+	my $__TIME_snapshot = time;
+	my $__TIME_override = undef;
+	*CORE::GLOBAL::time = sub { $__TIME_override || $__TIME_snapshot };
+	*CORE::GLOBAL::time = sub { $__TIME_override };
+	sub OVERRIDE_TIME { $__TIME_override = shift; }
+}
+
+use Test::More;
+require "t/common.pl";
+
+ok_plugin(0, "OVERTIME OK - time is now 123456789", undef, "Time Overrides", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OVERTIME"; START;
+
+	OVERRIDE_TIME(123456789);
+	OK "time is now ".time();
+
+	DONE;
+});
+
+my $JAN23_9AM = 1390485600;
+my $JAN23_MID = 1390453200;
+
+ok_plugin(0, "SAR OK - %util: 0.69 avgqu-sz: 0.02 avgrq-sz: 8 await: 1.58 rd_sec/s: 2.94 svctm: 0.63 tps: 10.9 wr_sec/s: 84.24",
+	undef, "SAR -d works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-d", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		my $dev = $sar->{'dev253-1'};
+		OK "$_: $dev->{$_}" for sort keys %$dev;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - %util: 0.31 avgqu-sz: 0.23 avgrq-sz: 8.00 await: 13.38 rd_sec/s: 0.28 svctm: 0.50 tps: 5.64 wr_sec/s: 44.80",
+	undef, "SAR -d works (15 samples)", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-d", samples => 15,
+		                    logs => "t/data/sar/centos5";
+
+		my $dev = $sar->{'dev253-1'};
+		OK sprintf("%s: %0.2f", $_, $dev->{$_}) for sort keys %$dev;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - %util: 0.38 avgqu-sz: 0.34 avgrq-sz: 8.00 await: 18.79 rd_sec/s: 0.43 svctm: 0.55 tps: 6.32 wr_sec/s: 50.15",
+	undef, "SAR -d works (midnight rollover)", sub {
+
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_MID + 300; # 5 after midnight
+		my $sar = SAR "-d", samples => 10, # 10 minutes worth of data
+		                    logs => "t/data/sar/centos5";
+
+		my $dev = $sar->{'dev253-1'};
+		OK sprintf("%s: %0.2f", $_, $dev->{$_}) for sort keys %$dev;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - rxbyt/s: 3281.8 rxcmp/s: 0 rxmcst/s: 0 rxpck/s: 49.76 txbyt/s: 1854.09 txcmp/s: 0 txpck/s: 4.45",
+	undef, "SAR -n DEV works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-n DEV", samples => 1,
+		                        logs => "t/data/sar/centos5";
+
+		my $dev = $sar->{'eth0'};
+		OK "$_: $dev->{$_}" for sort keys %$dev;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - coll/s: 0 rxdrop/s: 0 rxerr/s: 0 rxfifo/s: 0 rxfram/s: 0 txcarr/s: 0 txdrop/s: 0 txerr/s: 0 txfifo/s: 0",
+	undef, "SAR -n EDEV works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-n EDEV", samples => 1,
+		                         logs => "t/data/sar/centos5";
+
+		my $dev = $sar->{'eth0'};
+		OK "$_: $dev->{$_}" for sort keys %$dev;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - %idle: 93.48 %iowait: 0.55 %nice: 0 %steal: 0 %system: 0.75 %user: 5.21",
+	undef, "SAR -u -P ALL works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-u -P ALL", samples => 1,
+		                           logs => "t/data/sar/centos5";
+
+		my $dev = $sar->{'all'};
+		OK "$_: $dev->{$_}" for sort keys %$dev;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - %dquot-sz: 0 %rtsig-sz: 0 %super-sz: 0 dentunusd: 56585 dquot-sz: 0 file-sz: 2040 inode-sz: 23969 rtsig-sz: 0 super-sz: 0",
+	undef, "SAR -v works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-v", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		OK "$_: $sar->{$_}" for sort keys %$sar;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - bread/s: 8.83 bwrtn/s: 284.81 rtps: 1.1 tps: 29.62 wtps: 28.51",
+	undef, "SAR -b works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-b", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		OK "$_: $sar->{$_}" for sort keys %$sar;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - ldavg-1: 0.04 ldavg-15: 0.01 ldavg-5: 0.07 plist-sz: 190 runq-sz: 2",
+	undef, "SAR -q works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-q", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		OK "$_: $sar->{$_}" for sort keys %$sar;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - fault/s: 1761.62 majflt/s: 0 pgpgin/s: 1.47 pgpgout/s: 47.47",
+	undef, "SAR -B works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-B", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		OK "$_: $sar->{$_}" for sort keys %$sar;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - %memused: 72.03 %swpused: 19.1 kbbuffers: 65824 kbcached: 213132 kbmemfree: 287220 kbmemused: 739668 kbswpcad: 94172 kbswpfree: 1624564 kbswpused: 383552",
+	undef, "SAR -r works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-r", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		OK "$_: $sar->{$_}" for sort keys %$sar;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - bufpg/s: 0.5 campg/s: 0.52 frmpg/s: -2.62",
+	undef, "SAR -R works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-R", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		OK "$_: $sar->{$_}" for sort keys %$sar;
+		DONE;
+});
+
+ok_plugin(0, "SAR OK - pswpin/s: 0 pswpout/s: 0",
+	undef, "SAR -W works", sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SAR"; START;
+
+		OVERRIDE_TIME $JAN23_9AM;
+		my $sar = SAR "-W", samples => 1,
+		                    logs => "t/data/sar/centos5";
+
+		OK "$_: $sar->{$_}" for sort keys %$sar;
+		DONE;
+});
+
+done_testing;

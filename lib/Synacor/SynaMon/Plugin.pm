@@ -575,9 +575,7 @@ one file to the next, transparently.
 
 Here are some possible values for the B<SAR> flags argument:
 
-    SAR "-P all";    # aggregate CPU stats
-    SAR "-x <pid>";  # single-process resource stats
-    SAR "-x ALL";    # resource stats for all processes
+    SAR "-u -P ALL"; # aggregate CPU stats
 
     SAR "-v";        # inode/file table usage
     SAR "-d";        # block device activity
