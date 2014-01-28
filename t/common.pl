@@ -12,6 +12,31 @@ sub TEST_ALL
 	$ENV{TEST_ALL};
 }
 
+sub PLATFORM
+{
+	open my $pipe, "-|", "/usr/bin/lsb_release -a"
+		or return 'unknown';
+
+	# LSB Version:    :core-3.0-ia32:core-3.0-noarch:graphics-3.0-ia32:graphics-3.0-noarch
+	# Distributor ID: CentOS
+	# Description:    CentOS release 4.7 (Final)
+	# Release:        4.7
+	# Codename:       Final
+
+	my ($dist, $ver);
+	while (<$pipe>) {
+		$dist = $1 if m/Distributor ID:\s+(.*)/i;
+		$ver  = $1 if m/Release:\s+(.*)/i;
+	}
+	close $pipe;
+
+	local $_ = "$dist-$ver";
+	return 'centos4' if m/^centos-4/i;
+	return 'centos5' if m/^centos-5/i;
+	return 'centos6' if m/^centos-6/i;
+	return 'unknown';
+}
+
 sub ok_plugin
 {
 	my ($exit, $summary, $perf, $message, $sub, $args, %opts) = @_;
