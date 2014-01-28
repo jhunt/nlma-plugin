@@ -512,6 +512,13 @@ set in the ssh_options parameter.
   my $output = RUN("ls -1", via => $ssh);
   # Returns 'remotefile\nremotefile2\nremotefile3\n'
 
+NOTE: Net::SSH::Perl doesn't support running commands on the same channel, ie:
+you will need to chain your commands in the run call.
+
+  # Chain commands
+  my $ssh = SSH($host, $user, $pass, { ssh_option => 'ssh_opt_value' });
+  my @output = RUN("sudo su thanks ; /bin/win_an_emmy", via => $ssh);
+
 RUN will fail in Net::SSH::Perl mode under the following circumstances:
 
 =over
