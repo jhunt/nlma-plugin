@@ -1342,7 +1342,7 @@ sub sar
 		}
 	}
 	if ($n == 0) {
-		$self->CRITICAL("No sar data found via /usr/bin/sadf -- $args");
+		$self->CRITICAL("No sar data found for sar $args");
 		return {};
 	}
 	if ($n > 1) {

@@ -220,7 +220,7 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			DONE;
 	});
 
-	ok_plugin(0, "SAR OK - no data",
+	ok_plugin(0, "SAR OK - rd_sec/s: 0 tps: 0.25 wr_sec/s: 3.48",
 		undef, "SAR won't die on no data file at midnight file", sub {
 			use Synacor::SynaMon::Plugin qw(:easy);
 			PLUGIN name => "SAR"; START;
@@ -234,7 +234,7 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			DONE;
 	});
 
-	ok_plugin(2, "SAR CRITICAL - No sar data found via /usr/bin/sadf -- -d",
+	ok_plugin(2, "SAR CRITICAL - No sar data found for sar -d",
 		undef, "SAR dies on no data", sub {
 			use Synacor::SynaMon::Plugin qw(:easy);
 			PLUGIN name => "SAR"; START;
@@ -449,7 +449,7 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			DONE;
 	});
 
-	ok_plugin(2, "SAR CRITICAL - No sar data found via /usr/bin/sadf -- -d",
+	ok_plugin(2, "SAR CRITICAL - No sar data found for sar -d",
 		undef, "SAR dies on no data", sub {
 			use Synacor::SynaMon::Plugin qw(:easy);
 			PLUGIN name => "SAR"; START;
