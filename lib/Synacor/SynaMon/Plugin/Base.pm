@@ -16,6 +16,7 @@ use POSIX qw/
 	WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED
 	SIGALRM
 	sigaction
+	strftime
 /;
 use Time::HiRes qw(gettimeofday);
 use File::Find;
@@ -1279,6 +1280,7 @@ sub jolokia_search
 sub _get_sar
 {
 	my ($self, $args, $file, $oldest, $data) = @_;
+	return unless -f $file;
 
 	my $command = -x "/usr/bin/sadf"
 		? "/usr/bin/sadf -- $args $file"   # we have sadf, use that!
@@ -1310,7 +1312,9 @@ sub sar
 	my $file;
 	my $now = time;
 	my $oldest   = $now - $span; $oldest -= ($oldest % $opts{slice});
-	my $midnight = $now - ($now % 86400);
+
+	my @t = localtime($now); @t[0 .. 2] = (0,0,0);
+	my $midnight = strftime("%s", @t);
 	$self->debug("Ignoring any sar data older than $oldest (now:$now, midnight:$midnight)");
 
 	if ($oldest < $midnight) {

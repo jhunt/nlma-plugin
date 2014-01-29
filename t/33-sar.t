@@ -25,6 +25,11 @@ ok_plugin(0, "OVERTIME OK - time is now 123456789", undef, "Time Overrides", sub
 my $JAN23_9AM = 1390485600;
 my $JAN23_MID = 1390453200;
 
+# there is no sa24 file
+my $JAN24_MID = 1390539600;
+# there is no sa25 file
+my $JAN25_MID = 1390626000;
+
 my $LOGS;
 my $OS = PLATFORM();
 if ($OS eq 'centos4') { ############################################### CentOS 4.x
@@ -215,6 +220,32 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			DONE;
 	});
 
+	ok_plugin(0, "SAR OK - no data",
+		undef, "SAR won't die on no data file at midnight file", sub {
+			use Synacor::SynaMon::Plugin qw(:easy);
+			PLUGIN name => "SAR"; START;
+
+			OVERRIDE_TIME $JAN24_MID;
+			my $sar = SAR "-d", samples => 1,
+			                    logs => $LOGS;
+
+			my $dev = $sar->{'dev8-6'};
+			OK "$_: $dev->{$_}" for sort keys %$dev;
+			DONE;
+	});
+
+	ok_plugin(2, "SAR CRITICAL - No sar data found via /usr/bin/sadf -- -d",
+		undef, "SAR dies on no data", sub {
+			use Synacor::SynaMon::Plugin qw(:easy);
+			PLUGIN name => "SAR"; START;
+
+			OVERRIDE_TIME $JAN25_MID;
+			my $sar = SAR "-d", samples => 15,
+			                    logs => $LOGS;
+
+			OK "no bail!";
+			DONE;
+	});
 
 } elsif ($OS eq 'centos5') { ########################################## CentOS 5.x
 
@@ -401,6 +432,33 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			                    logs => $LOGS;
 
 			OK "$_: $sar->{$_}" for sort keys %$sar;
+			DONE;
+	});
+
+	ok_plugin(0, "SAR OK - %util: 0.69 avgqu-sz: 0.02 avgrq-sz: 8 await: 1.58 rd_sec/s: 2.94 svctm: 0.63 tps: 10.9 wr_sec/s: 84.24",
+		undef, "SAR won't die on no data file at midnight", sub {
+			use Synacor::SynaMon::Plugin qw(:easy);
+			PLUGIN name => "SAR"; START;
+
+			OVERRIDE_TIME $JAN24_MID;
+			my $sar = SAR "-d", samples => 1,
+			                    logs => $LOGS;
+
+			my $dev = $sar->{'dev253-1'};
+			OK "$_: $dev->{$_}" for sort keys %$dev;
+			DONE;
+	});
+
+	ok_plugin(2, "SAR CRITICAL - No sar data found via /usr/bin/sadf -- -d",
+		undef, "SAR dies on no data", sub {
+			use Synacor::SynaMon::Plugin qw(:easy);
+			PLUGIN name => "SAR"; START;
+
+			OVERRIDE_TIME $JAN25_MID;
+			my $sar = SAR "-d", samples => 15,
+			                    logs => $LOGS;
+
+			OK "no bail!";
 			DONE;
 	});
 
