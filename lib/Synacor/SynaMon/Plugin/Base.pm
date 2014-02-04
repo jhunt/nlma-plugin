@@ -1359,6 +1359,70 @@ sub sar
 	return $collapsed;
 }
 
+sub calculate_rate
+{
+	my ($self, %opts) = @_;
+	if (!$opts{store}) {
+		$self->WARNING("Need a store file to get previous data");
+		return {};
+	}
+	if (!$opts{data}) {
+		$self->WARNING("Need data to parse");
+		return {};
+	}
+	$opts{want} = [keys %{$opts{data}}] if !$opts{want};
+	$opts{want} = [ $opts{want} ] unless ref($opts{want}) eq "ARRAY";
+	my $NOW = time;
+	$opts{data}->{check} = $NOW;
+
+	my $then = $self->retrieve($opts{store}, as => 'yaml');
+	if (!$then) {
+		$self->WARNING("No historic data found; rate calculation deferred");
+		return {};
+	}
+	$self->debug("Calculating change for current data:");
+	$self->dump($opts{data});
+
+	$self->debug("Found historic state data:");
+	$self->dump($then);
+
+	my @fields;
+	my $rollover = 0;
+	for (@{$opts{want}}) {
+		next unless exists $opts{data}->{$_} and exists $then->{$_};
+		$rollover = 1 if $opts{data}->{$_} < $then->{$_};
+		push @fields, $_;
+	}
+
+	if ($rollover) {
+		$self->debug("Wraparound/rollover detected:\n".
+		      join("\n", map { sprintf("  %-15s -> %s", $_, $then->{$_}, $opts{data}->{$_}) }
+		        sort @fields));
+		$self->WARNING("Service restart detected (values reset to near-zero)");
+		return {};
+	}
+
+	my $span = $NOW - $then->{check};
+	if ($span <= 0) {
+		$self->debug("${span}s time span detected (data from $then->{check} vs $NOW)\n".
+		      "Skipping rate-based checks altogether");
+		return {};
+
+	} elsif ($opts{stale} && $span > $self->parse_time($opts{stale})) {
+		$self->WARNING("Stale data detected; last sample was ".$self->format_time($span)." ago");
+		return {};
+	}
+
+	$self->debug("${span}s time span detected");
+	$span /= 60; # per min
+	my $data = { map { $_ => ($opts{data}->{$_} - $then->{$_}) / $span } @fields };
+
+	$self->debug("Calculated per-minute rates:");
+	$self->dump($data);
+
+	return $data;
+}
+
 my %DEVNAME = ();
 sub _devnames
 {
@@ -2191,6 +2255,47 @@ returns only the first, which allows these usage parameters:
         my $dev = DEVNAME $_;
         # ...
     }
+
+=head2 calculate_rate(%opts)
+
+This function was added and tested to help transform data that is a counter,
+ie an ever increase value into a gauge, ie a rate.
+
+All parameters are in hash format, data and store are required parameters,
+and the plugin will warn if they are not present.
+
+=over
+
+=item data
+
+A key value set representing your current data values
+
+=item store
+
+The object store to get the last data set from
+
+=item want
+
+The data items you want to calculate over, can be an array or a single value
+
+=item stale
+
+The time staleness to warn over
+
+=back
+
+Usage:
+
+my $calculated = calculate_rate(
+	stale => 1800,
+	store => "check_mAh_datah",
+	want  => [ "data1", "data2" ],
+	data  => {
+		data1 => 300,
+		data2 = 400,
+		},
+);
+
 
 =head1 AUTHOR
 

@@ -1,15 +1,7 @@
 #!perl
 
-BEGIN {
-	# don't try this at home, kids
-	my $__TIME_snapshot = time;
-	my $__TIME_override = undef;
-	*CORE::GLOBAL::time = sub { $__TIME_override || $__TIME_snapshot };
-	*CORE::GLOBAL::time = sub { $__TIME_override };
-	sub OVERRIDE_TIME { $__TIME_override = shift; }
-}
-
 use Test::More;
+use t::override_time;
 require "t/common.pl";
 
 ok_plugin(0, "OVERTIME OK - time is now 123456789", undef, "Time Overrides", sub {

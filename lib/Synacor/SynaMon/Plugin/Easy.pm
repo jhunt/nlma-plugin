@@ -46,6 +46,7 @@ our @EXPORT = qw/
 	JOLOKIA_SEARCH
 
 	SAR
+	CALC_RATE
 
 	DEVNAME
 
@@ -138,6 +139,7 @@ sub JOLOKIA_READ    { $plugin->jolokia_read(@_); }
 sub JOLOKIA_SEARCH  { $plugin->jolokia_search(@_); }
 
 sub SAR { $plugin->sar(@_); }
+sub CALC_RATE { $plugin->calculate_rate(@_); }
 
 sub DEVNAME { $plugin->devname(@_); }
 
@@ -379,6 +381,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::sar>.
 =head2 DEVNAME
 
 Wrapper around B<Synacor::SynaMon::Plugin::devname>.
+
+=head2 CALC_RATE
+
+Wrapper around B<Synacor::SynaMon::Plugin::calculate_rate>.
 
 =head1 AUTHOR
 
