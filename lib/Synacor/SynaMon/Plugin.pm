@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.27";
+our $VERSION = "1.28";
 
 use Exporter;
 use base qw(Exporter);
@@ -677,6 +677,33 @@ For each data point, the plugin must specify a label and the value:
 A plugin can track as many data points as it wants, within reason.
 
 TRACK_VALUE has been available since version 1.0.
+
+=head1 CALCULATING RATE
+
+Easily convert counters (increasing total data) to gauges (rate)
+
+I<store> uses the STORE/RETRIEVE convention of storing in /var/tmp
+with the mon_ prefix. It is not optional.
+
+I<data> is a key value store and is also required.
+
+I<want> is a single value or array of keys to calculate the rate over.
+It is optional and will default to all.
+
+I<stale> is a value in seconds to warn if the data is old.
+
+calc_rate syntax is as follows:
+
+CALC_RATE
+	data  => {
+			key1 => value1,
+			key2 => value2
+		},
+	want  => [ key1, key2 ],
+	store => 'filename',
+	stale => 3600;
+
+CALC_RATE has been available since version 1.28
 
 =head1 TIMERS and TIMEOUTS
 
