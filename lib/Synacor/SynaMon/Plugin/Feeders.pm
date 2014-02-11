@@ -156,7 +156,7 @@ sub HOSTS
 	my %h = ();
 	while (<$fh>) {
 		chomp;
-		my ($ip, $name) = split/\s+/, $_, 2;
+		my ($ip, $name) = split/\s+/, $_;
 		my ($key, $value) = $BY_ADDRESS ? ($ip, $name) : ($name, $ip);
 
 		if ($options{dedupe}) {
