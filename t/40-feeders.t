@@ -372,6 +372,60 @@ ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing", sub {
 	OK;
 });
 
+ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing with extra fields", sub {
+	use Synacor::SynaMon::Plugin qw(:feeder);
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+
+	my $file = "t/data/hosts-authoritative.lst";
+	my ($hash, @keys);
+
+	$hash = HOSTS file => $file;
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find 127.0.0.1 => localhost"
+		unless $hash->{'127.0.0.1'} and $hash->{'127.0.0.1'} eq 'localhost';
+
+	@keys = HOSTS file => $file;
+	WARNING "Did not find 127.0.0.1 in IP list"
+		unless $keys[0] and $keys[0] eq "127.0.0.1";
+
+	$hash = HOSTS file => $file, by => 'address';
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find 127.0.0.1 => localhost (by => address)"
+		unless $hash->{'127.0.0.1'} and $hash->{'127.0.0.1'} eq 'localhost';
+
+	@keys = HOSTS file => $file, by => 'ip';
+	WARNING "Did not find 127.0.0.1 in IP list (by => ip)"
+		unless $keys[0] and $keys[0] eq "127.0.0.1";
+
+
+	$hash = HOSTS file => $file, by => 'name';
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find localhost => 127.0.0.1"
+		unless $hash->{localhost} and $hash->{localhost} eq "127.0.0.1";
+
+	@keys = HOSTS file => $file, by => 'fqdn';
+	WARNING "Did not find localhost in Hostname list"
+		unless $keys[0] and $keys[0] eq "localhost";
+
+
+	$hash = HOSTS file => "/path/to/nowhere", alt_file => $file, by => 'name';
+	CRITICAL "Received $hash (not a hashref)"
+		unless ref($hash) and ref($hash) eq 'HASH';
+	WARNING "Did not find localhost => 127.0.0.1"
+		unless $hash->{localhost} and $hash->{localhost} eq "127.0.0.1";
+
+	@keys = HOSTS file => "/path/to/nowhere", alt_file => $file, by => 'fqdn';
+	WARNING "Did not find localhost in Hostname list"
+		unless $keys[0] and $keys[0] eq "localhost";
+
+	OK;
+});
+
 ok_plugin(0, "FEEDER OK", undef, "dedupe", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
 	#open STDERR, ">", "/dev/null";
