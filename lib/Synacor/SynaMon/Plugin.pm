@@ -678,30 +678,53 @@ A plugin can track as many data points as it wants, within reason.
 
 TRACK_VALUE has been available since version 1.0.
 
-=head1 CALCULATING RATE
+=head1 CALCULATING RATES
 
-Easily convert counters (increasing total data) to gauges (rate)
+Sometimes, data gathered is in an absolute, ever-increasing counter, like
+the number of processes created by the kernel since boot.  Usually, you want
+this kind of data to be graphed and thresholded as a gauge, or rate of
+change per unit time.
 
-I<store> uses the STORE/RETRIEVE convention of storing in /var/tmp
-with the mon_ prefix. It is not optional.
+This is what B<CALC_RATE> was built for.
 
-I<data> is a key value store and is also required.
+To use B<CALC_RATE>, you'll need to pass in a hashref of counter values,
+an arrayref of keys that should be rate-calculated (optional), a store file
+and a staleness threshold.  For example:
+
+    my %data;
+    $data{processes} = get_processes_since_boot();
+    $data{contextsw} = get_context_switches_since_boot();
+
+    my $rates = CALC_RATE(data  => \%data,
+                          want  => ['processes', 'contextsw'],
+                          store => 'sysproc',   # /var/tmp/mon_sysproc
+                          stale => 300);        # 5 minutes
+
+    # don't forget to STORE the data!
+    STORE 'sysproc', \%data, as => 'yaml';
+
+The four options, I<data>, I<want>, I<store> and I<stale> are all that
+B<CALC_RATE> recognizes.  Other keys are ignored.
+
+I<store> uses the STORE/RETRIEVE convention of storing in /var/tmp with the
+mon_ prefix.  This is B<required>.
+
+I<data> contains the counter values and is also required.
 
 I<want> is a single value or array of keys to calculate the rate over.
-It is optional and will default to all.
+If not specified, all keys will be rate-calculated.
 
-I<stale> is a value in seconds to warn if the data is old.
+I<stale> is the staleness threshold (in seconds) for doing rate
+calculations.  If the store file is found to be older than this threshold,
+rate calculation will be skipped, a new state file will be written (with
+current data) and a WARNING will be issued.
 
-calc_rate syntax is as follows:
-
-CALC_RATE
-	data  => {
-			key1 => value1,
-			key2 => value2
-		},
-	want  => [ key1, key2 ],
-	store => 'filename',
-	stale => 3600;
+B<CALC_RATE> handles wraparound by detecting when counter values regress
+(i.e. are less than they were last time).  This can sometimes represent
+integer overflow, but usually indicates that the process doing the counting
+has been restarted.  On wrap-around, B<CALC_RATE> will skip the rate
+calculations, to avoid ending up with large negative rates and skewing
+graphs.
 
 CALC_RATE has been available since version 1.28
 
