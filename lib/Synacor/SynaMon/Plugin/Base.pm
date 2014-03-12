@@ -1096,6 +1096,8 @@ my @UNITS = qw/B KB MB GB TB PB EB YB ZB/;
 sub parse_bytes
 {
 	my ($self, $s) = @_;
+	return undef if !defined $s;
+	return 0 if !$s;
 	$s =~ m/^(\d+(?:\.\d+)?)([^\d]+)/i or return undef;
 	my ($num, $unit) = ($1, uc($2));
 	for (@UNITS) {
@@ -1108,6 +1110,7 @@ sub parse_bytes
 sub format_bytes
 {
 	my ($self, $b, $fmt) = @_;
+	return '<undef>' if !defined $b;
 	my $orig = $b+0;
 	$fmt = '%0.2f%s' unless $fmt;
 	for (@UNITS) {
@@ -1120,6 +1123,7 @@ sub format_bytes
 sub parse_time
 {
 	my ($self, $s) = @_;
+	return undef if !defined $s;
 	my $t = 0;
 	while ($s =~ m/\G\s*(\d+(?:\.\d+)?)\s*([a-zA-Z])/g) {
 		my $x = $1;
@@ -1134,6 +1138,7 @@ sub parse_time
 sub format_time
 {
 	my ($self, $s, $fmt) = @_;
+	return '<undef>' if !defined $s;
 	$fmt = '%i%s' unless $fmt;
 
 	my $u = 's';

@@ -51,6 +51,31 @@ ok_plugin(0, "BYTES OK", undef, "Basic size spec parsing", sub {
 	DONE;
 });
 
+ok_plugin(0, "BYTES OK", undef, "undefined values", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "BYTES";
+	START;
+
+	my $want = '<undef>';
+	my $out  = FORMAT_BYTES(undef);
+	BAIL(CRITICAL "FORMAT_BYTES(undef) != $want (== $out)") unless $out eq $want;
+
+	$out  = FORMAT_BYTES();
+	BAIL(CRITICAL "FORMAT_BYTES() != $want (== $out)") unless $out eq $want;
+
+	$out = PARSE_BYTES(undef);
+	BAIL(CRITICAL "PARSE_BYTES(undef) != undef (== $out)") if defined $out;
+
+	$out = PARSE_BYTES();
+	BAIL(CRITICAL "PARSE_BYTES() != undef (== $out)") if defined $out;
+
+	$out = PARSE_BYTES('');
+	BAIL(CRITICAL "PARSE_BYTES('') != 0 (== $out)") if !defined $out or $out != 0;
+
+	OK;
+	DONE;
+});
+
 ok_plugin(0, "BYTES OK", undef, "BYTES_THOLD handling", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "BYTES";

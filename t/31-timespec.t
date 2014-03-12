@@ -44,6 +44,31 @@ ok_plugin(0, "TIME OK", undef, "Basic time spec parsing", sub {
 	DONE;
 });
 
+ok_plugin(0, "TIME OK", undef, "undefined values", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "TIME";
+	START;
+
+	my $want = '<undef>';
+	my $out  = FORMAT_TIME(undef);
+	BAIL(CRITICAL "FORMAT_TIME(undef) != $want (== $out)") unless $out eq $want;
+
+	$out  = FORMAT_TIME();
+	BAIL(CRITICAL "FORMAT_TIME() != $want (== $out)") unless $out eq $want;
+
+	$out = PARSE_TIME(undef);
+	BAIL(CRITICAL "PARSE_TIME(undef) != undef (== $out)") if defined $out;
+
+	$out = PARSE_TIME();
+	BAIL(CRITICAL "PARSE_TIME() != undef (== $out)") if defined $out;
+
+	$out = PARSE_TIME('');
+	BAIL(CRITICAL "PARSE_TIME('') != 0 (== $out)") if !defined $out or $out != 0;
+
+	OK;
+	DONE;
+});
+
 ok_plugin(0, "TIME OK", undef, "TIME_THOLD handling", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "TIME";
