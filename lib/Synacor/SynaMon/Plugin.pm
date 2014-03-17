@@ -1087,6 +1087,37 @@ requested, using these credentials.
 
 =back
 
+=head2 DECODE_JSON
+
+Sometimes, HTTP requests give back JSON or JSONP results, that need to be
+deserialized into Perl hashes and arrays.  The B<DECODE_JSON> function makes
+this easy:
+
+    my ($res, $data) = HTTP_GET $url;
+    if ($res->is_success) {
+
+        my $payload = JSON_DECODE $data;
+        OK "Found 'title' in JSON data"
+            if $payload->{title};
+
+    }
+
+The padding function call will automatically be removed from a JSONP
+request, so the response 'jsonp("{...}")' will be treated as if the server
+had responded with just '{...}'.  The framework will automatically detect
+whether or not it needs to do JSONP unpacking.
+
+If there are any problems parsing the JSON/JSONP response, the undef value
+will be returned:
+
+    JSON_DECODE $raw_data
+       or CRITICAL "JSON response not understood";
+
+Technically speaking, the above code would also alert if the JSON response
+was '~', a literal null / undefined value.  If you truly need to
+differentiate this state from an error state, feel free to use Perl's JSON
+module directly, and please carefully re-think the API design.
+
 =head2 SLURP
 
 SLURP provides the simple ability to read in a file and grab all
