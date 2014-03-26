@@ -18,6 +18,7 @@ ok_plugin(0, "TIME OK", undef, "Basic time spec parsing", sub {
 		'1h'   => 3600,
 		'2d'   => 86400*2,
 		'14d'  => 86400*14,
+		'2w'   => 86400*14,
 		'1h1m' => 3660,
 	);
 	for my $s (keys %t) {

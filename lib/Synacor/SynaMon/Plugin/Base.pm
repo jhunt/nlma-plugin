@@ -1127,9 +1127,10 @@ sub parse_time
 	my $t = 0;
 	while ($s =~ m/\G\s*(\d+(?:\.\d+)?)\s*([a-zA-Z])/g) {
 		my $x = $1;
-		$x *= 60    if $2 eq 'm';
-		$x *= 3600  if $2 eq 'h';
-		$x *= 86400 if $2 eq 'd';
+		$x *= 60      if $2 eq 'm';
+		$x *= 3600    if $2 eq 'h';
+		$x *= 86400   if $2 eq 'd';
+		$x *= 7*86400 if $2 eq 'w';
 		$t += $x;
 	}
 	$t;
