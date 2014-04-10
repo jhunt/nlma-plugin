@@ -535,7 +535,7 @@ sub trace
 sub trace_dump
 {
 	my ($self, @vars) = @_;
-	return unless $self->{debug} >= 3;
+	return unless $self->{debug} && $self->{debug} >= 3;
 
 	local $Data::Dumper::Pad = "TRACE> ";
 	print STDERR Dumper(@vars);
