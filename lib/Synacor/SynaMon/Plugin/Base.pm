@@ -66,6 +66,8 @@ our $TIMEOUT_MESSAGE = "Timed out";
 our $TIMEOUT_STAGE = "running check";
 our $ALL_DONE = 0;
 
+$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
+
 sub new
 {
 	my ($class, %options) = @_;
@@ -163,6 +165,13 @@ sub set
 					$self->_bad_setting($key, $value, "(warning|critical|unknown|ok)");
 				}
 			}
+		} elsif ($key eq "ssl_verify") {
+			if ($value) {
+				$self->debug("Enabling SSL hostname verification");
+			} else {
+				$self->debug("Disabling SSL hostname verification");
+			}
+			$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = $value ? 1 : 0;
 		}
 
 		$self->{settings}{$key} = $value;
@@ -1016,7 +1025,7 @@ sub mech
 sub http_request
 {
 	my ($self, $method, $uri, $data, $headers, $options) = @_;
-	$method = uc($method);
+	$method  = uc($method);
 	$headers = $headers || {};
 	$options = $options || {};
 
@@ -1034,8 +1043,11 @@ sub http_request
 
 	if (exists $options->{username} && exists $options->{password}) {
 		$request->authorization_basic($options->{username}, $options->{password});
-	};
+	}
 
+	$options->{recreate} = 1
+		if $options->{timeout} && $options->{timeout} != $self->mech->timeout;
+	$self->mech($options);
 	my $response = $self->mech->request($request);
 	return wantarray ?
 		($response, $response->decoded_content) :

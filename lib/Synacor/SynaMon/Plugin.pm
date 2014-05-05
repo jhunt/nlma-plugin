@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.28";
+our $VERSION = "1.29";
 
 use Exporter;
 use base qw(Exporter);
@@ -369,6 +369,14 @@ sign of trouble.  Often, this is exactly what we want; if we get a bad
 request from the Jolokia proxy, chances are we can't continue, and should
 alert someone that something is wrong.  When it isn't what you want, flip
 this on and you'll get empty results from failed Jolokia/JMX operations.
+
+=item B<ssl_verify>
+
+Turn on or off, SSL certificate checking by setting the appropriate LWP
+environment viariable. Certificate checking is accomplished by verify
+that a cert is not self signed, and the cert name matches the hostname.
+As of version 1.29 SSL hostname verifaction is off by default, and
+must be explicitly turned on.
 
 =back
 
