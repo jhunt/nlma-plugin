@@ -1283,7 +1283,7 @@ sub jolokia_search
 	my $results = {};
 	for my $domain (keys %$data) {
 		for my $bean (keys %{$data->{$domain}}) {
-			$self->debug("Checking bean '$domain:$bean'\n".
+			$self->trace("Checking bean '$domain:$bean'\n".
 			             "      against /$match/") if $match;
 			next if $match && "$domain:$bean" !~ m/$match/i;
 			next unless ref($data->{$domain}{$bean}) && $data->{$domain}{$bean}{attr};
