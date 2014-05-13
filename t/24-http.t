@@ -91,6 +91,7 @@ ok_plugin(0, "HTTP OK - request handler", undef, "_REQUEST delegates properly", 
 	DONE;
 });
 
+
 ok_plugin(0, "HTTP OK - right response", undef, "Basic HTTP ops", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => 'HTTP';
@@ -107,6 +108,25 @@ ok_plugin(0, "HTTP OK - right response", undef, "Basic HTTP ops", sub {
 
 	(undef, $data) = HTTP_POST "$url/doohickey", "data=here";
 	$data eq "I see you POST-ing that doohickey!" or CRITICAL "Bad POST response: $data";
+
+	DONE;
+});
+
+ok_plugin(0, "HTTP OK - handle lack of encoding header properly", undef, "Encoding", sub {
+	use Synacor::SynaMon::Plugin qw(:ewasy);
+	PLUGIN name => 'HTTP';
+	START  default => 'handle lack of encoding header properly';
+
+	my $url = $httpd->endpoint."/thing";
+	my ($res, $data);
+	{   # override decoded_content to return undef, simulating no encoding specified on Cent-6
+		no warnings 'redefine';
+		*HTTP::Message::decoded_content = sub { undef };
+		($res, $data) = HTTP_REQUEST GET => "$url/unencoded-content";
+	}
+	$data eq "I see you GET-ing that unencoded-content!" or CRITICAL "Bad GET response: $data.";
+	! defined $res->decoded_content or CRITICAL "decoded_content() did not return undef - test invalid.";
+	$data eq $res->content or CRITICAL "HTTP_REQUEST returned content() when decoded_content() returns undef";
 
 	DONE;
 });

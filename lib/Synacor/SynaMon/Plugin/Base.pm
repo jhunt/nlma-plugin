@@ -1048,10 +1048,11 @@ sub http_request
 	$options->{recreate} = 1
 		if $options->{timeout} && $options->{timeout} != $self->mech->timeout;
 	$self->mech($options);
-	my $response = $self->mech->request($request);
+	my $res = $self->mech->request($request);
+	my $res_data = defined $res->decoded_content ? $res->decoded_content : $res->content;
 	return wantarray ?
-		($response, $response->decoded_content) :
-		$response->is_success;
+		($res, $res_data) :
+		$res->is_success;
 }
 
 sub http_get
