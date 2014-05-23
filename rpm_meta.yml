@@ -5,4 +5,5 @@ requires:
   - perl-HTML-Parser
   - perl-HTML-Tagset
   - perl-Log-Log4perl >= 1.40
+  - 'perl(LWP::Protocol::https)'
   - perl > 5.8.0
