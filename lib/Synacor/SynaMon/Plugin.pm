@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.29";
+our $VERSION = "1.30";
 
 use Exporter;
 use base qw(Exporter);
@@ -1185,6 +1185,97 @@ and all domains.
 
 B<JOLOKIA_CONNECT>, B<JOLOKIA_READ> and B<JOLOKIA_SEARCH>
 have been available since v1.26.
+
+=head2 SNMP INTEGRATION
+
+SNMP, Simple Network Management Protocol, is an official standard for remote
+management, monitoring and device introspection.  Several platforms are only
+reachable via SNMP, chief among them network devices like firewalls, routers
+and core switches.
+
+The plugin framework provides a set of primitives that make writing plugins
+based on SNMP interactions easy and painless.  These functions are divided
+into two groups: MIB Management and Agent Interaction.
+
+MIBs (Management Information Bases) are kind of like schema definitions for
+SNMP trees.  They define the semantics of different parts of the hierarchy,
+enforcing syntax and providing meaning that is otherwise very difficult to
+determine.
+
+For example, the OID (Object Identifier) 1.3.6.1.2.1.1.5 contains the name
+of the system, per the agent configuration.  The B<SNMPv2-MIB> contains this
+definition, and also names 1.3.6.1.2.1.1 as I<system> and 1.3.6.1.2.1 as
+I<mib-2>.  Since these symbolic names are so handy, all SNMP framework
+functions will transparently perform name -> OID resolution behind the
+scenes.
+
+The B<OID> and B<OIDS> functions can be used explicitly to perform this
+resolution.
+
+All of the B<SNMP_*> functions comprise the Agent Interaction side of the
+house.  To ease into this, let's consider an example:
+
+    SNMP_MIB "ENTITY-MIB";
+    SNMP_MIB "IF-MIB";
+
+    SNMP_SESSION OPTION->host,
+      port      => 161,             # this is the default
+      version   => '2c',            # so is this
+      timeout   => 5,               # ... as is this
+      community => 'MyCommunity'
+        OR BAIL(CRITICAL "Failed to connect to SNMP!");
+
+    my $name = SNMP_GET '[sysName].0';
+    DEBUG "Got sysName = $name";
+    OK "Connected to SNMP";
+
+For such a small plugin, it covers all of the important aspects of SNMP.
+
+First up, we have to calls to B<SNMP_MIB>.  This function compiles and loads
+named MIBs into memory, so that they can be consulted for OID resolution.
+
+Next, the B<SNMP_SESSION> call initiates the connection to the remote SNMP
+agent.  You can pass the B<port>, B<version>, B<community> and B<timeout>
+options to influence how the connection is made, but for most use cases you
+will only need B<community>.  Note that B<SNMP_SESSION> returns a false
+value if the remote agent cannot be contacted.
+
+In the last part of the example, we call B<SNMP_GET> to retrieve the value
+of a single OID.  The string '[sysName].0' is in a format recognizable to
+the framework, and will instruct B<SNMP_GET> to replace '[sysName]' with the
+resolved numeric OID for the sysName subtree from the SNMPv2-MIB, before
+making the query request.
+
+In addition to B<SNMP_GET>, you have to other retrieval functions to choose
+from: B<SNMP_TREE> and B<SNMP_TABLE>.  The former will return the requested
+OID value, and all other OIDs underneath it (i.e. the value of all OIDs who
+share the given OID as a prefix).  This is not nearly as useful as
+B<SNMP_TABLE>, which deserves its own example:
+
+    my $r = SNMP_TABLE qw/entPhysicalName
+                          cpmCPUTotal5min/;
+
+    for (sort keys %$r) {
+        next unless exists $r->{$_}{cpmCPUTotal5min};
+
+        my $cpu  = $r->{$_}{entPhysicalName};
+        my $perf = $r->{$_}{cpmCPUTotal5min};
+
+        CHECK_VALUE $perf, sprintf("CPU %s is %0.1f%% used", $cpu, $perf),
+            warning  => OPTION->warning,
+            critical => OPTION->critical;
+    }
+
+Here, we are stitching together disparate tables that share an indexing
+strategy (namely, the physical index).  This allows us to easily associate a
+processor name (entPhysicalName) with the 5-minute usage rate, inside of a
+Cisco ASA device.
+
+NOTE: SNMP support depends on the Perl SNMP::MIB::Compiler module (in the
+perl-SNMP-MIB-Compiler RPM package).  If that is not installed, any calls
+to SNMP functions will result in an UNKNOWN alert.
+
+B<SNMP_*>, B<OID> and B<OIDS> have been available since v1.30.
 
 =head2 FETCH SCRIPTS
 

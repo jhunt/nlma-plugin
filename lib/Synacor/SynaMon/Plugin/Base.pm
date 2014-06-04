@@ -20,6 +20,9 @@ use POSIX qw/
 /;
 use Time::HiRes qw(gettimeofday);
 use File::Find;
+use Net::SNMP;
+# SNMP functionality is optional
+eval 'use SNMP::MIB::Compiler';
 use utf8;
 
 use constant NAGIOS_OK       => 0;
@@ -1468,6 +1471,137 @@ sub devname
 	return wantarray ? @a : $a[0];
 }
 
+sub _snmp_check
+{
+	return if $INC{'SNMP/MIB/Compiler.pm'};
+	shift->UNKNOWN("SNMP::MIB::Compiler not installed; SNMP functionality disabled");
+}
+
+sub _snmp_init
+{
+	my ($self) = @_;
+	$self->_snmp_check;
+	return if $self->{mibc};
+	$self->{mibc} = SNMP::MIB::Compiler->new;
+	$self->{mibc}->{debug_lexer}     = 0;
+	$self->{mibc}->{debug_recursive} = 0;
+	$self->{mibc}->{make_dump}       = 1;
+	$self->{mibc}->{use_dump}        = 1;
+	$self->{mibc}->{do_imports}      = 1;
+
+	my @paths = ();
+	find(sub {
+		return unless -d;
+		push @paths, $File::Find::name;
+	}, $ENV{MONITOR_MIBS} || '/opt/synacor/monitor/lib/snmp');
+	$self->trace("Looking for SNMP MIBs in $_") for @paths;
+	$self->{mibc}->add_path(@paths);
+	$self->{mibc}->add_extension('', '.my', '.mib', '.txt');
+
+	$self->{mibc_cache} = "/var/tmp/mibc.cache";
+	$self->trace("caching compiled MIB definitions in $self->{mibc_cache}");
+	mkdir $self->{mibc_cache};
+	$self->{mibc}->repository($self->{mibc_cache});
+
+	$self->snmp_mib('SNMPv2-MIB');
+}
+
+sub snmp_mib
+{
+	my ($self, @mibs) = @_;
+	$self->_snmp_check;
+	$self->_snmp_init;
+	for (@mibs) {
+		$self->debug("loading SNMP MIB $_");
+		eval {
+			$self->{mibc}->compile($_);
+			$self->{mibc}->load($_);
+		};
+		if ($@) {
+			$self->debug("Caught an exception: $@");
+			$self->UNKNOWN("Unknown MIB: $_");
+		}
+	}
+	return 1;
+}
+
+sub snmp_session
+{
+	my ($self, $endpoint, %opts) = @_;
+	$self->_snmp_check;
+	return $self->{snmp_session} if @_ == 1;
+
+	$self->{snmp_session} = Net::SNMP->session(
+		-hostname  => $endpoint,
+		-port      => $opts{port}      || 161,
+		-version   => $opts{version}   || '2c',
+		-community => $opts{community} || 'public',
+		-timeout   => $opts{timeout}   || 5,
+	) or return undef;
+
+	$self->{snmp_session}->get_request(-varbindlist => ['1.3.6.1.2.1.1.5'])
+		or return undef;
+
+	# some of the F5 VServer OIDs are too big for the default
+	# maximum message size, so we raise it here
+	$self->{snmp_session}->max_msg_size(65535);
+	return 1;
+}
+
+sub snmp_get
+{
+	my ($self, @oids) = @_;
+	$self->_snmp_check;
+	my $r = $self->{snmp_session}->get_request(-varbindlist => $self->oids(@oids));
+	($r) = (values %$r) if @oids == 1;
+	return $r;
+}
+
+sub snmp_tree
+{
+	my ($self, $oid) = @_;
+	$self->_snmp_check;
+	$oid = $self->oid($oid);
+	my $r = $self->{snmp_session}->get_table(-baseoid => $oid);
+
+	my $h = {};
+	for (keys %$r) {
+		my $v = $r->{$_};
+		s/^\Q$oid.\E//;
+		$h->{$_} = $v;
+	}
+	return $h;
+}
+
+sub snmp_table
+{
+	my $self = shift;
+	$self->_snmp_check;
+	my %map = (ref($_[0]) ? %{$_[0]} : map { $_ => "[$_]" } @_);
+	my $h = {};
+	for my $key (keys %map) {
+		my $r = $self->snmp_tree($map{$key});
+		$h->{$_}{$key} = $r->{$_} for keys %$r;
+	}
+	return $h;
+}
+
+sub oid
+{
+	my ($self, $oid) = @_;
+	$self->_snmp_check;
+	$self->_snmp_init;
+	$oid =~ s/\[([^\]]*)\]/$self->{mibc}->resolve_oid($1)/ge;
+	return $oid;
+}
+
+sub oids
+{
+	my $self = shift;
+	$self->_snmp_check;
+	return [map { $self->oid($_) } split /\s+/, join(' ', @_)];
+}
+
 1;
 
 =head1 NAME
@@ -2315,6 +2449,110 @@ my $calculated = calculate_rate(
 		},
 );
 
+=head2 snmp_mib(@mib_names)
+
+Compile and load an SNMP MIB into memory, so that it can be queried with utility functions
+like B<oid> and B<oids>.  You must compile/load all the MIBs you need before you can call
+other B<snmp_*> functions with OID arguments like '[sysName].0'
+
+=head2 snmp_session($endpoint, \%options)
+
+Connect to B<$endpoint> over SNMP.  The following options are supported:
+
+=head2 snmp_session()
+
+Returns the current Net::SNMP handle, instead of connecting.
+
+=over
+
+=item B<port>
+
+The UDP port to connect to.  The default (B<161>) is usually correct.
+
+=item B<version>
+
+What SNMP version to speak with the endpoint.  Defaults to B<2c>.
+
+=item B<community>
+
+What community string to use when querying the endpoint.
+
+=item B<timeout>
+
+Timeout for communicating with the SNMP agent.  Defaults to B<5>.
+
+=back
+
+Currently, the SNMP implementation does B<not> support v3 / USM authentication.
+
+=head2 snmp_get(@oids)
+
+Retrieve one or more values from the SNMP endpoint.  @oids will be run through the
+B<OIDS> function first, so you can use shortcut names like '[sysName].0' (assuming you
+loaded the MIB beforehand).
+
+You must call B<snmp_session> prior to calling this function.
+
+=head2 snmp_tree($oid)
+
+Retrieve an entire subtree of the OID hierarchy, starting at $oid.  The OID value will
+be passed through the B<OID> function first, so you can use shortcut names like
+'[sysLocation].0' (assuming you loaded the MIB beforehand).
+
+You must call B<snmp_session> prior to calling this function.
+
+=head2 snmp_table(@names)
+
+=head2 snmp_table(\%map)
+
+Retrieve an inter-related collection of OIDs, indexed properly in a Perl hash.  In the first
+invocation, you pass in the bare shortcut names, like so:
+
+    my $table = SNMP_TABLE(qw/ ifMtu ifSpeed /);
+    for my $index (keys %$table) {
+      printf "%s: %s/%s\n", $idx,
+        $table->{$idx}{ifMtu},       # values are indexed by table index, and
+        $table->{$idx}{ifSpeed};     # the short names given above
+    }
+
+In the second invocation, you can pass a single hashref that will do the mapping / rename
+the way you desire:
+
+    my $table = SNMP_TABLE({ mtu => '[ifMtu]', speed => '[ifSpeed]' });
+    for my $index (keys %$table) {
+      printf "%s: %s/%s\n", $idx,
+        $table->{$idx}{mtu},       # values are indexed by table index, and
+        $table->{$idx}{speed};     # the map keys (instead of the short names)
+    }
+
+You must call B<snmp_session> prior to calling this function.
+
+=head2 oid($name)
+
+With B<oid()>, you can refer to the long OID strings (1.3.6.1.2.1...) by the short names
+that are defined in their MIB, assuming you compiled/loaded that mib with B<SNMP_MIB> first.
+
+This makes code interacting with SNMP agents easier to read, since the numbers are looked up
+at runtime and the names are all that you have to deal with.
+
+Compare:
+
+    SNMP_GET '[sysContact].0';         # OID() is called implicitly
+
+and
+
+    SNMP_GET '1.3.6.1.2.1.1.4.0';
+
+The MIB definitions clearly state the B<sysContact> is the 1.3.6.1.2.1.1.4 subtree, but being
+able to read that directly in the code is well worth it.
+
+B<OID()> will only expand shortcut names that are surrounded with square brackets.  This means
+that you can pass raw OIDs (i.e. if you got them as a value from a previous query, or you
+really I<like> number strings) and they will be passed back untouched.
+
+=head2 oids(@names)
+
+Call OID() on all of its arguments, returning the result as a list.
 
 =head1 AUTHOR
 

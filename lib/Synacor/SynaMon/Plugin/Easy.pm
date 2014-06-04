@@ -50,6 +50,10 @@ our @EXPORT = qw/
 
 	DEVNAME
 
+	SNMP_MIB SNMP_SESSION
+	SNMP_GET SNMP_TREE SNMP_TABLE
+	OID OIDS
+
 	DEBUG DUMP NOOP
 	TRACE TDUMP
 /;
@@ -142,6 +146,14 @@ sub SAR { $plugin->sar(@_); }
 sub CALC_RATE { $plugin->calculate_rate(@_); }
 
 sub DEVNAME { $plugin->devname(@_); }
+
+sub SNMP_MIB     { $plugin->snmp_mib(@_); }
+sub SNMP_SESSION { $plugin->snmp_session(@_); }
+sub SNMP_GET     { $plugin->snmp_get(@_); }
+sub SNMP_TREE    { $plugin->snmp_tree(@_); }
+sub SNMP_TABLE   { $plugin->snmp_table(@_); }
+sub OID          { $plugin->oid(@_); }
+sub OIDS         { $plugin->oids(@_); }
 
 END {
 	$plugin->finalize("END block") if $plugin;
@@ -385,6 +397,34 @@ Wrapper around B<Synacor::SynaMon::Plugin::devname>.
 =head2 CALC_RATE
 
 Wrapper around B<Synacor::SynaMon::Plugin::calculate_rate>.
+
+=head2 SNMP_MIB
+
+Wrapper around B<Synacor::SynaMon::Plugin::snmp_mib>.
+
+=head2 SNMP_SESSION
+
+Wrapper around B<Synacor::SynaMon::Plugin::snmp_session>.
+
+=head2 SNMP_GET
+
+Wrapper around B<Synacor::SynaMon::Plugin::snmp_get>.
+
+=head2 SNMP_TREE
+
+Wrapper around B<Synacor::SynaMon::Plugin::snmp_tree>.
+
+=head2 SNMP_TABLE
+
+Wrapper around B<Synacor::SynaMon::Plugin::snmp_table>.
+
+=head2 OID
+
+Wrapper around B<Synacor::SynaMon::Plugin::oid>.
+
+=head2 OIDS
+
+Wrapper around B<Synacor::SynaMon::Plugin::oids>.
 
 =head1 AUTHOR
 
