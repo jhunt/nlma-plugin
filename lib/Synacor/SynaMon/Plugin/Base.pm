@@ -1601,6 +1601,32 @@ sub snmp_table
 	return $h;
 }
 
+sub snmp_enum
+{
+	my ($self, $value, $type, $format) = @_;
+	$self->_snmp_check;
+	$self->_snmp_init;
+	my $s = $format || "%s";
+	my $name = $self->{mibc}{nodes}{$type}{syntax}{values}{$value} || "UNKNOWN";
+
+	$s =~ s/%s/$name/g;
+	$s =~ s/%i/$value/g;
+	$s;
+}
+
+sub snmp_tc
+{
+	my ($self, $value, $type, $format) = @_;
+	$self->_snmp_check;
+	$self->_snmp_init;
+	my $s = $format || "%s";
+	my $name = $self->{mibc}{types}{$type}{syntax}{values}{$value} || "UNKNOWN";
+
+	$s =~ s/%s/$name/g;
+	$s =~ s/%i/$value/g;
+	$s;
+}
+
 sub oid
 {
 	my ($self, $oid) = @_;
@@ -2541,6 +2567,20 @@ the way you desire:
     }
 
 You must call B<snmp_session> prior to calling this function.
+
+=head2 snmp_enum($type, $numeric, [$format = "%s"])
+
+Look up the display name for an enumerated value.  For example, the enum value 1, of
+type ifAdminStatus, is "up".  The optional B<$format> parameter will be interpreted as
+a printf-style format string.  The format specifier B<%s> will be replaced with the
+display name, and B<%i> will be replaced with the numeric value.
+
+=head2 snmp_tc($type, $numeric, [$format = "%s"])
+
+Look up the display name for a textual convention.  For example, the TC value 6, of
+type IANAifType, is "ethernetCsmacd".  The optional B<$format> parameter will be
+interpreted as a printf-style format string.  The format specifier B<%s> will be
+replaced with the display name, and B<%i> will be replaced with the numeric value.
 
 =head2 oid($name)
 

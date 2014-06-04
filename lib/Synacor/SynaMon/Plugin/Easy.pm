@@ -53,6 +53,7 @@ our @EXPORT = qw/
 	SNMP_MIB SNMP_SESSION
 	SNMP_GET SNMP_TREE SNMP_TABLE
 	OID OIDS
+	SNMP_ENUM SNMP_TC
 
 	DEBUG DUMP NOOP
 	TRACE TDUMP
@@ -154,6 +155,8 @@ sub SNMP_TREE    { $plugin->snmp_tree(@_); }
 sub SNMP_TABLE   { $plugin->snmp_table(@_); }
 sub OID          { $plugin->oid(@_); }
 sub OIDS         { $plugin->oids(@_); }
+sub SNMP_ENUM    { $plugin->snmp_enum(@_); }
+sub SNMP_TC      { $plugin->snmp_tc(@_); }
 
 END {
 	$plugin->finalize("END block") if $plugin;
@@ -425,6 +428,14 @@ Wrapper around B<Synacor::SynaMon::Plugin::oid>.
 =head2 OIDS
 
 Wrapper around B<Synacor::SynaMon::Plugin::oids>.
+
+=head2 SNMP_ENUM
+
+Wrapper around B<Synacor::SynaMon::Plugin::snmp_enum>.
+
+=head2 SNMP_TC
+
+Wrapper around B<Synacor::SynaMon::Plugin::snmp_tc>.
 
 =head1 AUTHOR
 

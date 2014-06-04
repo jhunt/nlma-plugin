@@ -120,5 +120,29 @@ ok_plugin(3, "SNMP UNKNOWN - SNMP::MIB::Compiler not installed; SNMP functionali
 	DONE;
 });
 
+ok_plugin(0, "SNMP OK - up up(1) ethernetCsmacd(6) down:down:down! 1/other literal string UNKNOWN UNKNOWN", undef, "ENUM / TC lookups", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_MIBS} = "t/data/mibs";
+	PLUGIN name => 'SNMP';
+	START;
+
+	SNMP_MIB 'SNMPv2-MIB';
+	SNMP_MIB 'IF-MIB';
+	SNMP_MIB 'IANAifType-MIB';
+
+	OK SNMP_ENUM(1, 'ifOperStatus');
+	OK SNMP_ENUM(1, 'ifOperStatus', '%s(%i)');
+
+	OK SNMP_TC(6, 'IANAifType', '%s(%i)');
+
+	OK SNMP_ENUM(2, 'ifOperStatus', '%s:%s:%s!');
+
+	OK SNMP_TC(1, 'IANAifType', '%i/%s');
+	OK SNMP_TC(1, 'IANAifType', 'literal string');
+
+	OK SNMP_TC(42, 'NOT-LOADED');
+	OK SNMP_ENUM(42, 'NOT-LOADED');
+	DONE;
+});
 
 done_testing;

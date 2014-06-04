@@ -1271,6 +1271,31 @@ strategy (namely, the physical index).  This allows us to easily associate a
 processor name (entPhysicalName) with the 5-minute usage rate, inside of a
 Cisco ASA device.
 
+The B<SNMP_TC> amd B<SNMP_ENUM> functions exist to look up display names for
+TEXTUAL CONVENTIONS and ENUMERATIONS.  For example, B<IF-MIB> provides the
+B<ifOperStatus> field, which is defined as an enumeration.  If you want to
+see the friendly name for a given value, you should use B<SNMP_ENUM>:
+
+    SNMP_MIB 'IF-MIB';
+
+    # ... connect ...
+
+    my $status = SNMP_GET '[ifOperStatus].0';
+    DEBUG "interface 0 is " . SNMP_ENUM($status, 'ifOperStatus');
+
+Each function takes an optional third parameter that lets you control the
+format of the returned string.  Any B<%s> sequences will be replaced with
+the display name of the TC/enum, and B<%i> will be replaced with the numeric
+value.  For example:
+
+    OK "eth0 is " . SNMP_ENUM($status, 'ifOperStatus', '%s(%i)');
+
+Will give you messages like "eth0 is up(1)" and "eth0 is testing(3)".
+
+All of this information is compiled from the local MIB cache, so you need to
+load the MIBs that define these enumerations and textual conventions via
+B<SNMP_MIB>.
+
 NOTE: SNMP support depends on the Perl SNMP::MIB::Compiler module (in the
 perl-SNMP-MIB-Compiler RPM package).  If that is not installed, any calls
 to SNMP functions will result in an UNKNOWN alert.
