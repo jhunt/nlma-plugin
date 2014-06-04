@@ -1531,12 +1531,17 @@ sub snmp_session
 	$self->_snmp_check;
 	return $self->{snmp_session} if @_ == 1;
 
+	$opts{port}      ||= 161;
+	$opts{version}   ||= '2c';
+	$opts{community} ||= 'public';
+	$opts{timeout}   ||= 5;
+
 	$self->{snmp_session} = Net::SNMP->session(
 		-hostname  => $endpoint,
-		-port      => $opts{port}      || 161,
-		-version   => $opts{version}   || '2c',
-		-community => $opts{community} || 'public',
-		-timeout   => $opts{timeout}   || 5,
+		-port      => $opts{port},
+		-version   => $opts{version},
+		-community => $opts{community},
+		-timeout   => $opts{timeout},
 	) or return undef;
 
 	$self->{snmp_session}->get_request(-varbindlist => ['1.3.6.1.2.1.1.5'])
@@ -1545,6 +1550,16 @@ sub snmp_session
 	# some of the F5 VServer OIDs are too big for the default
 	# maximum message size, so we raise it here
 	$self->{snmp_session}->max_msg_size(65535);
+
+	$self->debug("Connected to $endpoint UDP/$opts{port} v$opts{version} community $opts{community}");
+	$self->debug("====[ SNMP IDENTITY ]=======================================",
+	             "sysName:     ".$self->snmp_get('1.3.6.1.2.1.1.5'),
+	             "sysContact:  ".$self->snmp_get('1.3.6.1.2.1.1.4'),
+	             "sysLocation: ".$self->snmp_get('1.3.6.1.2.1.1.6'),
+	             "sysObjectID: ".$self->snmp_get('1.3.6.1.2.1.1.2'),
+	             "sysDescr:    ".$self->snmp_get('1.3.6.1.2.1.1.1'),
+	             "============================================================");
+
 	return 1;
 }
 
