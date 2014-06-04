@@ -1271,10 +1271,79 @@ strategy (namely, the physical index).  This allows us to easily associate a
 processor name (entPhysicalName) with the 5-minute usage rate, inside of a
 Cisco ASA device.
 
-The B<SNMP_TC> amd B<SNMP_ENUM> functions exist to look up display names for
-TEXTUAL CONVENTIONS and ENUMERATIONS.  For example, B<IF-MIB> provides the
-B<ifOperStatus> field, which is defined as an enumeration.  If you want to
-see the friendly name for a given value, you should use B<SNMP_ENUM>:
+If we were to walk these two OIDs outside of the framework, we might see a
+tree that looks like this:
+
+    $ snmpwalk ... 1.3.6.1.2.1.47.1.1.1.1.7
+    .1.3.6.1.2.1.47.1.1.1.1.7.1 = STRING: "WS-C6504-E"
+    .1.3.6.1.2.1.47.1.1.1.1.7.2 = STRING: "Physical Slot 1"
+    .1.3.6.1.2.1.47.1.1.1.1.7.3 = STRING: "Physical Slot 2"
+
+(1.3.6.1.2.1.1.47.1.1.1.1.7 is entPhysicalName)
+
+    $ snmpwalk ... 1.3.6.1.4.1.9.9.109.1.1.1.1.5
+    .1.3.6.1.4.1.9.9.109.1.1.1.1.5.1 = Gauge32: 6
+    .1.3.6.1.4.1.9.9.109.1.1.1.1.5.2 = Gauge32: 10
+    .1.3.6.1.4.1.9.9.109.1.1.1.1.5.3 = Gauge32: 1
+
+(1.3.6.1.4.1.9.9.109.1.1.1.1.5 is cpmCPUTotal5min)
+
+What B<SNMP_TABLE> does is look at these sets of trees, remove the base OID
+from each (so both sets of indices are reduced to [1,2,3]), and then merges
+it all together.  With the above data, the following code:
+
+    DUMP SNMP_TABLE qw/entPhysicalName cpmCPUTotal5min/;
+
+would print out the following:
+
+    DEBUG> $VAR1 => {
+                      '1' => {
+                                entPhysicalName => "WS-C6504-E",
+                                cpmCPUTotal5min => 6,
+                             },
+                      '2' => {
+                                entPhysicalName => "Physical Slot 1",
+                                cpmCPUTotal5min => 10,
+                             },
+                      '3' => {
+                                entPhysicalName => "Physical Slot 2",
+                                cpmCPUTotal5min => 1,
+                             }
+                    }
+
+And the following code (which supplies explicit keys):
+
+    DUMP SNMP_TABLE { name  => 'entPhysicalName',
+                      usage => 'cpmCPUTotal5min' };
+
+would print out the following:
+
+    DEBUG> $VAR1 => {
+                      '1' => {
+                                name  => "WS-C6504-E",
+                                usage => 6,
+                             },
+                      '2' => {
+                                name  => "Physical Slot 1",
+                                usage => 10,
+                             },
+                      '3' => {
+                                name  => "Physical Slot 2",
+                                usage => 1,
+                             }
+                    }
+
+B<SNMP_TABLE> can make your life quite a bit easier, especially if you are
+dealing with contiguous trees (like all of the B<if*> values for host
+interfaces).
+
+SNMP MIBs can define TEXTUAL CONVENTIONS and ENUMERATIONS that map numeric
+values to more human-friendly names.  The B<SNMP_TC> amd B<SNMP_ENUM>
+functions exist to look up these friendly names, given the type and a value.
+
+For example, B<IF-MIB> provides the B<ifOperStatus> field, which is defined
+as an enumeration.  If you want to see the friendly name for a given value,
+you should use B<SNMP_ENUM>:
 
     SNMP_MIB 'IF-MIB';
 

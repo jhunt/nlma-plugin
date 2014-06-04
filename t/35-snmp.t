@@ -108,6 +108,35 @@ ok_plugin(0, "SNMP OK - looks good", undef, "SNMP TREE usage", sub {
 	DONE;
 });
 
+ok_plugin(0, "SNMP OK - looks good", undef, "SNMP_TABLE usage", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_MIBS} = "t/data/mibs";
+	PLUGIN name => 'SNMP';
+	START;
+
+	SNMP_MIB 'SNMPv2-MIB';
+	SNMP_MIB 'IF-MIB';
+
+	SNMP_SESSION '127.0.0.1', community => 'v7015e49'
+		or BAIL(CRITICAL "Failed to connect to 127.0.0.1 via SNMP (UDP/161)");
+
+	my $t = SNMP_TABLE qw/ ifIndex ifMtu ifSpeed ifDescr /;
+	DUMP $t;
+
+	for (keys %$t) {
+		my $if = $t->{$_};
+		exists $if->{ifIndex} or CRITICAL "No ifIndex found for $_";
+		exists $if->{ifMtu}   or CRITICAL "No ifMtu found for $_";
+		exists $if->{ifSpeed} or CRITICAL "No ifSpeed found for $_";
+		exists $if->{ifDescr} or CRITICAL "No ifDescr found for $_";
+
+		!exists $if->{ifType} or CRITICAL "ifType found in $_, but should not be!";
+	}
+
+	OK "looks good";
+	DONE;
+});
+
 ok_plugin(3, "SNMP UNKNOWN - SNMP::MIB::Compiler not installed; SNMP functionality disabled", undef, "SNMP::MIB::Compiler dependency", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	delete $INC{'SNMP/MIB/Compiler.pm'}; # don't try this at home, kids
