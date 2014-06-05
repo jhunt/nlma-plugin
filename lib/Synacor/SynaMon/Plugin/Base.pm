@@ -1553,11 +1553,11 @@ sub snmp_session
 
 	$self->debug("Connected to $endpoint UDP/$opts{port} v$opts{version} community $opts{community}");
 	$self->debug("====[ SNMP IDENTITY ]=======================================",
-	             "sysName:     ".$self->snmp_get('1.3.6.1.2.1.1.5'),
-	             "sysContact:  ".$self->snmp_get('1.3.6.1.2.1.1.4'),
-	             "sysLocation: ".$self->snmp_get('1.3.6.1.2.1.1.6'),
-	             "sysObjectID: ".$self->snmp_get('1.3.6.1.2.1.1.2'),
-	             "sysDescr:    ".$self->snmp_get('1.3.6.1.2.1.1.1'),
+	             "sysName:     ".$self->snmp_get('1.3.6.1.2.1.1.5.0'),
+	             "sysContact:  ".$self->snmp_get('1.3.6.1.2.1.1.4.0'),
+	             "sysLocation: ".$self->snmp_get('1.3.6.1.2.1.1.6.0'),
+	             "sysObjectID: ".$self->snmp_get('1.3.6.1.2.1.1.2.0'),
+	             "sysDescr:    ".$self->snmp_get('1.3.6.1.2.1.1.1.0'),
 	             "============================================================");
 
 	return 1;
