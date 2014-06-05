@@ -20,8 +20,8 @@ use POSIX qw/
 /;
 use Time::HiRes qw(gettimeofday);
 use File::Find;
-use Net::SNMP;
 # SNMP functionality is optional
+eval 'use Net::SNMP';
 eval 'use SNMP::MIB::Compiler';
 use utf8;
 
@@ -1473,8 +1473,11 @@ sub devname
 
 sub _snmp_check
 {
-	return if $INC{'SNMP/MIB/Compiler.pm'};
-	shift->UNKNOWN("SNMP::MIB::Compiler not installed; SNMP functionality disabled");
+	return if $INC{'SNMP/MIB/Compiler.pm'} and $INC{'Net/SNMP.pm'};
+	shift->UNKNOWN("SNMP::MIB::Compiler not installed; SNMP functionality disabled")
+		unless $INC{'SNMP/MIB/Compiler.pm'};
+	shift->UNKNOWN("Net::SNMP not installed; SNMP functionality disabled")
+		unless $INC{'Net/SNMP.pm'};
 }
 
 sub _snmp_init

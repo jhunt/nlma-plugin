@@ -149,6 +149,19 @@ ok_plugin(3, "SNMP UNKNOWN - SNMP::MIB::Compiler not installed; SNMP functionali
 	DONE;
 });
 
+ok_plugin(3, "SNMP UNKNOWN - Net::SNMP not installed; SNMP functionality disabled", undef, "Net::SNMP dependency", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	delete $INC{'Net/SNMP.pm'}; # don't try this at home, kids
+	$ENV{MONITOR_MIBS} = "t/data/mibs";
+	PLUGIN name => 'SNMP';
+	START;
+
+	SNMP_MIB 'SNMPv2-MIB';
+	OK "succeeded, against our best estimates";
+	DONE;
+});
+
+
 ok_plugin(0, "SNMP OK - up up(1) ethernetCsmacd(6) down:down:down! 1/other literal string UNKNOWN UNKNOWN", undef, "ENUM / TC lookups", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
