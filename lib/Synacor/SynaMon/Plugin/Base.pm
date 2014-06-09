@@ -1114,7 +1114,7 @@ sub parse_bytes
 	my ($self, $s) = @_;
 	return undef if !defined $s;
 	return 0 if !$s;
-	$s =~ m/^(\d+(?:\.\d+)?)([^\d]+)/i or return undef;
+	$s =~ m/^(\d+(?:\.\d+)?)([^\d]+)/i or return int($s);
 	my ($num, $unit) = ($1, uc($2));
 	for (@UNITS) {
 		return $num if $unit eq $_ or "${unit}B" eq $_;
@@ -1141,12 +1141,12 @@ sub parse_time
 	my ($self, $s) = @_;
 	return undef if !defined $s;
 	my $t = 0;
-	while ($s =~ m/\G\s*(\d+(?:\.\d+)?)\s*([a-zA-Z])/g) {
+	while ($s =~ m/\G\s*(\d+(?:\.\d+)?)\s*([a-zA-Z])?/g) {
 		my $x = $1;
-		$x *= 60      if $2 eq 'm';
-		$x *= 3600    if $2 eq 'h';
-		$x *= 86400   if $2 eq 'd';
-		$x *= 7*86400 if $2 eq 'w';
+		$x *= 60      if $2 and $2 eq 'm';
+		$x *= 3600    if $2 and $2 eq 'h';
+		$x *= 86400   if $2 and $2 eq 'd';
+		$x *= 7*86400 if $2 and $2 eq 'w';
 		$t += $x;
 	}
 	$t;

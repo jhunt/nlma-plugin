@@ -12,6 +12,7 @@ ok_plugin(0, "TIME OK", undef, "Basic time spec parsing", sub {
 	my %t;
 
 	%t = (
+		'81'   => 81,
 		'3m'   => 180,
 		'2.5m' => 150,
 		'10m'  => 600,
@@ -28,6 +29,7 @@ ok_plugin(0, "TIME OK", undef, "Basic time spec parsing", sub {
 	}
 
 	%t = (
+		'81s'  => 81,
 		'10m'  => 600,
 		'60m'  => 3600,
 		'65m'  => 3900,

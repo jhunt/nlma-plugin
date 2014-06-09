@@ -12,6 +12,7 @@ ok_plugin(0, "BYTES OK", undef, "Basic size spec parsing", sub {
 	my %t;
 
 	%t = (
+		'180'  => 180,
 		'4K'   => 4096,
 		'2kb'  => 2048,
 		'1.5k' => 1536,
@@ -30,6 +31,7 @@ ok_plugin(0, "BYTES OK", undef, "Basic size spec parsing", sub {
 	}
 
 	%t = (
+		'180.00B' => 180,
 		'4.00KB'  => 4096,
 		'2.00KB'  => 2048,
 		'1.50KB'  => 1536,
