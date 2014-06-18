@@ -1187,11 +1187,13 @@ sub jolokia_connect
 		$self->bail(NAGIOS_CRITICAL, "No 'port' specified for Jolokia/JMX connection");
 	}
 
+	$self->{_jolokia_target} = "$params{host}:$params{port}";
+
 	my ($user, $pass) = $self->credentials($params{creds} || 'remote_jmx');
 	$params{target} = {
 		user     => $user,
 		password => $pass,
-		url      => "service:jmx:rmi:///jndi/rmi://$params{host}:$params{port}/jmxrmi",
+		url      => "service:jmx:rmi:///jndi/rmi://$self->{_jolokia_target}/jmxrmi",
 	};
 
 	$params{proxy} = $ENV{MONITOR_JOLOKIA_PROXY} || "localhost:5080";
@@ -1206,6 +1208,9 @@ sub jolokia_request
 
 	my $url = "http://$self->{jolokia}{proxy}/jolokia/";
 	$self->debug("Making Jolokia request to $url with:");
+	# add unused query params to make jolokia request log correlation easier
+	$url .= "?syn_host=$self->{_jolokia_target}&syn_check_plugin=$self->{name}";
+
 	$self->dump($request);
 
 	my ($res, $json) = $self->http_post($url, JSON->new->allow_nonref->encode($request));

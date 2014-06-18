@@ -44,8 +44,9 @@ my $HTTPD = run_http_server {
 
 	if ($path =~ m{/jolokia$}) {
 		$file = "bad-idx";
-
-	} elsif ($path =~ m{/jolokia/$}) {
+	                             # makes sure we have the correct data for logging,
+	                             # all tests use same host/port + run from this  script, so be explicit
+	} elsif ($path =~ m{/jolokia/(\?syn_host=whatever:12345&syn_check_plugin=32-jolokia.t)?$}) {
 		my $payload = decode_json($req->content);
 
 		if (ref($payload) eq 'HASH' && $payload->{type} eq 'list') {
