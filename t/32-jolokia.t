@@ -36,10 +36,11 @@ ok_plugin(3, "JOLO UNKNOWN - Check appears to be broken; JOLOKIA_SEARCH called b
 
 ###################################################################
 
+my $i = 0;
 my $HTTPD = run_http_server {
 	my $req = shift;
 	my $path = $req->uri;
-
+	$i++;
 	my $file;
 
 	if ($path =~ m{/jolokia$}) {
@@ -64,10 +65,13 @@ my $HTTPD = run_http_server {
 		];
 	}
 
+	my $data = read_file("t/data/jolokia/$file.out");
+	$data =~ s|\@\@INCREMENTING_VALUE\@\@|$i|g;
+
 	return [
 		200,
 		[ 'Content-type' => 'application/json' ],
-		[ read_file("t/data/jolokia/$file.out") ]
+		[ $data ]
 	];
 };
 $ENV{MONITOR_JOLOKIA_PROXY} = $HTTPD->endpoint;
@@ -146,6 +150,27 @@ ok_plugin(0, "JOLO OK - Found 63 beans", undef, "MBean search via JOLOKIA_SEARCH
 	my @beans = JOLOKIA_SEARCH();
 	OK "Found ".@beans." beans";
 	DONE;
+});
+
+ok_plugin(0, "JOLO OK - We got the same data for both searches", undef, "JOLOKIA_SEARCH caches bean list", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	use Test::Deep qw/deep_diag cmp_details/;
+	PLUGIN name => "JOLO";
+	START;
+	JOLOKIA_CONNECT host => 'whatever',
+	                port => 13245;
+	my @beans  = JOLOKIA_SEARCH();
+	my @beans2 = JOLOKIA_SEARCH();
+	my ($ok, $stack) = cmp_details(\@beans, \@beans2);
+	if ($ok) {
+		OK "We got the same data for both searches";
+	} else {
+		CRITICAL "JOLOKIA_SEARCH does not appear to have cached the first search for later use";
+		diag "First:";
+		diag explain \@beans;
+		diag "Second:";
+		diag explain \@beans2;
+	}
 });
 
 ok_plugin(0, "JOLO OK - Found 5 beans", undef, "MBean search with regex", sub {
