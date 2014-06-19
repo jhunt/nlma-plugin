@@ -1282,10 +1282,15 @@ sub jolokia_search
 	$self->UNKNOWN("Check appears to be broken; JOLOKIA_SEARCH called before JOLOKIA_CONNECT")
 		unless $self->{jolokia};
 
-	my $data = $self->jolokia_request({
+
+	unless ($self->{_jolokia_beans}) {
+		$self->{_jolokia_beans} = $self->jolokia_request({
 			target => $self->{jolokia}{target},
 			type   => 'list',
 		}) or return wantarray ? () : {};
+	}
+
+	my $data = $self->{_jolokia_beans};
 
 	# See http://www.jolokia.org/reference/html/protocol.html#list
 	$data = $data->[0]{value};
