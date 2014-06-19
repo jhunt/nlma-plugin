@@ -159,7 +159,7 @@ ok_plugin(0, "JOLO OK - We got the same data for both searches", undef, "JOLOKIA
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever',
-	                port => 13245;
+	                port => 12345;
 	my @beans  = JOLOKIA_SEARCH();
 	my @beans2 = JOLOKIA_SEARCH();
 	my ($ok, $stack) = cmp_details(\@beans, \@beans2);
