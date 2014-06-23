@@ -1458,19 +1458,16 @@ sub calculate_rate
 my %DEVNAME = ();
 sub _devnames
 {
-	no warnings 'File::Find';
-	find({
-			wanted => sub {
-				return unless -b;
-				my $rdev = (lstat($_))[6];
-				my $min = $rdev % 256;
-				my $maj = int($rdev / 256);
-
-				$DEVNAME{"dev$maj-$min"} = $_;
-			},
-			no_chdir => 1,
-		}, "/dev");
-	use warnings 'File::Find';
+	return if keys %DEVNAME;
+	open my $fh, "<", "/proc/mounts" or return;
+	while (<$fh>) {
+		my ($dev, $mount) = split /\s+/;
+		next unless $dev =~ m{^/dev/.};
+		my @st = stat($dev) or next;
+		my ($maj, $min) = (int($st[6] / 256), $st[6] % 256);
+		$DEVNAME{"dev$maj-$min"} = $mount;
+	}
+	close $fh;
 }
 
 sub devname
