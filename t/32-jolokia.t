@@ -50,8 +50,8 @@ my $HTTPD = run_http_server {
 	} elsif ($path =~ m{/jolokia/(\?syn_host=whatever:12345&syn_check_plugin=32-jolokia.t)?$}) {
 		my $payload = decode_json($req->content);
 
-		if (ref($payload) eq 'HASH' && $payload->{type} eq 'list') {
-			$file = "list";
+		if (ref($payload) eq 'HASH' && $payload->{type} eq 'search') {
+			$file = "search";
 
 		} elsif (ref($payload) eq 'ARRAY') {
 			$file = @$payload == 1 ? 'one' : 'multi';
@@ -142,7 +142,7 @@ ok_plugin(3, "JOLO UNKNOWN - Credentials not found for 'hahahahahah-i-dont-think
 });
 
 
-ok_plugin(0, "JOLO OK - Found 63 beans", undef, "MBean search via JOLOKIA_SEARCH", sub {
+ok_plugin(0, "JOLO OK - Found 54 beans", undef, "MBean search via JOLOKIA_SEARCH", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;

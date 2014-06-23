@@ -1282,31 +1282,32 @@ sub jolokia_search
 	$self->UNKNOWN("Check appears to be broken; JOLOKIA_SEARCH called before JOLOKIA_CONNECT")
 		unless $self->{jolokia};
 
-
 	unless ($self->{_jolokia_beans}) {
 		$self->{_jolokia_beans} = $self->jolokia_request({
 			target => $self->{jolokia}{target},
-			type   => 'list',
+			type   => 'search',
+			mbean  => '*:*',
 		}) or return wantarray ? () : {};
 	}
 
-	my $data = $self->{_jolokia_beans};
+	# See http://www.jolokia.org/reference/html/protocol.html#search
+	my $data = $self->{_jolokia_beans}; $data = $data->[0]{value};
 
-	# See http://www.jolokia.org/reference/html/protocol.html#list
-	$data = $data->[0]{value};
-	my $results = {};
-	for my $domain (keys %$data) {
-		for my $bean (keys %{$data->{$domain}}) {
-			$self->trace("Checking bean '$domain:$bean'\n".
-			             "      against /$match/") if $match;
-			next if $match && "$domain:$bean" !~ m/$match/i;
-			next unless ref($data->{$domain}{$bean}) && $data->{$domain}{$bean}{attr};
-			for my $attr (keys %{$data->{$domain}{$bean}{attr}}) {
-				$results->{"$domain:$bean"}{$attr} = $data->{$domain}{$bean}{attr}{$attr};
-			}
-		}
+	my $total = 0;
+	my $matched = 0;
+	my $results = [];
+
+	for my $bean (@$data) {
+		$total++;
+		$self->trace("Checking bean '$bean'\n".
+		             "      against /$match/") if $match;
+		next if $match && $bean !~ m/$match/i;
+		$matched++;
+		push @$results, $bean;
 	}
-	return wantarray ? keys %$results : $results;
+
+	$self->debug("Matched $matched / $total beans") if $match;
+	return wantarray ? @$results : $results;
 }
 
 sub _get_sar
