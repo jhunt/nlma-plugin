@@ -7,3 +7,4 @@ requires:
   - perl-Log-Log4perl >= 1.40
   - 'perl(LWP::Protocol::https)'
   - perl > 5.8.0
+  - perl-Net-SNMP >= 6.0.1
