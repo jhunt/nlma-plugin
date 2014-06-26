@@ -1033,14 +1033,16 @@ sub http_request
 	$options = $options || {};
 
 	$self->debug("Making HTTP Request: $method $uri");
-	$self->dump($data) if $method eq "POST";
+	$self->dump($data) if $method eq "POST"
+	                   or $method eq "PUT"
+	                   or $method eq "DELETE";
 
 	my $request = HTTP::Request->new($method => $uri);
 	for my $h (keys %$headers) {
 		$self->debug("   '$h: $headers->{$h}'");
 		$request->header($h, $headers->{$h});
 	}
-	if (($method eq "POST" || $method eq "PUT") and $data) {
+	if (($method eq "POST" || $method eq "PUT" || $method eq "DELETE") and $data) {
 		$request->content($data);
 	}
 
