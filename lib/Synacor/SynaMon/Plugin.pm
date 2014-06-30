@@ -703,16 +703,17 @@ and a staleness threshold.  For example:
     $data{processes} = get_processes_since_boot();
     $data{contextsw} = get_context_switches_since_boot();
 
-    my $rates = CALC_RATE(data  => \%data,
-                          want  => ['processes', 'contextsw'],
-                          store => 'sysproc',   # /var/tmp/mon_sysproc
-                          stale => 300);        # 5 minutes
+    my $rates = CALC_RATE(data       => \%data,
+                          want       => ['processes', 'contextsw'],
+                          store      => 'sysproc',   # /var/tmp/mon_sysproc
+                          resolution => '60s',       # default
+                          stale      => '5m');
 
     # don't forget to STORE the data!
     STORE 'sysproc', \%data, as => 'yaml';
 
-The four options, I<data>, I<want>, I<store> and I<stale> are all that
-B<CALC_RATE> recognizes.  Other keys are ignored.
+The five options, I<data>, I<want>, I<store>, I<stale> and I<resolution>
+are all that B<CALC_RATE> recognizes.  Other keys are ignored.
 
 I<store> uses the STORE/RETRIEVE convention of storing in /var/tmp with the
 mon_ prefix.  This is B<required>.
@@ -726,6 +727,11 @@ I<stale> is the staleness threshold (in seconds) for doing rate
 calculations.  If the store file is found to be older than this threshold,
 rate calculation will be skipped, a new state file will be written (with
 current data) and a WARNING will be issued.
+
+I<resolution> is the period resolution for the rate.  It defaults to 60s,
+but can be overridden to make per-second calculations (as '1s').  The rate
+resolution B<must be> less than the check interval.  If the check runs every
+5 minutes, a 10m resolution makes no sense.
 
 B<CALC_RATE> handles wraparound by detecting when counter values regress
 (i.e. are less than they were last time).  This can sometimes represent

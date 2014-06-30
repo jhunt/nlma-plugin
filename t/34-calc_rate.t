@@ -84,6 +84,7 @@ ok_plugin(0, "RATE OK - stat1: 10 stat2: 10 stat3: 20", undef, "Default params",
 	DONE;
 });
 
+OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
@@ -102,6 +103,7 @@ ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1", sub {
 	DONE;
 });
 
+OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1, missing 1 stat", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
@@ -119,6 +121,7 @@ ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1, missing
 	DONE;
 });
 
+OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat2: 50", undef, "Default params, want 2, missing 1 stat", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
@@ -136,6 +139,43 @@ ok_plugin(0, "RATE OK - stat2: 50", undef, "Default params, want 2, missing 1 st
 	DONE;
 });
 
+OVERRIDE_TIME 300;
+ok_plugin(0, "RATE OK - stat2: 25", undef, "Resolution is a supported option", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => 'rate';
+	START;
+	my $calculated = CALC_RATE
+		store => 'rollover',
+		want => [ 'stat2' ],
+		resolution => '30s',
+		data => {
+			stat2 => 400,
+		};
+	OK "$_: $calculated->{$_}" for sort keys %$calculated;
+	DONE;
+});
+
+OVERRIDE_TIME 3600;
+ok_plugin(0, "RATE OK - stat2: 1", undef, "Resolution in hours is supported", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
+	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
+	PLUGIN name => 'rate';
+	START;
+	my $calculated = CALC_RATE
+		store => 'rollover',
+		want => [ 'stat2' ],
+		resolution => '1h',
+		data => {
+			stat2 => 150+1,
+		};
+	OK "$_: $calculated->{$_}" for sort keys %$calculated;
+	DONE;
+});
+
+OVERRIDE_TIME 300;
 ok_plugin(1, "RATE WARNING - Stale data detected; last sample was 5m ago", undef, "Check staleness", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";

@@ -1410,6 +1410,9 @@ sub calculate_rate
 	my $NOW = time;
 	$opts{data}->{check} = $NOW;
 
+	$opts{resolution} = $self->parse_time($opts{resolution} || 60);
+	$opts{resolution} = 60 if $opts{resolution} <= 0;
+
 	my $then = $self->retrieve($opts{store}, as => 'yaml');
 	if (!$then) {
 		$self->WARNING("No historic data found; rate calculation deferred");
@@ -1448,8 +1451,8 @@ sub calculate_rate
 		return {};
 	}
 
-	$self->debug("${span}s time span detected");
-	$span /= 60; # per min
+	$self->debug("${span}s time span detected ($opts{resolution}s resolution)");
+	$span /= $opts{resolution};
 	my $data = { map { $_ => ($opts{data}->{$_} - $then->{$_}) / $span } @fields };
 
 	$self->debug("Calculated per-minute rates:");
