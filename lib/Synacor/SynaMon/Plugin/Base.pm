@@ -1104,7 +1104,7 @@ sub json_decode
 	my ($self, $data) = @_;
 	my $obj;
 	$data = $data || "";
-	if ($data =~ /^[^\(]*\((.*)\)$/) { # JSONP
+	if ($data =~ /^[^\(]*\((.*)\);?$/) { # JSONP
 		$data = $1;
 	}
 	eval { $obj = JSON->new->allow_nonref->decode($data); }
