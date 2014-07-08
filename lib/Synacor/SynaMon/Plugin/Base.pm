@@ -229,7 +229,7 @@ sub option
 			if ($spec =~ m/\busage\b/ || $spec =~ m/^\?/ || $spec =~ m/\|\?/) {
 				$self->status('UNKNOWN', "Option spec $spec conflicts with built-in usage|? option");
 			}
-			for (qw/debug|D   noop   help|h/) {
+			for (qw/debug|D   noop   noperf   help|h/) {
 				next unless $spec =~ m/\b($_)\b/;
 				$self->status('UNKNOWN', "Option spec $spec conflicts with built-in $_ option");
 			}
@@ -270,6 +270,7 @@ sub usage
 sub track_value
 {
 	my ($self, $label, $value, @data) = @_;
+	return if $self->{noperf};
 	$self->{legacy}->add_perfdata(
 		label => $label,
 		value => $value,
@@ -316,6 +317,11 @@ sub getopts
 	$self->option("noop",
 		usage => "--noop",
 		help  => "Dry-run mode",
+		framework => 1,
+	);
+	$self->option("noperf",
+		usage => "--noperf",
+		help  => "Skip submission of performance data",
 		framework => 1,
 	);
 	$self->{legacy}->opts->{_attr}{usage} = $self->usage;
@@ -442,8 +448,9 @@ sub start
 	$self->getopts;
 	$ALL_DONE = 0;
 
-	$self->{debug} = $self->option->debug;
-	$self->{noop}  = $self->option->noop;
+	$self->{debug}  = $self->option->debug;
+	$self->{noop}   = $self->option->noop;
+	$self->{noperf} = $self->option->noperf;
 	$self->debug("Starting ".$self->mode." execution");
 
 	if (exists $opts{default}) {

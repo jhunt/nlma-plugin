@@ -34,6 +34,8 @@ $USAGE
    Turn on debug mode
  --noop
    Dry-run mode
+ --noperf
+   Skip submission of performance data
  -t, --timeout=INTEGER
    Seconds before plugin times out (default: 22)
 EOF
@@ -109,6 +111,8 @@ $USAGE
    Turn on debug mode
  --noop
    Dry-run mode
+ --noperf
+   Skip submission of performance data
  -t, --timeout=INTEGER
    Seconds before plugin times out (default: 45)
 EOF

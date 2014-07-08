@@ -54,6 +54,14 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec noop conflicts with built-in noop opt
 	DONE;
 });
 
+ok_plugin(3, "OPTION UNKNOWN - Option spec noperf conflicts with built-in noperf option", undef, "override --noperf", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "OPTION";
+	OPTION "noperf";
+	START default => "good";
+	DONE;
+});
+
 ok_plugin(0, "OPTION OK - done", undef, "option processing", sub {
 	use Synacor::SynaMon::Plugin qw(:easy);
 	use Test::Deep::NoTest;
