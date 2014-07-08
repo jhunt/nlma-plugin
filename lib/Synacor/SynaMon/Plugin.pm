@@ -608,6 +608,16 @@ Here are some possible values for the B<SAR> flags argument:
 
 For full details, check the sar(1) man page.
 
+If B<SAR> is unable to gather the requested samples, it will issue a WARNING
+to that effect.  This is designed to ensure that we don't continue to try to
+analyze data that we couldn't get.  You can escalate this to a CRITICAL or
+an UNKNOWN by setting the B<missing_sar_data> setting:
+
+    SET missing_sar_data => 'CRITICAL';
+    my $sar = SAR "-d", samples => 60;
+
+There is currently no way to ignore a failure in SAR data collection.
+
 SAR has been available since version 1.27.
 
 =head2 Translating Device Names

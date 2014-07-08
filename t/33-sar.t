@@ -226,7 +226,7 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			DONE;
 	});
 
-	ok_plugin(2, "SAR CRITICAL - No sar data found for sar -d",
+	ok_plugin(1, "SAR WARNING - No sar data found for sar -d",
 		undef, "SAR dies on no data", sub {
 			use Synacor::SynaMon::Plugin qw(:easy);
 			PLUGIN name => "SAR"; START;
@@ -236,6 +236,7 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			                    logs => $LOGS;
 
 			OK "no bail!";
+			CRITICAL "no bail!";
 			DONE;
 	});
 
@@ -441,7 +442,7 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			DONE;
 	});
 
-	ok_plugin(2, "SAR CRITICAL - No sar data found for sar -d",
+	ok_plugin(1, "SAR WARNING - No sar data found for sar -d",
 		undef, "SAR dies on no data", sub {
 			use Synacor::SynaMon::Plugin qw(:easy);
 			PLUGIN name => "SAR"; START;
@@ -451,11 +452,52 @@ if ($OS eq 'centos4') { ############################################### CentOS 4
 			                    logs => $LOGS;
 
 			OK "no bail!";
+			CRITICAL "no bail!";
 			DONE;
 	});
 
 } else { ############################################################## UNKNOWN
-	diag "Skipping SAR tests; unhandled platform $OS detected";
+	diag "Skipping platform-specific SAR tests; unhandled platform $OS detected";
 }
+
+$LOGS = "/path/to/nowhere";
+ok_plugin(1, "SAR WARNING - No sar data found for sar -d", undef, "missing_sar_data => 'WARNING' works", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "SAR"; START;
+	SET missing_sar_data => "WARNING";
+
+	my $sar = SAR "-d", samples => 90,
+	                    logs => $LOGS;
+
+	OK;
+	DONE;
+});
+
+
+$LOGS = "/path/to/nowhere";
+ok_plugin(2, "SAR CRITICAL - No sar data found for sar -d", undef, "missing_sar_data => 'CRITICAL' works", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "SAR"; START;
+	SET missing_sar_data => "CRITICAL";
+
+	my $sar = SAR "-d", samples => 90,
+	                    logs => $LOGS;
+
+	OK;
+	DONE;
+});
+
+$LOGS = "/path/to/nowhere";
+ok_plugin(3, "SAR UNKNOWN - No sar data found for sar -d", undef, "missing_sar_data => 'UNKNOWN' works", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "SAR"; START;
+	SET missing_sar_data => "UNKNOWN";
+
+	my $sar = SAR "-d", samples => 90,
+	                    logs => $LOGS;
+
+	OK;
+	DONE;
+});
 
 done_testing;

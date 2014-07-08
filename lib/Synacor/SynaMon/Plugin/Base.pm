@@ -104,6 +104,7 @@ sub new
 		settings => {
 			ignore_credstore_failures => 0,
 			on_timeout => NAGIOS_CRITICAL,
+			missing_sar_data => NAGIOS_WARNING,
 			signals => 'perl',
 		},
 		legacy => Nagios::Plugin->new(%options),
@@ -135,7 +136,7 @@ sub set
 	for my $key (keys %vars) {
 		my $value = $vars{$key};
 
-		if ($key eq 'on_timeout') {
+		if ($key eq 'on_timeout' or $key eq 'missing_sar_data') {
 			my $tmp_val = _nagios_code_for($value);
 			if ($tmp_val) {
 				$value = $tmp_val;
@@ -1377,7 +1378,7 @@ sub sar
 		}
 	}
 	if ($n == 0) {
-		$self->CRITICAL("No sar data found for sar $args");
+		$self->bail($self->{settings}{missing_sar_data}, "No sar data found for sar $args");
 		return {};
 	}
 	if ($n > 1) {
