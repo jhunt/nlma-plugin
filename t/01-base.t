@@ -341,4 +341,20 @@ ok_plugin(3, "EVAL UNKNOWN - Missing Status - name", undef, "evaluate test with 
 	DONE;
 });
 
+###################################################################
+
+ok_plugin(0, "TRACK OK", "key1=42;;", "track value", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "track"; START;
+	TRACK_VALUE key1 => 42;
+	OK; DONE;
+});
+
+ok_plugin(0, "TRACK OK", "", "track value", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "track"; START;
+	TRACK_VALUE key1 => 42;
+	OK; DONE;
+}, ['--noperf']);
+
 done_testing;

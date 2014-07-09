@@ -82,9 +82,10 @@ sub ok_plugin
 		is($e, $exit,    "$message: expect exit code $exit");
 	} else {
 		($s, $p) = map { s/^\s+//; s/\s$//; $_ } split /\|/, $output[0];
+		$p = "" unless $p;
 
 		is($s, $summary, "$message: expected summary output");
-		is($p, $perf,    "$message: expected perfdata output") if $perf;
+		is($p, $perf,    "$message: expected perfdata output") if defined $perf;
 		is($e, $exit,    "$message: expect exit code $exit");
 	}
 }
