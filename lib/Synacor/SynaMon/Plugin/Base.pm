@@ -528,6 +528,7 @@ sub dump
 	return unless $self->{debug};
 
 	local $Data::Dumper::Pad = "DEBUG> ";
+	local $Data::Dumper::Useqq = 1;
 	print STDERR Dumper(@vars);
 	print STDERR "\n";
 }
@@ -551,6 +552,7 @@ sub trace_dump
 	return unless $self->{debug} && $self->{debug} >= 3;
 
 	local $Data::Dumper::Pad = "TRACE> ";
+	local $Data::Dumper::Useqq = 1;
 	print STDERR Dumper(@vars);
 	print STDERR "\n";
 }

@@ -69,7 +69,7 @@ ok_plugin(0, "DEBUG> undef", undef, "debug undef handling", sub {
 	DONE;
 }, ["-D"]);
 
-ok_plugin(0, "DEBUG> \$VAR1 = 'test';", undef, "object dump", sub {
+ok_plugin(0, 'DEBUG> $VAR1 = "test";', undef, "object dump", sub {
 	# Temporarily redirect STDERR to /dev/null, since we don't want
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
@@ -166,7 +166,7 @@ ok_plugin(0, "TRACE> trace output", undef, "keep TRACE-ing past -DDDD", sub {
 	DONE;
 }, ["-DDDDDDDD"]);
 
-ok_plugin(0, "TRACE> \$VAR1 = 'test';", undef, "object trace dump", sub {
+ok_plugin(0, 'TRACE> $VAR1 = "test";', undef, "object trace dump", sub {
 	# Temporarily redirect STDERR to /dev/null, since we don't want
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
@@ -180,6 +180,31 @@ ok_plugin(0, "TRACE> \$VAR1 = 'test';", undef, "object trace dump", sub {
 
 	DONE;
 }, ["-DDDD"]);
+
+$debug = <<EOF;
+DEBUG> \$VAR1 = {
+DEBUG>           "text" => "plain",
+DEBUG>           "binary" => "\\32n\\204\\3\\0\\1\\0\\0\\0\\1\\0\\0\\5"
+DEBUG>         };
+
+DEBUG> Finalizing plugin execution via DONE call
+
+DEBUG OK - done
+EOF
+ok_plugin(0, $debug, undef, "binary dumps", sub {
+	# Temporarily redirect STDERR to /dev/null, since we don't want
+	# any of the debug messages that START prints.
+	open STDERR, ">", "/dev/null";
+
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "DEBUG";
+	START default => "done";
+
+	open STDERR, ">&", STDOUT;
+	DUMP { text => "plain", binary => "\32n\204\3\0\1\0\0\0\1\0\0\5" };
+
+	DONE;
+}, ["-D"], output => 'all');
 
 
 done_testing;
