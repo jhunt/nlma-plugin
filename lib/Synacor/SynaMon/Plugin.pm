@@ -694,6 +694,11 @@ For each data point, the plugin must specify a label and the value:
 
 A plugin can track as many data points as it wants, within reason.
 
+The global option B<--noperf> renders all B<TRACK_VALUE> calls as noops,
+preventing them from actually working.  This is handy when you need to run
+a plugin for its threshold analysis, but are already tracking the
+performance data elsewhere.
+
 TRACK_VALUE has been available since version 1.0.
 
 =head1 CALCULATING RATES
