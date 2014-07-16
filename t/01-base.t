@@ -266,7 +266,7 @@ ok_plugin(0, $size_msg, undef, "Truncate Messages", sub {
 	PLUGIN name => "size";
 	START;
 
-	CRITICAL "length descrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
+	CRITICAL "length discrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
 	for (1 .. 600) { OK $X; }
 	DONE;
 });
@@ -278,7 +278,7 @@ ok_plugin(0, $size_msg, undef, "Bigger Truncate Messages", sub {
 	PLUGIN name => "size";
 	START;
 
-	CRITICAL "length descrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
+	CRITICAL "length discrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
 	for (1 .. 600) { OK $X; }
 	DONE;
 });
@@ -290,13 +290,27 @@ ok_plugin(0, $size_msg, undef, "Maximum single message size", sub {
 	PLUGIN name => "size";
 	START;
 
-	CRITICAL "length descrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
+	CRITICAL "length discrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
 	OK 'x' x 1024;
 	OK 'x' x 2024;
 	OK 'x' x 8192;
 	DONE;
 });
 
+$X = 'x' x 500;     # we should get 6 of these (501 * 6 = 3006b)
+my $Y = 'y' x 500;  # we should get 1 of these
+$size_msg = "SIZE OK - $X $X $X $X $X $X $Y (alert truncated \@4k)";
+ok_plugin(0, $size_msg, undef, "Maximum single message size", sub {
+	use Synacor::SynaMon::Plugin qw(:easy);
+	PLUGIN name => "size";
+	START;
+
+	CRITICAL "length discrepancy (".length($size_msg)." >= 4096)" if length($size_msg) >= 4096;
+	OK 'first message';
+	OK 'x' x (rand(1024) + 1024) for 1 .. 16; # more than six
+	OK 'y' x (rand(1024) + 1024);
+	DONE;
+});
 
 ###################################################################
 
