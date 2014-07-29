@@ -18,6 +18,7 @@ use POSIX qw/
 	sigaction
 	strftime
 /;
+use Fcntl qw(:flock);
 use Time::HiRes qw(gettimeofday);
 use File::Find;
 # SNMP functionality is optional
@@ -176,6 +177,13 @@ sub set
 				$self->debug("Disabling SSL hostname verification");
 			}
 			$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = $value ? 1 : 0;
+		} elsif ($key eq "ignore_flock_failure") {
+			if ($value) {
+				$self->debug("Disabling flock failure detection");
+			} else {
+				$self->debug("Enabling flock failure detection");
+			}
+
 		}
 
 		$self->{settings}{$key} = $value;
@@ -688,7 +696,6 @@ sub store
 	my ($self, $path, $data, %options) = @_;
 	return unless defined $data;
 
-
 	# do this part before re-opening the state file (and losing all our previous data that _process_bulk_data will try to read in)
 	my $archive_data;
 	if ($options{as} && $options{as} =~ m/^data_archive$/i) {
@@ -705,8 +712,14 @@ sub store
 			return;
 	}
 
+
+
 	open my $fh, ">", "$path.tmp" or
 		$self->bail(NAGIOS_UNKNOWN, "Could not open '$path.tmp' for writing");
+	my $flock_fail = 0;
+	flock $fh, LOCK_EX|LOCK_NB or $flock_fail = 1;
+	$self->bail(NAGIOS_UNKNOWN, "Unable to obtain file lock on '$path.tmp'")
+		if !$self->{settings}{ignore_flock_failure} && $flock_fail;
 
 	if ($options{as} && $options{as} !~ m/^raw$/i) {
 		if ($options{as} =~ m/^ya?ml$/i) {
@@ -724,6 +737,7 @@ sub store
 		$data = join('', @$data);
 	}
 	print $fh $data;
+	flock $fh, LOCK_UN unless $flock_fail;
 	close $fh;
 	rename "$path.tmp", $path;
 
