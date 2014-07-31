@@ -157,13 +157,13 @@ ok_plugin(0, "TIME OK - all good", undef, "Timers / STAGE_TIME vs TOTAL_TIME", s
 	START;
 	sleep 1;
 	my ($total, $stage) = (TOTAL_TIME, STAGE_TIME);
-	if (!within($total, $stage, 0.001)) {
+	if (!within($total, $stage, 0.01)) {
 		CRITICAL "Total $total != Stage $stage";
 	}
 
 	STAGE "second stage";
 	($total, $stage) = (TOTAL_TIME, STAGE_TIME);
-	if (within($total, $stage, 0.001)) {
+	if (within($total, $stage, 0.01)) {
 		CRITICAL "second stage STAGE_TIME ($stage) should be much less than TOTAL_TIME ($total)";
 	}
 
@@ -178,13 +178,13 @@ ok_plugin(0, "TIME OK - all good", undef, "Timers / start_timeout should reset S
 	sleep 1;
 	START_TIMEOUT 4; # no stage name = STAGE_TIME does *not* get reset
 	my ($total, $stage) = (TOTAL_TIME, STAGE_TIME);
-	if (!within($total, $stage, 0.001)) {
+	if (!within($total, $stage, 0.01)) {
 		CRITICAL "Total $total != Stage $stage";
 	}
 
 	START_TIMEOUT 4, "stage 2";
 	($total, $stage) = (TOTAL_TIME, STAGE_TIME);
-	if (within($total, $stage, 0.001)) {
+	if (within($total, $stage, 0.01)) {
 		CRITICAL "second stage STAGE_TIME ($stage) should be much less than TOTAL_TIME ($total)";
 	}
 
