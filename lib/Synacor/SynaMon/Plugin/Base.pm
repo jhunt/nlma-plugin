@@ -70,6 +70,8 @@ our $TIMEOUT_MESSAGE = "Timed out";
 our $TIMEOUT_STAGE = "running check";
 our $ALL_DONE = 0;
 
+my $LAST_RC = undef;
+
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 sub new
@@ -911,6 +913,30 @@ sub cred_keys
 	return @keys;
 }
 
+sub last_run_exit_reason
+{
+	my ($self) = @_;
+	if (WIFEXITED($LAST_RC)) {
+		return "normal";
+	} elsif (WIFSIGNALED($LAST_RC)) {
+		return "signal";
+	}
+
+	return "abnormal";
+}
+
+sub last_run_exited
+{
+	my ($self) = @_;
+	if (WIFEXITED($LAST_RC)) {
+		return WEXITSTATUS($LAST_RC);
+	} elsif (WIFSIGNALED($LAST_RC)) {
+		return WTERMSIG($LAST_RC);
+	}
+
+	return sprintf "0x%04x", $LAST_RC;
+}
+
 sub run
 {
 	my ($self, $command, %opts) = @_;
@@ -962,6 +988,7 @@ sub _run_via_shell
 	my @lines = <$pipe>;
 	close $pipe;
 	my $rc = $?;
+	$LAST_RC = $rc;
 
 	if ($rc != 0 && !$opts{failok}) { # caller expects command to exit 0
 		# handle normal exit, signal death or unknown properly
@@ -987,6 +1014,7 @@ sub _run_via_ssh
 	$self->debug("Executing: '$cmd'");
 	eval {
 		($stdout, $stderr, $rc) = $ssh->cmd($cmd);
+		$LAST_RC = $rc;
 		$stdout = "" unless defined $stdout;
 		$stderr = "" unless defined $stderr;
 		if (! $opts{failok} && $rc != 0) {
@@ -2253,6 +2281,25 @@ in the identity files to be used.
 
   # auto-determine port from hostname
   my $ssh = $plugin->ssh("myhost:22", $user, $pass, {});
+
+=head2 last_run_exited
+
+Returns the return code of the last command executed via run().
+If no command has ever been run, that value will be undef. Otherwise,
+it will be the return code reported by the run command.
+
+If possible, the exit code will be translated based on exit type
+(normal, signal, other), prior to returning a value.
+
+=head2 last_run_exit_reason
+
+Returns a string indicating the way the last command executed via run()
+terminated. This will be one of "normal", "signaled", or "abnormal",
+depending on whether the command exited normally, exited as a result of
+a signal, or some other reason.
+
+For remote commands, this data may not be available, and would appear
+to return as a "normal" exit.
 
 =head2 mech
 

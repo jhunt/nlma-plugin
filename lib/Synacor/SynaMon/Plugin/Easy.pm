@@ -26,7 +26,7 @@ our @EXPORT = qw/
 	STORE RETRIEVE SLURP STATE_FILE_PATH
 	CREDENTIALS CRED_KEYS
 
-	RUN
+	RUN LAST_RUN_EXITED LAST_RUN_EXIT_REASON
 	SSH
 
 	MECH
@@ -96,6 +96,8 @@ sub CREDENTIALS { $plugin->credentials(@_); }
 sub CRED_KEYS { $plugin->cred_keys(@_); }
 
 sub RUN { $plugin->run(@_); }
+sub LAST_RUN_EXITED { $plugin->last_run_exited(@_); }
+sub LAST_RUN_EXIT_REASON { $plugin->last_run_exit_reason(@_); }
 sub SSH { $plugin->ssh(@_); }
 
 sub DEBUG { $plugin->debug(@_) if $plugin }
@@ -294,6 +296,14 @@ Introduced in 1.09
 =head2 RUN
 
 Wrapper around B<Synacor::SynaMon::Plugin::run>.
+
+=head2 LAST_RUN_EXITED
+
+Wrapper around B<Synacor::SynaMon::Plugin::last_run_exited>.
+
+=head2 LAST_RUN_EXIT_REASON
+
+Wrapper around B<Synacor::SynaMon::Plugin::last_run_exit_reason>.
 
 =head2 SSH
 
