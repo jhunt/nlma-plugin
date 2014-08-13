@@ -90,4 +90,46 @@ ok_plugin(2,
 	}
 );
 
+# test new returning false using failok
+ok_plugin(0,
+	"SSH OK",
+	undef,
+	"Net::SSH::Perl->new() returning false using failok doesn't trigger crit",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SSH";
+		START;
+		my $ssh = SSH "invalidhost", "myuser", "mypass", { ssh_opt => "asdf", failok => 1 };
+		OK;
+	}
+);
+
+# test login returning false using failok
+ok_plugin(0,
+	"SSH OK",
+	undef,
+	"Net::SSH::Perl->login() returning false using failok doesn't trigger crit",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SSH";
+		START;
+		my $ssh = SSH "myhost", "myuser", "badpass", { ssh_opt => "asdf", failok => 1 };
+		OK;
+	}
+);
+
+# test new/login dying using failok
+ok_plugin(0,
+	"SSH OK",
+	undef,
+	"die during new()/login() using failok doesn't trigger crit",
+	sub {
+		use Synacor::SynaMon::Plugin qw(:easy);
+		PLUGIN name => "SSH";
+		START;
+		my $ssh = SSH "badhost", "myuser", "badpass", { ssh_opt => "asdf", failok => 1 };
+		OK;
+	}
+);
+
 done_testing;
