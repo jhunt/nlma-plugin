@@ -70,8 +70,6 @@ our $TIMEOUT_MESSAGE = "Timed out";
 our $TIMEOUT_STAGE = "running check";
 our $ALL_DONE = 0;
 
-my $LAST_RC = undef;
-
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 sub new
@@ -916,9 +914,9 @@ sub cred_keys
 sub last_run_exit_reason
 {
 	my ($self) = @_;
-	if (WIFEXITED($LAST_RC)) {
+	if (WIFEXITED($self->{last_rc})) {
 		return "normal";
-	} elsif (WIFSIGNALED($LAST_RC)) {
+	} elsif (WIFSIGNALED($self->{last_rc})) {
 		return "signal";
 	}
 
@@ -928,13 +926,13 @@ sub last_run_exit_reason
 sub last_run_exited
 {
 	my ($self) = @_;
-	if (WIFEXITED($LAST_RC)) {
-		return WEXITSTATUS($LAST_RC);
-	} elsif (WIFSIGNALED($LAST_RC)) {
-		return WTERMSIG($LAST_RC);
+	if (WIFEXITED($self->{last_rc})) {
+		return WEXITSTATUS($self->{last_rc});
+	} elsif (WIFSIGNALED($self->{last_rc})) {
+		return WTERMSIG($self->{last_rc});
 	}
 
-	return sprintf "0x%04x", $LAST_RC;
+	return sprintf "0x%04x", $self->{last_rc};
 }
 
 sub run
@@ -988,7 +986,7 @@ sub _run_via_shell
 	my @lines = <$pipe>;
 	close $pipe;
 	my $rc = $?;
-	$LAST_RC = $rc;
+	$self->{last_rc} = $rc;
 
 	if ($rc != 0 && !$opts{failok}) { # caller expects command to exit 0
 		# handle normal exit, signal death or unknown properly
@@ -1014,7 +1012,7 @@ sub _run_via_ssh
 	$self->debug("Executing: '$cmd'");
 	eval {
 		($stdout, $stderr, $rc) = $ssh->cmd($cmd);
-		$LAST_RC = $rc;
+		$self->{last_rc} = $rc;
 		$stdout = "" unless defined $stdout;
 		$stderr = "" unless defined $stderr;
 		if (! $opts{failok} && $rc != 0) {

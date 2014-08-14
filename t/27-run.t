@@ -153,8 +153,8 @@ ok_plugin(0, "RUNVIA OK - explicit ls worked", undef, "test explicit 'shell' tra
 		DONE;
 });
 
-# test that _run_via_shell sets $LAST_RC
-ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets LAST_RC properly", sub {
+# test that _run_via_shell sets last_rc
+ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_rc properly", sub {
 		use Synacor::SynaMon::Plugin qw/:easy/;
 		PLUGIN name => "RUNVIA";
 		START;
@@ -216,18 +216,18 @@ ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets LAST_R
 		},
 	);
 
-	# bad command + failok - verify LAST_RC has been set
+	# bad command + failok - verify last_rc has been set
 	ok_plugin(0,
 		"SSHRUN OK - last exited 1",
 		undef,
-		"_run_via_ssh sets LAST_RC after running commands",
+		"_run_via_ssh sets last_rc after running commands",
 		sub {
 			use Synacor::SynaMon::Plugin qw/:easy/;
 			PLUGIN name => "SSHRUN";
 			START;
 			my $ssh = Net::SSH::Perl->new();
 			RUN "badcmd", via => $ssh, failok => 1;
-			CRITICAL "LAST_RC was set to " . LAST_RUN_EXITED unless LAST_RUN_EXITED == 1;
+			CRITICAL "last_rc was set to " . LAST_RUN_EXITED unless LAST_RUN_EXITED == 1;
 			OK "last exited 1";
 			DONE;
 		},
