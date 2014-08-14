@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.31";
+our $VERSION = "1.32";
 
 use Exporter;
 use base qw(Exporter);
@@ -541,6 +541,29 @@ RUN will fail in Net::SSH::Perl mode under the following circumstances:
 
 RUN($cmd, via => $obj) has been available since version 1.22.
 Net::SSH::Perl support for RUN has been available since version 1.22.
+
+=head2 LAST_RUN_EXITED
+
+If you are using RUN in combination with 'failok', to suppress the built-in
+return code checking, you may at some point want to manually look at the return
+code ofthe command executed via RUN (for example, you want to run B<test -f myfile>
+and ensure that it returns 1). The LAST_RUN_EXITED call will return this value to you.
+Where applicable it will translate the return code into a human readable exit number, or
+signal number (See LAST_RUN_EXIT_REASON), or if unable to determine the cause
+of the command's exit, it will return a hex value representing the abnormal
+exit code.
+
+LAST_RUN_EXITED was added in version 1.32.
+
+=head2 LAST_RUN_EXIT_REASON
+
+When using the LAST_RUN_EXIT call to get an exit code, you may wish to see
+how the program exited (normally, due to receiving a signal, or abnormally).
+The LAST_RUN_EXIT_REASON call gets this done for you. It will return any of
+'normal', 'signaled', or 'abnormal', depending on how the last command executed
+actually returned.
+
+LAST_RUN_EXIT_REASON was added in version 1.32.
 
 =head2 SSH
 
