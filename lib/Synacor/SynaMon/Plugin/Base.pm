@@ -1040,7 +1040,9 @@ sub ssh
 		$opts->{port} = $1;
 	}
 
-	my $ssh;
+	my $failok = delete $opts->{failok};
+
+	my ($ssh, $error);
 	eval {
 		# Depending on the underlying mechanism pulling in user/password info, data
 		# may be in utf8. Net::SSH::Perl handles this poorly, so decode it all just
@@ -1048,15 +1050,22 @@ sub ssh
 		utf8::decode($user);
 		utf8::decode($pass);
 		$ssh = Net::SSH::Perl->new($hostname, %$opts)
-			or $self->bail("CRITICAL", "Couldn't connect to $hostname");
-		$ssh->login($user, $pass)
-			or $self->bail("CRITICAL", "Could not log in to $hostname as $user");
+			or do { $error = "Couldn't connect to $hostname"; };
+		if ($ssh) {
+			$ssh->login($user, $pass)
+				or do { $error = "Could not log in to $hostname as $user"; };
+		}
 		1;
 	} or do {
 		$self->debug("Exception caught: $@");
 		$@ =~ s/ at \S+ line \d+//;
-		$self->bail("CRITICAL", "Could not ssh to $hostname as $user: $@");
+		$error = "Could not ssh to $hostname as $user: $@";
 	};
+
+	if ($error && !$failok) {
+		$self->bail("CRITICAL", $error);
+	}
+
 	return $ssh;
 }
 
@@ -2268,8 +2277,8 @@ override any port manually specified in the Net::SSH::Perl options.
   my $ssh = $plugin->ssh('myhost:21', $user, $pass);
   my $ssh = $plugin->ssh('myhost', $user, $pass, { port => 21 });
 
-This will add CRITs upon errors to instantiate the ssh object, and on errors
-logging in.
+Unless the 'failok' option is passed, this will add CRITs upon errors to
+instantiate the ssh object, and on errors logging in.
 
 If using an ssh key, use the appropriate ssh options for Net::SSH::Perl to pass
 in the identity files to be used.
@@ -2279,6 +2288,9 @@ in the identity files to be used.
 
   # auto-determine port from hostname
   my $ssh = $plugin->ssh("myhost:22", $user, $pass, {});
+
+  # don't bail on failures:
+  my $ssh = $plugin->ssh('myhost:22', $user, $pass, { failok => 1 });
 
 =head2 last_run_exited
 
