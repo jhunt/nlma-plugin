@@ -938,8 +938,7 @@ sub last_run_exited
 sub run
 {
 	my ($self, $command, %opts) = @_;
-	my $via = delete $opts{via};
-	$via ||= "shell";
+	my $via = exists $opts{via} ? $opts{via} : "shell";
 	if (ref $via) {
 		if ($via->isa("Net::SSH::Perl")){
 			$self->_run_via_ssh($via, $command, %opts);
@@ -958,6 +957,7 @@ sub run
 sub _run_via_shell
 {
 	my ($self, $command, %opts) = @_;
+	$self->{last_rc} = undef;
 	if ($ENV{TEST_PLUGINS} and $ENV{TEST_CHROOT} and -d $ENV{TEST_CHROOT}) {
 		$self->debug("TEST_PLUGINS and TEST_CHROOT are set; using commands in $ENV{TEST_CHROOT}");
 		$command = "$ENV{TEST_CHROOT}$command";
@@ -1008,9 +1008,14 @@ sub _run_via_shell
 sub _run_via_ssh
 {
 	my ($self, $ssh, $cmd, %opts) = @_;
+	$self->{last_rc} = undef;
 	my ($stdout, $stderr, $rc);
 	$self->debug("Executing: '$cmd'");
 	eval {
+		# Test if we're connected, dies if we aren't
+		# This prevents $ssh->cmd from setting rc to 0 during transport failures
+		$ssh->sock;
+
 		($stdout, $stderr, $rc) = $ssh->cmd($cmd);
 		$self->{last_rc} = $rc;
 		$stdout = "" unless defined $stdout;
@@ -1041,6 +1046,7 @@ sub ssh
 	}
 
 	my $failok = delete $opts->{failok};
+	$opts->{identity_files} ||= [ "$ENV{HOME}/.ssh/id_rsa", "$ENV{HOME}/.ssh/id_dsa", "$ENV{HOME}/.ssh/identity" ];
 
 	my ($ssh, $error);
 	eval {
@@ -1062,8 +1068,12 @@ sub ssh
 		$error = "Could not ssh to $hostname as $user: $@";
 	};
 
-	if ($error && !$failok) {
-		$self->bail("CRITICAL", $error);
+	if ($error) {
+		if ($failok) {
+			return undef;
+		} else {
+			$self->bail("CRITICAL", $error);
+		}
 	}
 
 	return $ssh;

@@ -100,7 +100,7 @@ ok_plugin(0,
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "invalidhost", "myuser", "mypass", { ssh_opt => "asdf", failok => 1 };
-		OK;
+		OK unless defined $ssh;
 	}
 );
 
@@ -114,7 +114,7 @@ ok_plugin(0,
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "myhost", "myuser", "badpass", { ssh_opt => "asdf", failok => 1 };
-		OK;
+		OK unless defined $ssh;
 	}
 );
 
@@ -128,7 +128,7 @@ ok_plugin(0,
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "badhost", "myuser", "badpass", { ssh_opt => "asdf", failok => 1 };
-		OK;
+		OK unless defined $ssh;
 	}
 );
 
