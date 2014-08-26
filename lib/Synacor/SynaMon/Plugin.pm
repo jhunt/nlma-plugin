@@ -573,11 +573,15 @@ RUN call, to allow for running external commands via SSH.
 
   my $ssh = SSH($host, $user, $pass, { ssh_option => 'value' });
 
-CRITICAL alerts will be generated if there are errors connecting to $host,
-if the credentials were invalid, or if for some reason perl was unable to
-instantiate the Net::SSH::Perl object.
+Unless the B<failok> option is sent as one of the options, CRITICAL alerts
+will be generated if there are errors connecting to $host, if the credentials
+were invalid, or if for some reason perl was unable to instantiate
+the Net::SSH::Perl object. Aside from B<failok>, the options passed to B<SSH>
+will be passed directly to Net::SSH::Perl for its use (things like
+B<identity_files>, B<protocol>, B<use_pty>).
 
-SSH has been available since version 1.22.
+SSH has been available since version 1.22. B<failok> has been available since
+1.32.
 
 =head1 SAR DATA
 

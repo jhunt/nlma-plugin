@@ -948,8 +948,10 @@ sub run
 	} else {
 		if ($via eq "shell") {
 			$self->_run_via_shell($command, %opts);
-		} else {
+		} elsif (defined $via) {
 			$self->bail(NAGIOS_UNKNOWN, "Unsupported RUN mechanism: '$via'");
+		} else {
+			$self->bail(NAGIOS_UNKNOWN, "Undefined RUN mechanism explicitly requested!");
 		}
 	}
 }
@@ -1047,6 +1049,7 @@ sub ssh
 
 	my $failok = delete $opts->{failok};
 	$opts->{identity_files} ||= [ "$ENV{HOME}/.ssh/id_rsa", "$ENV{HOME}/.ssh/id_dsa", "$ENV{HOME}/.ssh/identity" ];
+	$opts->{identity_files}   = [ $opts->{identity_files} ] if (ref($opts->{identity_files}) ne "ARRAY");
 
 	my ($ssh, $error);
 	eval {
@@ -2274,18 +2277,45 @@ Output will be returned as a list of lines (without the traiing '\n')
 if called in list context, or a string containing newline-separated lines
 in scalar context. This behavior is very similar to run_via_shell's behavior.
 
-=head2 ssh
+=head2 ssh($hostname, $user, $passwd, $opts)
 
 Creates a Net::SSH::Perl object for use with the run($cmd, via => $obj)
 function. Accepts hostname, username, password, and Net::SSH::Perl options.
 
-If port is specified as '<hostname>:<port>' in the hostname variable, it will
-override any port manually specified in the Net::SSH::Perl options.
+Arguments:
+
+=over
+
+=item B<hostname>
+
+This is the hostname to connect to. If port is specified as '<hostname>:<port>'
+in this argument, it will override any port manually specified in the
+$opts hashref passed to Net::SSH::Perl.
 
   # All three invocations have the same results:
   my $ssh = $plugin->ssh('myhost:21', $user, $pass. { port => 22 });
   my $ssh = $plugin->ssh('myhost:21', $user, $pass);
   my $ssh = $plugin->ssh('myhost', $user, $pass, { port => 21 });
+
+=item B<user>
+
+Username to initiate the ssh connection as. If left undefined, uses the
+effective UID of the process.
+
+=item B<passwd>
+
+Password to provide when prompted for password based authentication. If using
+key-based authentication, specify this as undefined.
+
+=item B<opts>
+
+This should be a hashref containing options which will be passed to
+Net::SSH::Perl directly, as it's I<%opts> argument. Things you may
+want to specify here are B<protocol>, B<identity_files>, B<use_pty>,
+and B<options>.
+
+There is one non-Net::SSH::Perl option that can be sepecified to affect
+how B<ssh()> behaves. This is the B<failok> option, and it works like this:
 
 Unless the 'failok' option is passed, this will add CRITs upon errors to
 instantiate the ssh object, and on errors logging in.
@@ -2301,6 +2331,8 @@ in the identity files to be used.
 
   # don't bail on failures:
   my $ssh = $plugin->ssh('myhost:22', $user, $pass, { failok => 1 });
+
+=back
 
 =head2 last_run_exited
 

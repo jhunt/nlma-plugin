@@ -3,6 +3,7 @@
 use strict;
 use Test::More;
 use Test::MockModule;
+use Test::Deep;
 
 #FIXME: mock out Net::SSH::Perl's new, login, cmd commands
 my $sshmodule = Test::MockModule->new("Net::SSH::Perl");
@@ -12,9 +13,10 @@ $sshmodule->mock('new', sub {
 	die "Invalid hostname: $host" if $host eq "badhost";
 	return bless(
 		{
-			host => $host,
-			port => $opts{port},
-			debug => $opts{debug}
+			host  => $host,
+			port  => $opts{port},
+			debug => $opts{debug},
+			opts  => \%opts,
 		},
 		$class
 	);
@@ -129,6 +131,39 @@ ok_plugin(0,
 		START;
 		my $ssh = SSH "badhost", "myuser", "badpass", { ssh_opt => "asdf", failok => 1 };
 		OK unless defined $ssh;
+	}
+);
+
+# verify we set default identity files
+ok_plugin(0,
+	"SSH OK",
+	undef,
+	"identity_files default is set",
+	sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "SSH";
+		START;
+		my $ssh = SSH "myhost", "myuser", "mypass";
+		OK if (eq_deeply $ssh->{opts}{identity_files},
+				bag(
+					re("\/.ssh\/id_rsa\$"),
+					re("\/.ssh\/id_dsa\$"),
+					re("\/.ssh\/identity\$"),
+				));
+	}
+);
+
+# verify that string identity files are translated to arrayrefs of one
+ok_plugin(0,
+	"SSH OK",
+	undef,
+	"identity_files forces arrayref",
+	sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "SSH";
+		START;
+		my $ssh = SSH "myhost", "myuser", "mypass", { identity_files => "myfile" };
+		OK if (eq_deeply $ssh->{opts}{identity_files}, [ 'myfile' ]);
 	}
 );
 
