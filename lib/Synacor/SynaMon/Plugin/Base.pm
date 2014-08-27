@@ -1048,7 +1048,8 @@ sub ssh
 	}
 
 	my $failok = delete $opts->{failok};
-	$opts->{identity_files} ||= [ "$ENV{HOME}/.ssh/id_rsa", "$ENV{HOME}/.ssh/id_dsa", "$ENV{HOME}/.ssh/identity" ];
+	my $homedir = _userdir($ENV{SUDO_USER}) || _userdir(getpwuid($>));
+	$opts->{identity_files} ||= [ "$homedir/.ssh/id_rsa", "$homedir/.ssh/id_dsa", "$homedir/.ssh/identity" ];
 	$opts->{identity_files}   = [ $opts->{identity_files} ] if (ref($opts->{identity_files}) ne "ARRAY");
 
 	my ($ssh, $error);
