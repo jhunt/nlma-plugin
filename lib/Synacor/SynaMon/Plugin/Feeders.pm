@@ -13,6 +13,7 @@ our @EXPORT = qw/
 	SEND_NSCA
 	FLUSH_NSCA
 
+	CONTEXT
 	HOSTS
 
 	LOG
@@ -34,6 +35,11 @@ my %NSCA = (
 );
 
 ##########################################################
+
+sub plugin
+{
+	$Synacor::SynaMon::Plugin::Easy::plugin;
+}
 
 sub SET_NSCA
 {
@@ -85,10 +91,18 @@ sub FLUSH_NSCA
 sub SEND_NSCA
 {
 	my (%args) = @_;
+	my $ctx;
+	if (!%args) {
+		($args{host}, $args{service})  = split '/', plugin->context, 2;
+		($args{status}, $args{output}) = plugin->check_status;
+		$args{output} = plugin->check_perfdata($args{output});
+		plugin->context('default');
+	}
+
 	$args{status} = $Synacor::SynaMon::Plugin::Base::STATUS_CODES{$args{status}};
 	$args{status} = 3 if !defined($args{status});
 
-	if (exists $args{service}) {
+	if (defined $args{service}) {
 		push @RESULTS, "$args{host}\t$args{service}\t$args{status}\t$args{output}";
 	} else {
 		push @RESULTS, "$args{host}\t$args{status}\t$args{output}";
@@ -169,6 +183,13 @@ sub HOSTS
 	return wantarray ? keys %h : \%h;
 }
 
+sub CONTEXT
+{
+	my ($host, $svc) = @_;
+	my $key = $svc ? "$host/$svc" : $host;
+	$Synacor::SynaMon::Plugin::Easy::plugin->context($key);
+}
+
 END {
 	if ($Synacor::SynaMon::Plugin::MODE eq "feeder") {
 		DEBUG "Flushing ".@RESULTS." NSCA results\n";
@@ -189,6 +210,21 @@ Hammer Throw core servers, and feed results for all hosts monitored by that
 node.
 
 =head1 FUNCTIONS
+
+=head2 CONTEXT $host [, $service]
+
+Set a new message / performance data context.  As a feeder executes, it can
+pass through multiple host/service or host contexts.  This affects normal
+calls like TRACK_VALUE, CHECK_VALUE and the more rudimentary OK, WARNING,
+CRITICAL and UNKNOWN handlers.
+
+B<CONTEXT> has been available since version 1.32.
+
+=head2 SEND_NSCA
+
+Gather up all of the performance data and raised alerts for the current
+context, and put them in the NSCA outflow queue.  This function call is
+different from the the B<SEND_NSCA %details> call.
 
 =head2 SEND_NSCA %details
 
@@ -330,6 +366,14 @@ Don't actually send results via send_nsca.  Useful for debugging.
 Defaults to I<0> (i.e. not in noop mode).
 
 =back
+
+=head1 INTERNAL FUNCTIONS
+
+These functions are not exported by default.
+
+=head2 plugin
+
+Retrieve the plugin context, from Easy.pm
 
 =head1 AUTHOR
 

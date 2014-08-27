@@ -495,6 +495,71 @@ ok_plugin(3, "FEEDER UNKNOWN - Failed to open /etc/icinga/defs/local/hosts.lst (
 });
 
 ###################################################################
+# CONTEXT
+
+unlink TEST_NSCA_OUT;
+ok_plugin(0, "FEEDER OK - sent", undef, "CONTEXT works", sub {
+	use Synacor::SynaMon::Plugin qw/:feeder/;
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+	SET_NSCA chunk => "t/bin/chunk";
+	SET_NSCA bin    => TEST_SEND_NSCA,
+	         BOGUS  => "this is a bogus option",
+	         config => TEST_NSCA_OUT;
+
+	CONTEXT  "host1", "cpu";
+	WARNING  "warn warn warn";
+	CRITICAL "crit crit crit";
+	SEND_NSCA;
+
+	CONTEXT  "host2", "load";
+	WARNING  "warn warn warn";
+	SEND_NSCA;
+
+	CONTEXT  "host3", "memory";
+	OK "ok ok ok";
+	SEND_NSCA;
+
+	CONTEXT "host4";
+	UNKNOWN "host down?";
+	SEND_NSCA;
+
+	OK "sent";
+});
+is_string_nows(slurp(TEST_NSCA_OUT),
+	"host1\tcpu\t2\tcrit crit crit\n\x17".
+	"host2\tload\t1\twarn warn warn\n\x17".
+	"host3\tmemory\t0\tok ok ok\n\x17".
+	"host4\t3\thost down?\n\x17",
+		"send_nsca output is correct");
+
+unlink TEST_NSCA_OUT;
+ok_plugin(0, "FEEDER OK - perfdata", "x=42;;", "CONTEXT handles perfdata", sub {
+	use Synacor::SynaMon::Plugin qw/:feeder/;
+	open STDERR, ">", "/dev/null";
+	PLUGIN name => "feeder";
+	START;
+	SET_NSCA chunk => "t/bin/chunk";
+	SET_NSCA bin    => TEST_SEND_NSCA,
+	         BOGUS  => "this is a bogus option",
+	         config => TEST_NSCA_OUT;
+
+	CONTEXT "host1", "cpu";
+	TRACK_VALUE x => 1;
+	TRACK_VALUE y => 2;
+	TRACK_VALUE z => 3;
+	OK "good";
+	SEND_NSCA;
+
+	TRACK_VALUE x => 42;
+	OK "perfdata";
+});
+is_string_nows(slurp(TEST_NSCA_OUT),
+	"host1\tcpu\t0\tgood | x=1;; y=2;; z=3;;\n\x17",
+		"send_nsca output is correct");
+
+###################################################################
 # cleanup
 
 unlink TEST_LOG_FILE;

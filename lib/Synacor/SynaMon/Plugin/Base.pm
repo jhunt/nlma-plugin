@@ -90,16 +90,10 @@ sub new
 
 	$options{usage} = "$options{shortname} [OPTIONS]";
 	my $self = {
-		messages => {
-			UNKNOWN  => { len => 0, list => [], over => 0 },
-			OK       => { len => 0, list => [], over => 0 },
-			WARNING  => { len => 0, list => [], over => 0 },
-			CRITICAL => { len => 0, list => [], over => 0 },
-		},
+		contexts => {},
 		name => $bin,
 		shortname => $options{shortname},
 		usage_list => [],
-		did_stuff => 0, # ticked for every STATUS message
 		options => {},
 		pids => [],
 		settings => {
@@ -123,7 +117,30 @@ sub new
 	# ITM-2948 - reset global default timeout to 45s
 	$self->{legacy}{opts}{timeout} = 45;
 
-	bless($self, $class);
+	bless($self, $class)->context('default');
+}
+
+sub context
+{
+	my ($self, $name) = @_;
+	if (defined $name) {
+		$self->{context} = $name;
+		$self->{contexts}{$name} = {
+				perfdata => [],
+				messages => {
+					UNKNOWN  => { len => 0, list => [], over => 0, count => 0 },
+					OK       => { len => 0, list => [], over => 0, count => 0 },
+					WARNING  => { len => 0, list => [], over => 0, count => 0 },
+					CRITICAL => { len => 0, list => [], over => 0, count => 0 },
+				},
+			} unless exists $self->{contexts}{$name};
+
+		$self->{perfdata} = $self->{contexts}{$name}{perfdata};
+		$self->{messages} = $self->{contexts}{$name}{messages};
+		$self;
+	} else {
+		$self->{context};
+	}
 }
 
 sub mode
@@ -277,12 +294,17 @@ sub usage
 
 sub track_value
 {
-	my ($self, $label, $value, @data) = @_;
+	my ($self, $label, $value, %opts) = @_;
 	return if $self->{noperf};
-	$self->{legacy}->add_perfdata(
-		label => $label,
-		value => $value,
-		@data);
+
+	for (qw/warning critical min max/) {
+		$opts{$_} = '' unless defined $opts{$_};
+	}
+
+	my $s = sprintf("%s=%s;%s;%s;%s;%s", $label, $value,
+		$opts{warning}, $opts{critical}, $opts{min}, $opts{max});
+	$s =~ s/;;$//; # no min/max
+	push @{$self->{perfdata}}, $s;
 }
 
 sub _reformat_hash_option
@@ -351,7 +373,6 @@ sub getopts
 sub status
 {
 	my ($self, $status, @message) = @_;
-	$self->{did_stuff}++;
 	my ($code, $name);
 	if (defined $status && defined $STATUS_CODES{$status} && defined $STATUS_NAMES{$status}) {
 		($code, $name) = ($STATUS_CODES{$status}, $STATUS_NAMES{$status});
@@ -381,12 +402,13 @@ sub status
 	$msg =~ s/\|/%PIPE%/g;
 	$msg =~ s/[\r\n\x0b]//g;
 
-	if ($code == NAGIOS_UNKNOWN) {
+	if ($code == NAGIOS_UNKNOWN && $self->{context} eq 'default') {
 		$ALL_DONE = 1;
-		$self->{legacy}->nagios_exit(NAGIOS_UNKNOWN, $msg);
+		$self->terminate(NAGIOS_UNKNOWN, $msg);
 	} else {
+		$self->{messages}{$name}{count}++;
 		# store the message and update length
-		push (@{$self->{messages}{$name}{list}}, $msg);
+		push (@{$self->{messages}{$name}{list}}, $msg) if $msg;
 		$self->{messages}{$name}{len} += $len + 1;
 
 		# make sure we don't go over our 4k limit
@@ -401,6 +423,57 @@ sub status
 	return $code, $msg;
 }
 
+sub check_status
+{
+	my ($self) = @_;
+	my ($status, $msg) = (NAGIOS_UNKNOWN, "Check appears to be broken; no problems triggered");
+
+	if ($self->{messages}{UNKNOWN}{count}) {
+		$status = NAGIOS_UNKNOWN;
+		$msg    = join(' ', @{$self->{messages}{UNKNOWN}{list}});
+		$msg   .= MESSAGE_TRUNCATED if $self->{messages}{UNKNOWN}{over};
+
+	} elsif ($self->{messages}{CRITICAL}{count}) {
+		$status = NAGIOS_CRITICAL;
+		$msg    = join(' ', @{$self->{messages}{CRITICAL}{list}});
+		$msg   .= MESSAGE_TRUNCATED if $self->{messages}{CRITICAL}{over};
+
+	} elsif ($self->{messages}{WARNING}{count}) {
+		$status = NAGIOS_WARNING;
+		$msg    = join(' ', @{$self->{messages}{WARNING}{list}});
+		$msg   .= MESSAGE_TRUNCATED if $self->{messages}{WARNING}{over};
+
+	} elsif ($self->{messages}{OK}{count}) {
+		$status = NAGIOS_OK;
+		$msg    = join(' ', @{$self->{messages}{OK}{list}});
+		$msg   .= MESSAGE_TRUNCATED if $self->{messages}{OK}{over};
+	}
+
+	return ($status, $msg);
+}
+
+sub check_perfdata
+{
+	my ($self, $output) = @_;
+	$output .= " |". join(' ', @{$self->{perfdata}}) if @{$self->{perfdata}};
+	$output;
+}
+
+sub terminate
+{
+	my ($self, $status, $msg) = @_;
+	if (!defined $status) {
+		($status, $msg) = $self->check_status;
+	}
+
+	my $output = "$self->{shortname} $STATUS_NAMES{$status}";
+	$output .= " - $msg" if $msg;
+	$output = $self->check_perfdata($output);
+
+	print "$output\n";
+	exit $status;
+}
+
 sub bail
 {
 	my ($self, $status, $message) = @_;
@@ -411,15 +484,14 @@ sub bail
 	}
 	(my $code, $message) = $self->status($status, $message);
 	$self->debug("Bailing $status ($code) from message: $message");
-	$self->{legacy}->nagios_exit($code, $message);
+	$self->terminate($code, $message);
 }
 
 sub evaluate
 {
 	my ($self, $status, @message) = @_;
-	$self->{did_stuff}++;
-	if ( defined $status && defined $STATUS_NAMES{$status} && defined $STATUS_CODES{$status} ) {
-		return if $STATUS_CODES{$status} == NAGIOS_OK;
+	if (defined $status && defined $STATUS_NAMES{$status} && defined $STATUS_CODES{$status} ) {
+		@message = () if $STATUS_CODES{$status} == NAGIOS_OK;
 	}
 	$self->status($status, @message);
 }
@@ -475,18 +547,7 @@ sub finalize
 	return if $ALL_DONE;
 	$ALL_DONE = 1;
 	$self->debug("Finalizing ".$self->mode." execution via $via");
-	if (!$self->{did_stuff}) {
-		$self->UNKNOWN("Check appears to be broken; no problems triggered");
-	}
-	for my $name (keys %{$self->{messages}}) {
-		next unless @{$self->{messages}{$name}{list}};
-		my $msg = join(' ', @{$self->{messages}{$name}{list}});
-
-		$msg .= MESSAGE_TRUNCATED if $self->{messages}{$name}{over};
-		$self->{legacy}->add_message($STATUS_CODES{$name}, $msg);
-	}
-
-	$self->{legacy}->nagios_exit($self->{legacy}->check_messages);
+	$self->terminate();
 }
 
 sub done
@@ -1751,6 +1812,16 @@ less error-prone.
 
 Create a new Plugin::Base object.
 
+=head2 context([$name])
+
+Mange plugin execution context.  If you don't know what this is, you don't need it.
+
+With no arguments, the name of the current context is returned.
+
+With a single argument, plugin execution will switch to that context.  Sufficient
+context defaults will be set up if the context doesn't already exist.  Returns the
+plugin object itself.
+
 =head2 mode
 
 Return a string representing the current execution mode.  This is used internally
@@ -1889,6 +1960,22 @@ Shorthand methods exist that pass predetermined status codes:
 =item OK
 
 =back
+
+=head2 terminate([$status, $message])
+
+Exit appropriately and print out the summary message and any performance
+data we have collected so far.  If $status and $message are not given,
+they will be determined by calling B<check_status>.
+
+=head2 check_status()
+
+Returns the status code and output / summary string, based on calls to
+OK, WARNING, CRITICAL and UNKNOWN (if UNKNOWN didn't cause immediate
+termination).
+
+=head2 check_perfdata($msg)
+
+Append performance data to $msg, and return it, if appropriate.
 
 =head2 bail
 
