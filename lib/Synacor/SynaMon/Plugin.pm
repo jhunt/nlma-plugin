@@ -28,6 +28,16 @@ sub import {
 		use Synacor::SynaMon::Plugin::Easy;
 		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
 
+	} elsif (exists $tags{':synthetic'}) {
+		delete $tags{':synthetic'};
+		$MODE = "synthetic";
+
+		use Synacor::SynaMon::Plugin::Easy;
+		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
+
+		use Synacor::SynaMon::Plugin::Synthetic;
+		Synacor::SynaMon::Plugin::Synthetic->export_to_level(1);
+
 	} elsif (exists $tags{':easy'}) {
 		delete $tags{':easy'};
 		$MODE = "plugin";
