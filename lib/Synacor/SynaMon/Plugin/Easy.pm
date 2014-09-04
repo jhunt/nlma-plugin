@@ -18,7 +18,7 @@ our @EXPORT = qw/
 
 	START DONE
 
-	CHECK_VALUE TRACK_VALUE
+	CHECK_VALUE TRACK_VALUE ANALYZE_THOLD
 
 	STAGE START_TIMEOUT STOP_TIMEOUT
 	STAGE_TIME TOTAL_TIME
@@ -75,8 +75,9 @@ sub WARNING  { $plugin->WARNING(@_); }
 sub CRITICAL { $plugin->CRITICAL(@_); }
 sub UNKNOWN  { $plugin->UNKNOWN(@_); }
 
-sub CHECK_VALUE { $plugin->check_value(@_); }
-sub TRACK_VALUE { $plugin->track_value(@_); }
+sub CHECK_VALUE   { $plugin->check_value(@_); }
+sub TRACK_VALUE   { $plugin->track_value(@_); }
+sub ANALYZE_THOLD { $plugin->analyze_thold(@_); }
 
 sub START { $plugin->start(@_); }
 sub DONE  { $plugin->done(@_); }
@@ -230,6 +231,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::CRITICAL>.
 =head2 UNKNOWN
 
 Wrapper around B<Synacor::SynaMon::Plugin::UNKNOWN>.
+
+=head2 ANALYZE_THOLD
+
+Wrapper around B<Synacor::SynaMon::Plugin::analyze_thold>.
 
 =head2 CHECK_VALUE
 

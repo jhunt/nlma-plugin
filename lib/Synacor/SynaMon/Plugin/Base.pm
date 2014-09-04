@@ -556,6 +556,17 @@ sub done
 	$self->finalize("DONE call") unless $self->mode eq 'feeder';
 }
 
+sub analyze_thold
+{
+	my ($self, $value, $thresh) = @_;
+	$self->debug("Comparing '$value' to threshold '$thresh'");
+
+	$self->{legacy}->set_thresholds(warning => $thresh); # use warning to get a 1 rc for matches
+	my $stat = $self->{legacy}->check_threshold($value);
+	$self->debug($stat ? "Value matched requested threshold" : "Value still nominal");
+	return $stat;
+}
+
 sub check_value
 {
 	my ($self, $value, $message, %thresh) = @_;
@@ -2003,6 +2014,13 @@ and status message, formatted for Nagios.
 
 B<finalize> should be called from END blocks, with an argument of
 "END block".  It is called automatically by B<done>
+
+=head2 analyze_thold
+
+Compares a value against a given threshold, and returns a boolean
+of whether the value matches/violates the threshold. A true value
+is returned when the threshold was matched/violated. A false value
+is returned when the value was not yet in violation of the threshold.
 
 =head2 check_value
 

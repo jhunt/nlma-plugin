@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.34";
+our $VERSION = "1.35";
 
 use Exporter;
 use base qw(Exporter);
@@ -707,7 +707,20 @@ triggered.  This can be useful to keep OK check output manageable:
 
 In this example, the OK message will be just "Files look great!"
 
+The B<ANALYZE_THOLD> function can be used if you wish to check a value
+against a specific threshold, but do not wish to create a status message
+(just to see if it violates a threshold, or matches a range of values
+specified in threshold format).
+
+   if (ANALYZE_THOLD $val, $thresh) {
+      # value violates threshold
+   } else {
+      # no violation
+   }
+
 CHECK_VALUE has been available since version 1.0.
+
+ANALYZE_THOLD has been available since version 1.35.
 
 =head1 TRACKING PERFORMANCE DATA
 
