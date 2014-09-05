@@ -21,9 +21,14 @@ use POSIX qw/
 use Fcntl qw(:flock);
 use Time::HiRes qw(gettimeofday);
 use File::Find;
+
 # SNMP functionality is optional
 eval 'use Net::SNMP';
 eval 'use SNMP::MIB::Compiler';
+
+# RRD functionality is optional
+eval 'use RRDp';
+
 use utf8;
 
 use constant NAGIOS_OK       => 0;
@@ -98,9 +103,14 @@ sub new
 		pids => [],
 		settings => {
 			ignore_credstore_failures => 0,
-			on_timeout => NAGIOS_CRITICAL,
-			missing_sar_data => NAGIOS_WARNING,
-			signals => 'perl',
+			on_timeout                => NAGIOS_CRITICAL,
+			missing_sar_data          => NAGIOS_WARNING,
+			signals                   => 'perl',
+			rrds                      => "/opt/synacor/monitor/rrd",
+			rrdtool                   => "/usr/bin/rrdtool",
+			rrdcached                 => "unix:/var/run/rrdcached/rrdcached.sock",
+			on_rrd_failure            => NAGIOS_CRITICAL,
+			bail_on_rrd_failure       => 1,
 		},
 		legacy => Nagios::Plugin->new(%options),
 	};
@@ -1804,6 +1814,56 @@ sub oids
 	return [map { $self->oid($_) } split /\s+/, join(' ', @_)];
 }
 
+sub _rrd_check
+{
+	return 1 if $INC{'RRDp.pm'};
+
+	shift->UNKNOWN("RRDp not installed; RRD functionality disabled");
+	return undef;
+}
+
+sub _rrd_error
+{
+	my ($self, $msg) = @_;
+
+	$msg =~ s/ at \S+ line \d+//;
+	if ($self->{settings}{bail_on_rrd_failure}) {
+		$self->bail($self->{settings}{on_rrd_failure}, $msg);
+	} else {
+		$self->status($self->{settings}{on_rrd_failure}, $msg);
+	}
+}
+
+sub rrd
+{
+	my ($self, $cmd, $file, @args) = @_;
+
+	$self->_rrd_check or return undef;;
+
+	$ENV{RRDCACHED_ADDRESS} = $self->{settings}{rrdcached};
+
+	unless ($self->{rrdp_running}) {
+		RRDp::start($self->{settings}{rrdtool});
+		$self->{rrdp_running} = 1;
+	}
+
+	my $path = $file =~ m|^/| ? $file : $self->{settings}{rrds} . "/$file";
+	$path .= ".rrd" unless $path =~ /\.rrd$/;
+
+	my $data;
+	eval {
+		RRDp::cmd($cmd, $path, @args);
+		$data = RRDp::read();
+		if ($RRDp::error) {
+			$self->_rrd_error($RRDp::error);
+		}
+		1;
+	} or do {
+		$self->_rrd_error($@);
+	};
+	return $data;
+}
+
 1;
 
 =head1 NAME
@@ -2853,6 +2913,35 @@ really I<like> number strings) and they will be passed back untouched.
 =head2 oids(@names)
 
 Call OID() on all of its arguments, returning the result as a list.
+
+=head2 rrd($command, $file, @args)
+
+Allows you to run arbitrary RRD commands through RRDp, with built-in error
+handling/alerting. Can be used for retrieving or updating RRDs directly, though
+this should not be used to replace the traditional perfdata gathering mechanisms,
+rather to provide introspection on the historical RRD data gathered.
+
+Arguments:
+
+=over
+
+=item B<$command>
+
+Determines the rrdtool command to be run. Should be a command that rrdtool supports
+(I<fetch>, I<info>, I<update>, ...).
+
+=item B<$file>
+
+RRD File to manipulate. For ease of use, it detects relative paths (anything not
+starting with '/'), and prepends the B<rrds> setting to the path. Any RRD
+name not ending in '.rrd' will also have it appended.
+
+=item B<@args>
+
+Additional arguments to pass to rrdtool (must be passed similarly to exec @args),
+each flag + option must be its own item in the array.
+
+=back
 
 =head1 AUTHOR
 
