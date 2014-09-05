@@ -1502,9 +1502,9 @@ Defaults to B<true>.
 
 NOTE: RRD support depends on the RRDp perl module (provided by the perl-rrdtool
 package). If that module is not installed, any calls to B<RRD> under normal plugin
-execution will result bailing with an UNKNOWN alert. If RRDp is present in a
-feeder script making use of B<CONTEXT>, UNKNOWN alerts will be generated, but the
-script will not bail./
+execution will result bailing with an UNKNOWN alert. If RRDp is not present when
+B<RRD> is called from a feeder script making use of B<CONTEXT>, UNKNOWN alerts will
+be generated, but the script will not bail.
 
 B<RRD> has been available since v1.35
 

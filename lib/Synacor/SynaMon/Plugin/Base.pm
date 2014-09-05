@@ -106,7 +106,7 @@ sub new
 			on_timeout                => NAGIOS_CRITICAL,
 			missing_sar_data          => NAGIOS_WARNING,
 			signals                   => 'perl',
-			rrd_base                  => "/opt/synacor/monitor/rrd",
+			rrds                      => "/opt/synacor/monitor/rrd",
 			rrdtool                   => "/usr/bin/rrdtool",
 			rrdcached                 => "unix:/var/run/rrdcached/rrdcached.sock",
 			on_rrd_failure            => NAGIOS_CRITICAL,
@@ -1806,9 +1806,8 @@ sub oids
 sub _rrd_check
 {
 	return 1 if $INC{'RRDp.pm'};
-	shift->UNKNOWN("RRDp not installed; RRD functionality disabled")
-		unless $INC{'RRDp.pm'};
 
+	shift->UNKNOWN("RRDp not installed; RRD functionality disabled");
 	return undef;
 }
 
@@ -1837,7 +1836,7 @@ sub rrd
 		$self->{rrdp_running} = 1;
 	}
 
-	my $path = $file =~ m|^/| ? $file : $self->{settings}{rrd_base} . "/$file";
+	my $path = $file =~ m|^/| ? $file : $self->{settings}{rrds} . "/$file";
 	$path .= ".rrd" unless $path =~ /\.rrd$/;
 
 	my $data;
