@@ -5,6 +5,7 @@ use Test::Deep;
 use t::override_time;
 require "t/common.pl";
 
+my $MASTER = $$;
 ###################################################################
 
 my $plugin = Synacor::SynaMon::Plugin::Base->new;
@@ -188,6 +189,8 @@ ok_plugin(0, "SNMP OK - up up(1) ethernetCsmacd(6) down:down:down! 1/other liter
 });
 
 END {
-	system "rm -rf /var/tmp/mibc.cache";
+	if ($$ == $MASTER) {
+		system "rm -rf /var/tmp/mibc.cache";
+	}
 }
 done_testing;
