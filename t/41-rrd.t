@@ -3,6 +3,10 @@
 use Test::More;
 require "t/common.pl";
 
+my $TMP_RRD = "t/tmp/test.rrd";
+unlink $TMP_RRD if -f $TMP_RRD;
+system "rrdtool create $TMP_RRD --step 60  --start n-1yr DS:datum:GAUGE:1800:U:U RRA:AVERAGE:0.5:1:43200 RRA:AVERAGE:0.5:60:9480 RRA:MIN:0.5:60:9480 RRA:MAX:0.5:60:9480";
+
 # Verify default settings
 ok_plugin(0, "RRD OK", undef, "Default RRD settings are set", sub {
 	use Synacor::SynaMon::Plugin qw/:easy/;
@@ -33,7 +37,7 @@ ok_plugin(0, "RRD OK", undef, "RRD settings can be overridden", sub {
 	my $settings = $Synacor::SynaMon::Plugin::Easy::plugin->{settings};
 
 	SET rrdtool             => "t/tmp/rrdtool";
-	SET rrds                => "t/data/rrd";
+	SET rrds                => "t/tmp";
 	SET rrdcached           => "unix:t/tmp/rrdcached.sock";
 	SET on_rrd_failure      => 1;
 	SET bail_on_rrd_failure => 0;
@@ -41,7 +45,7 @@ ok_plugin(0, "RRD OK", undef, "RRD settings can be overridden", sub {
 	CRITICAL "Bad overridden rrdtool setting: '$settings->{rrdtool}'."
 		unless $settings->{rrdtool} eq "t/tmp/rrdtool";
 	CRITICAL "Bad overridden rrds setting: '$settings->{rrds}'."
-		unless $settings->{rrds} eq "t/data/rrd";
+		unless $settings->{rrds} eq "t/tmp";
 	CRITICAL "Bad overridden rrdcached setting: '$settings->{rrdcached}'."
 		unless $settings->{rrdcached} eq "unix:t/tmp/rrdcached.sock";
 	CRITICAL "Bad overridden on_rrd_failure setting: '$settings->{on_rrd_failure}'."
@@ -58,7 +62,7 @@ ok_plugin(0, "RRD OK", undef, "RRD can fetch data", sub {
 	use Synacor::SynaMon::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
-	SET rrds      => "t/data/rrd";
+	SET rrds      => "t/tmp";
 	SET rrdcached => "unix:t/tmp/nosckethere.sock";
 
 	my $data = RRD info => "test";
@@ -73,7 +77,7 @@ ok_plugin(0, "RRD OK", undef, "RRD sets RRDCACHED_ADDRESS environment variable",
 	use Synacor::SynaMon::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
-	SET rrds      => "t/data/rrd";
+	SET rrds      => "t/tmp";
 	SET rrdcached => "unix:t/tmp/nosockethere.sock";
 
 	RRD info => "test";
@@ -89,7 +93,7 @@ ok_plugin(0, "RRD OK", undef, "multiple RRD calls don't cause failure", sub {
 	use Synacor::SynaMon::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
-	SET rrds      => "t/data/rrd";
+	SET rrds      => "t/tmp";
 	SET rrdcached => "unix:t/tmp/nosckethere.sock";
 
 	RRD info => "test";
@@ -100,13 +104,13 @@ ok_plugin(0, "RRD OK", undef, "multiple RRD calls don't cause failure", sub {
 });
 
 # Verify Errors are caught/handled appropriately
-ok_plugin(2, "RRD CRITICAL - ERROR: opening 't/data/rrd/norrdhere.rrd': No such file or directory.",
+ok_plugin(2, "RRD CRITICAL - ERROR: opening 't/tmp/norrdhere.rrd': No such file or directory.",
 	undef,
 	"RRD errors are handled appropriately", sub {
 		use Synacor::SynaMon::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
-		SET rrds => "t/data/rrd";
+		SET rrds => "t/tmp";
 
 		RRD info => "norrdhere";
 
@@ -116,12 +120,12 @@ ok_plugin(2, "RRD CRITICAL - ERROR: opening 't/data/rrd/norrdhere.rrd': No such 
 
 # Setting fail_bail = 0 allows scripts to continue
 ok_plugin(2,
-	"RRD CRITICAL - ERROR: opening 't/data/rrd/norrdhere.rrd': No such file or directory. Second message",
+	"RRD CRITICAL - ERROR: opening 't/tmp/norrdhere.rrd': No such file or directory. Second message",
 	undef, "RRD fail_bail = 0 allows continued execution", sub {
 		use Synacor::SynaMon::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
-		SET rrds                => "t/data/rrd";
+		SET rrds                => "t/tmp";
 		SET bail_on_rrd_failure => 0;
 
 		RRD info => "norrdhere";
@@ -131,12 +135,12 @@ ok_plugin(2,
 });
 
 # Customizing on_failure affects status messages
-ok_plugin(1, "RRD WARNING - ERROR: opening 't/data/rrd/norrdhere.rrd': No such file or directory.",
+ok_plugin(1, "RRD WARNING - ERROR: opening 't/tmp/norrdhere.rrd': No such file or directory.",
 	undef, "RRD on_failure adjusts status properly", sub {
 		use Synacor::SynaMon::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
-		SET rrds           => "t/data/rrd";
+		SET rrds           => "t/tmp";
 		SET on_rrd_failure => "WARNING";
 
 		RRD info => "norrdhere";
@@ -145,4 +149,5 @@ ok_plugin(1, "RRD WARNING - ERROR: opening 't/data/rrd/norrdhere.rrd': No such f
 		DONE;
 });
 
+unlink $TMP_RRD;
 done_testing;
