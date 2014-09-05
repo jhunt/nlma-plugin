@@ -1839,7 +1839,7 @@ sub _rrd_error
 {
 	my ($self, $msg) = @_;
 
-	$msg =~ s/ at \S+ line \d+//;
+	$msg =~ s/ at \S+ line \d+.*/./;
 	if ($self->{settings}{bail_on_rrd_failure}) {
 		$self->bail($self->{settings}{on_rrd_failure}, $msg);
 	} else {

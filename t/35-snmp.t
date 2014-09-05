@@ -187,4 +187,7 @@ ok_plugin(0, "SNMP OK - up up(1) ethernetCsmacd(6) down:down:down! 1/other liter
 	DONE;
 });
 
+END {
+	system "rm -rf /var/tmp/mibc.cache";
+}
 done_testing;
