@@ -1451,9 +1451,22 @@ sub _get_sar
 	my ($self, $args, $file, $oldest, $data) = @_;
 	return unless -f $file;
 
-	my $command = -x "/usr/bin/sadf"
-		? "/usr/bin/sadf -- $args $file"   # we have sadf, use that!
-		: "sar -h $args -f $file";         # crusty old CentOS 4 doesn't have sadf; use sar -h
+	if (!$self->{sar_version}) {
+		$self->debug("Auto-detecting version of sysstat/sar installed");
+		(local $_, undef) = qx(sar -V 2>&1); chomp;
+		$self->debug("sar -V said '$_'");
+
+		$self->{sar_version} = 0;
+		$self->{sar_version} = $1 if m/^sysstat version (\d+)\./;
+	}
+
+	if (!$self->{sar_version}) {
+		$self->debug("Failed to detect sysstat/sar version!");
+	}
+
+	my $command = "/usr/bin/sadf -- $args $file";
+	   $command = "sar -h $args -f $file"           if $self->{sar_version} == 5;
+	   $command = "/usr/bin/sadf -T -- $args $file" if $self->{sar_version} == 10;
 
 	for ($self->run($command)) {
 		# i.e: |vm01.jhunt  58      1390366861      lo      rxerr/s 0.00|
