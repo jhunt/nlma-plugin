@@ -1430,7 +1430,7 @@ return the RRDp generated datastructure in response to your query.
 
 You can make use of it really simply, like this:
 
-    RRD "fetch", "myhost/coolservice/awesomedatapoint", qw/
+    RRD fetch => "myhost/coolservice/awesomedatapoint", qw/
         AVERAGE -s $start -e $end
         /;
 
@@ -1446,10 +1446,10 @@ I<info>, ...).
 =item B<rrd_file>
 
 The second argument is the RRD file to work on. ".rrd" is appended
-to the end of the filename for you, if not present (Damn, we're helpful,
+to the end of the filename for you, if not present (damn, we're helpful,
 aren't we?). To make things even easier, if you do not specify an
 absolute path (something starting with '/'), B<RRD> will prepend the
-B<rrd_base_dir> setting, which should refer to the base directories
+B<rrds> setting, which should refer to the base directories
 where all RRDs are kept.
 
 =item B<@args>
@@ -1461,19 +1461,19 @@ to how the "exec $cmd, @args" paradigm works.
 
 =back
 
-The folllowing settings can be used to adjust B<RRD>'s behavior:
+The following settings can be used to adjust B<RRD>'s behavior:
 
 =over
 
-=item B<rrd_base_dir>
+=item B<rrds>
 
 Sets the base directory for finding RRD files. Defaults to B</opt/synacor/monitor/rrd>.
 
-=item B<rrd_binary>
+=item B<rrdtool>
 
 Specifies the path to the rrdtool binary. Defaults to B</usr/bin/rrdtool>.
 
-=item B<rrd_cached_socket>
+=item B<rrdcached>
 
 Specifies the connection string to be used to enable rrdcached support. This causes
 B<RRD> to set the B<RRDCACHED_ADDRESS> environment variable prior to starting up the
@@ -1481,7 +1481,7 @@ RRDp connection. If rrdcached is not in use, this will have no effect.
 
 Defaults to B<unix:/var/run/rrdcched/rrdcached.sock>.
 
-=item B<rrd_on_failure>
+=item B<on_rrd_failure>
 
 Specifies what status level to give messages auto-generated in the event of B<RRD>
 command failures. This can be set to the strings of B<OK>, B<WARNING>, B<CRITICAL>,
@@ -1489,16 +1489,22 @@ B<UNKNOWN>, or their Nagios plugin numeric equivalencies.
 
 Defaults to B<CRITICAL>.
 
-=item B<rrd_fail_bail>
+=item B<bail_on_rrd_failure>
 
 Controls whether or not B<RRD> command failures cause the plugin to bail out. To
 allow plugins to continue execution after a failure, set this to a false value.
-However, failures will still generate status messages based on the B<rrd_on_failure>
+However, failures will still generate status messages based on the B<on_rrd_failure>
 setting.
 
 Defaults to B<true>.
 
 =back
+
+NOTE: RRD support depends on the RRDp perl module (provided by the perl-rrdtool
+package). If that module is not installed, any calls to B<RRD> under normal plugin
+execution will result bailing with an UNKNOWN alert. If RRDp is present in a
+feeder script making use of B<CONTEXT>, UNKNOWN alerts will be generated, but the
+script will not bail./
 
 B<RRD> has been available since v1.35
 

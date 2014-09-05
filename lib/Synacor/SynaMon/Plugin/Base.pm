@@ -103,14 +103,14 @@ sub new
 		pids => [],
 		settings => {
 			ignore_credstore_failures => 0,
-			on_timeout => NAGIOS_CRITICAL,
-			missing_sar_data => NAGIOS_WARNING,
-			signals => 'perl',
-			rrd_base          => "/opt/synacor/monitor/rrd",
-			rrd_binary        => "/usr/bin/rrdtool",
-			rrd_cached_socket => "unix:/var/run/rrdcached/rrdcached.sock",
-			rrd_on_failure    => NAGIOS_CRITICAL,
-			rrd_fail_bail     => 1,
+			on_timeout                => NAGIOS_CRITICAL,
+			missing_sar_data          => NAGIOS_WARNING,
+			signals                   => 'perl',
+			rrd_base                  => "/opt/synacor/monitor/rrd",
+			rrdtool                   => "/usr/bin/rrdtool",
+			rrdcached                 => "unix:/var/run/rrdcached/rrdcached.sock",
+			on_rrd_failure            => NAGIOS_CRITICAL,
+			bail_on_rrd_failure       => 1,
 		},
 		legacy => Nagios::Plugin->new(%options),
 	};
@@ -1805,9 +1805,11 @@ sub oids
 
 sub _rrd_check
 {
-	return if $INC{'RRDp.pm'};
+	return 1 if $INC{'RRDp.pm'};
 	shift->UNKNOWN("RRDp not installed; RRD functionality disabled")
 		unless $INC{'RRDp.pm'};
+
+	return undef;
 }
 
 sub _rrd_error
@@ -1815,10 +1817,10 @@ sub _rrd_error
 	my ($self, $msg) = @_;
 
 	$msg =~ s/ at \S+ line \d+//;
-	if ($self->{settings}{rrd_fail_bail}) {
-		$self->bail($self->{settings}{rrd_on_failure}, $msg);
+	if ($self->{settings}{bail_on_rrd_failure}) {
+		$self->bail($self->{settings}{on_rrd_failure}, $msg);
 	} else {
-		$self->status($self->{settings}{rrd_on_failure}, $msg);
+		$self->status($self->{settings}{on_rrd_failure}, $msg);
 	}
 }
 
@@ -1826,12 +1828,12 @@ sub rrd
 {
 	my ($self, $cmd, $file, @args) = @_;
 
-	$self->_rrd_check;
+	$self->_rrd_check or return undef;;
 
-	$ENV{RRDCACHED_ADDRESS} = $self->{settings}{rrd_cached_socket};
+	$ENV{RRDCACHED_ADDRESS} = $self->{settings}{rrdcached};
 
 	unless ($self->{rrdp_running}) {
-		RRDp::start($self->{settings}{rrd_binary});
+		RRDp::start($self->{settings}{rrdtool});
 		$self->{rrdp_running} = 1;
 	}
 
@@ -2914,7 +2916,7 @@ Determines the rrdtool command to be run. Should be a command that rrdtool suppo
 =item B<$file>
 
 RRD File to manipulate. For ease of use, it detects relative paths (anything not
-starting with '/'), and prepends the B<rrd_base_dir> setting to the path. Any RRD
+starting with '/'), and prepends the B<rrds> setting to the path. Any RRD
 name not ending in '.rrd' will also have it appended.
 
 =item B<@args>
