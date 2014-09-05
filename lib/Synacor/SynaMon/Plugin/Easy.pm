@@ -55,6 +55,8 @@ our @EXPORT = qw/
 	OID OIDS
 	SNMP_ENUM SNMP_TC
 
+	RRD
+
 	DEBUG DUMP NOOP
 	TRACE TDUMP
 /;
@@ -159,6 +161,8 @@ sub OID          { $plugin->oid(@_); }
 sub OIDS         { $plugin->oids(@_); }
 sub SNMP_ENUM    { $plugin->snmp_enum(@_); }
 sub SNMP_TC      { $plugin->snmp_tc(@_); }
+
+sub RRD          { $plugin->rrd(@_); }
 
 END {
 	$plugin->finalize("END block") if $plugin;
@@ -446,6 +450,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::snmp_enum>.
 =head2 SNMP_TC
 
 Wrapper around B<Synacor::SynaMon::Plugin::snmp_tc>.
+
+=head2 RRD
+
+Wrapper around B<Synacor::SynaMon::Plugin::rrd>.
 
 =head1 AUTHOR
 
