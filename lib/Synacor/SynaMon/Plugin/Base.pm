@@ -1879,7 +1879,8 @@ sub rrd
 			for (split "\n", $$data) {
 				my ($time, $val) = /^\s*(\d+):\s*(.*)\s*$/;
 				next unless $time;
-				$d->{$time} = strtod($val) eq "nan" ? undef : strtod($val);
+				$val = strtod($val);
+				$d->{$time} = $val eq "nan" ? undef : $val;
 			}
 			$data = $d;
 			$self->trace_dump($data);

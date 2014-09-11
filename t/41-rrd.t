@@ -167,7 +167,17 @@ my $rrd = Test::MockModule->new("RRDp");
 $rrd->mock('cmd', sub (@) {} );
 $rrd->mock('read', sub () {
 	# NOTE: values in here are hand-crafted to test our number parsing regex, skipping non-numbers.
-	my $str = "                          datum\n\n1410381060: -1.340000000000e-40\n1410381120: 13.003400000000e323\n1410381240: +nan\n1410381300: -nan\n1410381360: 0.0000000000e00\n1410381420: 340.443100000000e-00\n";
+	my $str = <<EOF;
+                          datum
+
+1410381060: -1.340000000000e-40
+1410381120: 13.003400000000e323
+1410381240: +nan
+1410381300: -nan
+1410381360: 0.0000000000e00
+1410381420: 340.443100000000e-00
+
+EOF
 	return \$str;
 });
 ok_plugin(0, "RRD_FETCH OK", undef, "RRD fetch returns expected datastructure", sub {
