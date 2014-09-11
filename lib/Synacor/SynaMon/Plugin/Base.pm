@@ -17,6 +17,7 @@ use POSIX qw/
 	SIGALRM
 	sigaction
 	strftime
+	strtod
 /;
 use Fcntl qw(:flock);
 use Time::HiRes qw(gettimeofday);
@@ -569,11 +570,11 @@ sub done
 sub analyze_thold
 {
 	my ($self, $value, $thresh) = @_;
-	$self->debug("Comparing '$value' to threshold '$thresh'");
+	$self->trace("Comparing '$value' to threshold '$thresh'");
 
 	$self->{legacy}->set_thresholds(warning => $thresh); # use warning to get a 1 rc for matches
 	my $stat = $self->{legacy}->check_threshold($value);
-	$self->debug($stat ? "Value matched requested threshold" : "Value still nominal");
+	$self->trace($stat ? "Value matched requested threshold" : "Value still nominal");
 	return $stat;
 }
 
@@ -1856,6 +1857,7 @@ sub rrd
 	$ENV{RRDCACHED_ADDRESS} = $self->{settings}{rrdcached};
 
 	unless ($self->{rrdp_running}) {
+		$self->debug("Starting up RRDp for manipulating RRDs");
 		RRDp::start($self->{settings}{rrdtool});
 		$self->{rrdp_running} = 1;
 	}
@@ -1865,8 +1867,23 @@ sub rrd
 
 	my $data;
 	eval {
+		$self->debug("Executing RRD comand: $cmd $path ".join(" ", @args));
 		RRDp::cmd($cmd, $path, @args);
 		$data = RRDp::read();
+		$self->trace("RRD command raw result:");
+		$self->trace_dump($data);
+
+		if ($cmd eq "fetch") {
+			$self->trace("Normalized 'fetch' data:");
+			my $d = {};
+			for (split "\n", $$data) {
+				my ($time, $val) = /^\s*(\d+):\s*(.*)\s*$/;
+				next unless $time;
+				$d->{$time} = strtod($val) eq "nan" ? undef : strtod($val);
+			}
+			$data = $d;
+			$self->trace_dump($data);
+		}
 		if ($RRDp::error) {
 			$self->_rrd_error($RRDp::error);
 		}

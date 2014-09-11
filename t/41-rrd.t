@@ -1,6 +1,8 @@
 #!perl
 
 use Test::More;
+use Test::MockModule;
+use Test::Deep;
 require "t/common.pl";
 
 my $TMP_RRD = "t/tmp/test.rrd";
@@ -147,6 +149,44 @@ ok_plugin(1, "RRD WARNING - ERROR: opening 't/tmp/norrdhere.rrd': No such file o
 
 		UNKNOWN "Shouldn't get here, as RRD will bail";
 		DONE;
+});
+
+ok_plugin(0, "RRD OK", undef, "RRD info returns scalar ref data", sub {
+	use Synacor::SynaMon::Plugin qw/:easy/;
+	PLUGIN name => "rrd";
+
+	SET rrds => "t/tmp";
+	my $data = RRD info => "test";
+	CRITICAL unless ref($data) eq "SCALAR";
+	OK;
+
+	DONE;
+});
+
+my $rrd = Test::MockModule->new("RRDp");
+$rrd->mock('cmd', sub (@) {} );
+$rrd->mock('read', sub () {
+	# NOTE: values in here are hand-crafted to test our number parsing regex, skipping non-numbers.
+	my $str = "                          datum\n\n1410381060: -1.340000000000e-40\n1410381120: 13.003400000000e323\n1410381240: +nan\n1410381300: -nan\n1410381360: 0.0000000000e00\n1410381420: 340.443100000000e-00\n";
+	return \$str;
+});
+ok_plugin(0, "RRD_FETCH OK", undef, "RRD fetch returns expected datastructure", sub {
+	use Synacor::SynaMon::Plugin qw/:easy/;
+	PLUGIN name => "rrd_fetch";
+
+	SET rrds => "t/tmp";
+	my $data = RRD fetch => "rrd", qw/fake args/;
+	CRITICAL "unexpected output from RRD fetch" unless eq_deeply $data, {
+		1410381060 => -1.340000000000e-40,
+		1410381120 => 13.003400000000e323,
+		1410381240 => undef,
+		1410381300 => undef,
+		1410381360 => 0.0000000000e00,
+		1410381420 => 340.443100000000e-00,
+	};
+	OK;
+
+	DONE;
 });
 
 unlink $TMP_RRD;
