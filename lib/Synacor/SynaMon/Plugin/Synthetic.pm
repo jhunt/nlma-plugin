@@ -26,6 +26,9 @@ sub START_SYNTHETIC
 	OPTION "useragent|U=s",
 		help => "Set the phantomjs useragent.";
 
+	OPTION "mobile",
+		help => "Give phantomjs a 'mobile' useragent";
+
 	START;
 
 	eval 'use Synacor::Test::Selenium::Utils; 1'
@@ -36,12 +39,12 @@ sub START_SYNTHETIC
 	my $url = OPTION->url;
 	   $url = "http://$url" if $url !~ m/^https?:\/\//;
 	return $DRIVER if $DRIVER;
-	my @DEBUG_LOG = ("--webdriver-loglevel='ERROR'");
+	my @DEBUG_LOG = ("--webdriver-loglevel=NONE");
 	if (OPTION->debug) {
 		$ENV{DEBUG} = 1;
 		DEBUG "Saving ghostdriver logs to /tmp/phantomjs.$$.debug.log";
 		@DEBUG_LOG  = (
-			"--webdriver-loglevel='DEBUG'",
+			"--webdriver-loglevel=DEBUG",
 			"--webdriver-logfile=/tmp/phantomjs.$$.debug.log"
 		);
 	}
@@ -56,6 +59,8 @@ sub START_SYNTHETIC
 	my $port = (sockaddr_in(getsockname($sock)))[0];
 	close $sock;
 
+	push @PHANTOM, "--webdriver=127.0.0.1:$port";
+	TRACE "Running: ".join ' ', @PHANTOM;
 	my $pid = fork;
 	if ($pid) {
 		DEBUG "Spawned '$pid' to run phantomjs on $port";
@@ -63,17 +68,19 @@ sub START_SYNTHETIC
 	} else {
 		close STDERR;
 		close STDOUT;
-		push @PHANTOM, "--webdriver=localhost:$port";
 		exec {$PHANTOM[0]} @PHANTOM or die UNKNOWN "Unable to start phantomjs: $!";
 		exit;
 	}
 
-	STAGE "Ensuring Phantomjs is responding";
-	for (1..20) {
+	START_TIMEOUT 3, "Phantomjs is not responding on port: $port";
+	for (1..8) {
+		# Going to squeeze out 5 tries before timeout
+		# Never seen an active webdriver take more than 2
 		my ($res, undef) = HTTP_GET "http://localhost:$port/sessions";
 		last if $res->is_success;
 		sleep .5;
 	}
+	STOP_TIMEOUT;
 
 	BIND_LOGGING(
 		debug => sub {
@@ -88,7 +95,9 @@ sub START_SYNTHETIC
 		});
 
 	my $ua = "linux firefox";
-	if (OPTION->useragent) {
+	if (OPTION->mobile) {
+		$ua = "apple iphone";
+	} elsif (OPTION->useragent) {
 		if (OPTION->useragent =~ m/^mobile$/i) {
 			$ua = "apple iphone"
 		} else {
