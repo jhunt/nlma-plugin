@@ -101,4 +101,18 @@ ok_plugin(1, "THOLD WARNING - value is 42", undef, "Nagios Threshold Format", su
 	DONE;
 });
 
+ok_plugin(0, "THOLD OK", undef, "ANALYZE_THOLD works properly", sub {
+	use Synacor::SynaMon::Plugin qw/:easy/;
+	PLUGIN name => "THOLD";
+	START;
+	my $val = 42;
+	# Verify that 1) ANALYZE_THOLD returns indicating a match, and 2) no extra messages were generated
+	CRITICAL("ANALYZE_THOLD did not determine a match when it should have.")
+		unless ANALYZE_THOLD($val, '@40:45') == 1;
+	# Verify that ANALYZE_THOLD correctly doesn't find a match.
+	CRITICAL("ANALYZE_THOLD found a match when it should not have.")
+		unless ANALYZE_THOLD($val, "60") == 0;
+	OK;
+});
+
 done_testing;

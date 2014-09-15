@@ -427,6 +427,7 @@ ok_plugin(0, "ALT_PATH OK", undef, "Alternate paths work", sub {
 	UNKNOWN "mon_altpath not created in overridden /tmp/mpf-test path" unless -f "/tmp/mpf-test/mon_altpath";
 	OK;
 });
+system "rm -rf /tmp/mpf-test"; # clean up the /tmp data so other users can make use of it
 
 ok_plugin(3, "ALT_PATH UNKNOWN - Tried to STORE into /etc (Framework Violation)", undef,
 	"Failed attempt to STORE into an unsafe directory", sub {

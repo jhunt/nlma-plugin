@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.34";
+our $VERSION = "1.35";
 
 use Exporter;
 use base qw(Exporter);
@@ -717,7 +717,20 @@ triggered.  This can be useful to keep OK check output manageable:
 
 In this example, the OK message will be just "Files look great!"
 
+The B<ANALYZE_THOLD> function can be used if you wish to check a value
+against a specific threshold, but do not wish to create a status message
+(just to see if it violates a threshold, or matches a range of values
+specified in threshold format).
+
+   if (ANALYZE_THOLD $val, $thresh) {
+      # value violates threshold
+   } else {
+      # no violation
+   }
+
 CHECK_VALUE has been available since version 1.0.
+
+ANALYZE_THOLD has been available since version 1.35.
 
 =head1 TRACKING PERFORMANCE DATA
 
@@ -1428,6 +1441,95 @@ perl-SNMP-MIB-Compiler RPM package).  If that is not installed, any calls
 to SNMP functions will result in an UNKNOWN alert.
 
 B<SNMP_*>, B<OID> and B<OIDS> have been available since v1.30.
+
+=head2 RRD
+
+Need to query RRD data directly to perform introspection on our historical
+data? No problem! Just use the B<RRD> function. It will set up an RRDp based
+connection to rrdtool, and let you run pretty efficient data queries of
+the RRDs. B<RRD> will take care of all the error handling for you, while
+still allowing you to customize its behavior. If successful, it will
+return the RRDp generated datastructure in response to your query.
+
+You can make use of it really simply, like this:
+
+    RRD fetch => "myhost/coolservice/awesomedatapoint", qw/
+        AVERAGE -s $start -e $end
+        /;
+
+Explanation of arguments:
+
+=over
+
+=item B<rrd_command>
+
+The first argument is the rrdtool command to execute (e.g. I<fetch>,
+I<info>, ...).
+
+=item B<rrd_file>
+
+The second argument is the RRD file to work on. ".rrd" is appended
+to the end of the filename for you, if not present (damn, we're helpful,
+aren't we?). To make things even easier, if you do not specify an
+absolute path (something starting with '/'), B<RRD> will prepend the
+B<rrds> setting, which should refer to the base directories
+where all RRDs are kept.
+
+=item B<@args>
+
+The remainder of arguments passed to RRD are the arguments controlling
+how the rrd command should run. These include all of the valid arguments
+for the corresponding rrdtool command. They're passed as an array, similar
+to how the "exec $cmd, @args" paradigm works.
+
+=back
+
+The following settings can be used to adjust B<RRD>'s behavior:
+
+=over
+
+=item B<rrds>
+
+Sets the base directory for finding RRD files. Defaults to B</opt/synacor/monitor/rrd>.
+
+=item B<rrdtool>
+
+Specifies the path to the rrdtool binary. Defaults to B</usr/bin/rrdtool>.
+
+=item B<rrdcached>
+
+Specifies the connection string to be used to enable rrdcached support. This causes
+B<RRD> to set the B<RRDCACHED_ADDRESS> environment variable prior to starting up the
+RRDp connection. If rrdcached is not in use, this will have no effect.
+
+Defaults to B<unix:/var/run/rrdcched/rrdcached.sock>.
+
+=item B<on_rrd_failure>
+
+Specifies what status level to give messages auto-generated in the event of B<RRD>
+command failures. This can be set to the strings of B<OK>, B<WARNING>, B<CRITICAL>,
+B<UNKNOWN>, or their Nagios plugin numeric equivalencies.
+
+Defaults to B<CRITICAL>.
+
+=item B<bail_on_rrd_failure>
+
+Controls whether or not B<RRD> command failures cause the plugin to bail out. To
+allow plugins to continue execution after a failure, set this to a false value.
+However, failures will still generate status messages based on the B<on_rrd_failure>
+setting.
+
+Defaults to B<true>.
+
+=back
+
+NOTE: RRD support depends on the RRDp perl module (provided by the perl-rrdtool
+package). If that module is not installed, any calls to B<RRD> under normal plugin
+execution will result bailing with an UNKNOWN alert. If RRDp is not present when
+B<RRD> is called from a feeder script making use of B<CONTEXT>, UNKNOWN alerts will
+be generated, but the script will not bail.
+
+B<RRD> has been available since v1.35
 
 =head2 FETCH SCRIPTS
 

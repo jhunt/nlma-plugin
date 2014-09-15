@@ -18,7 +18,7 @@ our @EXPORT = qw/
 
 	START DONE
 
-	CHECK_VALUE TRACK_VALUE
+	CHECK_VALUE TRACK_VALUE ANALYZE_THOLD
 
 	STAGE START_TIMEOUT STOP_TIMEOUT
 	STAGE_TIME TOTAL_TIME
@@ -55,6 +55,8 @@ our @EXPORT = qw/
 	OID OIDS
 	SNMP_ENUM SNMP_TC
 
+	RRD
+
 	DEBUG DUMP NOOP
 	TRACE TDUMP
 /;
@@ -75,8 +77,9 @@ sub WARNING  { $plugin->WARNING(@_); }
 sub CRITICAL { $plugin->CRITICAL(@_); }
 sub UNKNOWN  { $plugin->UNKNOWN(@_); }
 
-sub CHECK_VALUE { $plugin->check_value(@_); }
-sub TRACK_VALUE { $plugin->track_value(@_); }
+sub CHECK_VALUE   { $plugin->check_value(@_); }
+sub TRACK_VALUE   { $plugin->track_value(@_); }
+sub ANALYZE_THOLD { $plugin->analyze_thold(@_); }
 
 sub START { $plugin->start(@_); }
 sub DONE  { $plugin->done(@_); }
@@ -160,6 +163,8 @@ sub OIDS         { $plugin->oids(@_); }
 sub SNMP_ENUM    { $plugin->snmp_enum(@_); }
 sub SNMP_TC      { $plugin->snmp_tc(@_); }
 
+sub RRD          { $plugin->rrd(@_); }
+
 END {
 	$plugin->finalize("END block") if $plugin;
 	$plugin->done if $plugin && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
@@ -230,6 +235,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::CRITICAL>.
 =head2 UNKNOWN
 
 Wrapper around B<Synacor::SynaMon::Plugin::UNKNOWN>.
+
+=head2 ANALYZE_THOLD
+
+Wrapper around B<Synacor::SynaMon::Plugin::analyze_thold>.
 
 =head2 CHECK_VALUE
 
@@ -446,6 +455,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::snmp_enum>.
 =head2 SNMP_TC
 
 Wrapper around B<Synacor::SynaMon::Plugin::snmp_tc>.
+
+=head2 RRD
+
+Wrapper around B<Synacor::SynaMon::Plugin::rrd>.
 
 =head1 AUTHOR
 
