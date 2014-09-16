@@ -477,11 +477,11 @@ sub terminate
 		($status, $msg) = $self->check_status;
 	}
 
-	RRDp::end() if $self->{rrdp_running};
-
 	my $output = "$self->{shortname} $STATUS_NAMES{$status}";
 	$output .= " - $msg" if $msg;
 	$output = $self->check_perfdata($output);
+
+	RRDp::end() if $self->{rrdp_running};
 
 	print "$output\n";
 	exit $status;
@@ -1838,6 +1838,18 @@ sub _rrd_check
 	return undef;
 }
 
+sub _rrd_error
+{
+	my ($self, $msg) = @_;
+
+	$msg =~ s/ at \S+ line \d+.*/./;
+	if ($self->{settings}{bail_on_rrd_failure}) {
+		$self->bail($self->{settings}{on_rrd_failure}, $msg);
+	} else {
+		$self->status($self->{settings}{on_rrd_failure}, $msg);
+	}
+}
+
 sub rrd
 {
 	my ($self, $cmd, $file, @args) = @_;
@@ -1849,41 +1861,41 @@ sub rrd
 	unless ($self->{rrdp_running}) {
 		$self->debug("Starting up RRDp for manipulating RRDs");
 		RRDp::start($self->{settings}{rrdtool});
-		$RRDp::error_mode = "catch";
 		$self->{rrdp_running} = 1;
 	}
 
 	my $path = $file =~ m|^/| ? $file : $self->{settings}{rrds} . "/$file";
 	$path .= ".rrd" unless $path =~ /\.rrd$/;
 
-	$self->debug("Executing RRD comand: $cmd $path ".join(" ", @args));
-	RRDp::cmd($cmd, $path, @args);
-	my $data = RRDp::read();
-	if ($RRDp::error) {
-		my $msg = $RRDp::error.".";
-		if ($self->{settings}{bail_on_rrd_failure}) {
-			$self->bail($self->{settings}{on_rrd_failure}, $msg);
-		} else {
-			$self->status($self->{settings}{on_rrd_failure}, $msg);
+	my $data;
+	eval {
+		$self->debug("Executing RRD comand: $cmd $path ".join(" ", @args));
+		RRDp::cmd($cmd, $path, @args);
+		if ($RRDp::error) {
+			$self->_rrd_error($RRDp::error);
+			return undef;
 		}
-		return undef;
-	}
-	$self->trace("RRD command raw result:");
-	$self->trace_dump($data);
-
-	if ($cmd eq "fetch") {
-		$self->trace("Normalized 'fetch' data:");
-		my $d = {};
-		for (split "\n", $$data) {
-			my ($time, $val) = /^\s*(\d+):\s*(.*)\s*$/;
-			next unless $time;
-			$val = strtod($val);
-			$d->{$time} = $val eq "nan" ? undef : $val;
-		}
-		$data = $d;
+		$data = RRDp::read();
+		$self->trace("RRD command raw result:");
 		$self->trace_dump($data);
-	}
 
+		if ($cmd eq "fetch") {
+			$self->trace("Normalized 'fetch' data:");
+			my $d = {};
+			for (split "\n", $$data) {
+				my ($time, $val) = /^\s*(\d+):\s*(.*)\s*$/;
+				next unless $time;
+				$val = strtod($val);
+				$d->{$time} = $val eq "nan" ? undef : $val;
+			}
+			$data = $d;
+			$self->trace_dump($data);
+		}
+		1;
+	} or do {
+		$self->_rrd_error($@);
+		return undef;
+	};
 	return $data;
 }
 
