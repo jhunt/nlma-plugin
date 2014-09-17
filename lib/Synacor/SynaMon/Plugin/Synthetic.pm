@@ -7,6 +7,8 @@ use strict;
 use Socket;
 use Time::HiRes qw/sleep/;
 use POSIX qw/sys_wait_h/;
+use Synacor::SynaMon::Plugin::Base;
+use Synacor::SynaMon::Plugin::Easy;
 use base qw/Exporter/;
 
 my $MASTER_PID = $$;
