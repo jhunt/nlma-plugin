@@ -57,6 +57,8 @@ our @EXPORT = qw/
 
 	RRD
 
+	DB_CONNECT DB_QUERY DB_EXEC
+
 	DEBUG DUMP NOOP
 	TRACE TDUMP
 /;
@@ -164,6 +166,10 @@ sub SNMP_ENUM    { $plugin->snmp_enum(@_); }
 sub SNMP_TC      { $plugin->snmp_tc(@_); }
 
 sub RRD          { $plugin->rrd(@_); }
+
+sub DB_CONNECT   { $plugin->db_connect(@_); }
+sub DB_QUERY     { $plugin->db_query(@_); }
+sub DB_EXEC      { $plugin->db_exec(@_); }
 
 END {
 	$plugin->finalize("END block") if $plugin;
@@ -459,6 +465,18 @@ Wrapper around B<Synacor::SynaMon::Plugin::snmp_tc>.
 =head2 RRD
 
 Wrapper around B<Synacor::SynaMon::Plugin::rrd>.
+
+=head2 DB_CONNECT
+
+Wrapper around B<Synacor::SynaMon::Plugin::db_connect>.
+
+=head2 DB_QUERY
+
+Wrapper around B<Synacor::SynaMon::Plugin::db_query>.
+
+=head2 DB_EXEC
+
+Wrapper around B<Synacor::SynaMon::Plugin::db_exec>.
 
 =head1 AUTHOR
 
