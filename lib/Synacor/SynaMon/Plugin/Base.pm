@@ -22,6 +22,7 @@ use POSIX qw/
 use Fcntl qw(:flock);
 use Time::HiRes qw(gettimeofday);
 use File::Find;
+use DBI;
 
 # SNMP functionality is optional
 eval 'use Net::SNMP';
@@ -104,14 +105,21 @@ sub new
 		pids => [],
 		settings => {
 			ignore_credstore_failures => 0,
+
 			on_timeout                => NAGIOS_CRITICAL,
+
 			missing_sar_data          => NAGIOS_WARNING,
+
 			signals                   => 'perl',
+
 			rrds                      => "/opt/synacor/monitor/rrd",
 			rrdtool                   => "/usr/bin/rrdtool",
 			rrdcached                 => "unix:/var/run/rrdcached/rrdcached.sock",
 			on_rrd_failure            => NAGIOS_CRITICAL,
 			bail_on_rrd_failure       => 1,
+
+			on_db_failure             => NAGIOS_CRITICAL,
+			bail_on_db_failure        => 1,
 		},
 		legacy => Nagios::Plugin->new(%options),
 	};
@@ -187,6 +195,7 @@ sub set
 				# Forcibly re-issue the timeout, under new settings
 				$self->start_timeout($self->stop_timeout);
 			}
+
 		} elsif ($key eq "on_previous_data_missing" ) {
 			my $tmp_val = _nagios_code_for($value);
 			if ($tmp_val) {
@@ -198,6 +207,7 @@ sub set
 					$self->_bad_setting($key, $value, "(warning|critical|unknown|ok)");
 				}
 			}
+
 		} elsif ($key eq "ssl_verify") {
 			if ($value) {
 				$self->debug("Enabling SSL hostname verification");
@@ -205,6 +215,7 @@ sub set
 				$self->debug("Disabling SSL hostname verification");
 			}
 			$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = $value ? 1 : 0;
+
 		} elsif ($key eq "ignore_flock_failure") {
 			if ($value) {
 				$self->debug("Disabling flock failure detection");
@@ -212,6 +223,27 @@ sub set
 				$self->debug("Enabling flock failure detection");
 			}
 
+		} elsif ($key =~ m/^on_.*_failure$/) {
+			my $tmp_val = _nagios_code_for($value);
+			if ($tmp_val) {
+				$value = $tmp_val;
+			} else {
+				if ($value =~ /^ok/i) {
+					$value = NAGIOS_OK;
+				} else {
+					$self->_bad_setting($key, $value, "(warning|critical|unknown|ok)");
+				}
+			}
+
+		} elsif ($key =~ m/^bail_on_(.*)_failure$/) {
+			my $subsys = $1;
+			if (!$value or $value =~ m/^no$/i) {
+				$self->debug("Will no longer bail when $subsys failure is detected");
+				$value = 0;
+			} else {
+				$self->debug("Will now bail when $subsys failure is detected");
+				$value = 1;
+			}
 		}
 
 		$self->{settings}{$key} = $value;
@@ -1899,6 +1931,106 @@ sub rrd
 	return $data;
 }
 
+sub _dbi_failure
+{
+	my ($self, $msg) = @_;
+
+	if ($self->{settings}{bail_on_db_failure}) {
+		$self->bail($self->{settings}{on_db_failure}, $msg);
+	} else {
+		$self->status($self->{settings}{on_db_failure}, $msg);
+		return undef;
+	}
+}
+
+sub _dbi_exec
+{
+	my ($self, $db, $sql) = @_;
+	$self->trace("Running SQL `$sql`");
+
+	$self->trace("Preparing SQL statement");
+	my $st = $db->prepare($sql)
+		or return $self->_dbi_failure("Error ".$db->errstr.", while parsing \"$sql\"");
+
+	DBI->trace(4) if $self->{debug} and $self->{debug} >= 3;
+	$self->trace("Executing SQL statement");
+	$st->execute
+		or return $self->_dbi_failure("Error ".$db->errstr.", while executing \"$sql\"");
+	DBI->trace(0) if $self->{debug} and $self->{debug} >= 3;
+
+	return $self->_dbi_failure($st->errstr. " while executing \"$sql\"")
+		if $st->errstr;
+
+	return $st;
+}
+
+sub _dbi_args
+{
+	my ($self, $a, $b) = @_;
+	return $b ? ($self, $a, $b)
+	          : ($self, $self->{last_dbh}, $a);
+}
+
+sub db_connect
+{
+	my ($self, $dsn, $user, $pass, $opts) = @_;
+	my $friendly_dsn = $dsn;
+	$friendly_dsn .= " as $user ".($pass ? "with" : "without")." a password" if $user;
+
+	$opts ||= {};
+	$opts->{RaiseError} = 0;
+	$opts->{PrintError} = 0;
+
+	$self->debug("Connecting to $friendly_dsn", "Connection parameters:");
+	$self->dump($opts);
+
+	my $dbh = DBI->connect($dsn, $user, $pass, $opts);
+	return $self->_dbi_failure(DBI->errstr."; $friendly_dsn")
+		if !$dbh || DBI->errstr;
+
+	$self->debug("Connected to $dsn");
+
+	$self->{last_dbh} = $dbh;
+	return $dbh;
+}
+
+sub db_query
+{
+	my ($self, $db, $sql) = _dbi_args(@_);
+
+	$self->debug("DB_QUERY: running \"$sql\"");
+	$self->bail(NAGIOS_UNKNOWN, "No SQL provided to DB_QUERY")
+		unless $sql;
+	$self->bail(NAGIOS_UNKNOWN, "Invalid database handle provided to DB_QUERY")
+		unless $db and ref($db);
+
+	my $st = $self->_dbi_exec($db, $sql)
+		or return undef;
+
+	my @l;
+	while (my $r = $st->fetchrow_hashref) { push @l, $r; }
+	$st->finish;
+
+	return wantarray? @l : \@l;
+}
+
+sub db_exec
+{
+	my ($self, $db, $sql) = _dbi_args(@_);
+
+	$self->debug("DB_EXEC: running \"$sql\"");
+	$self->bail(NAGIOS_UNKNOWN, "No SQL provided to DB_EXEC")
+		unless $sql;
+	$self->bail(NAGIOS_UNKNOWN, "Invalid database handle provided to DB_EXEC")
+		unless $db and ref($db);
+
+	my $st = $self->_dbi_exec($db, $sql)
+		or return undef;
+	$st->finish;
+
+	return 1;
+}
+
 1;
 
 =head1 NAME
@@ -2977,6 +3109,47 @@ Additional arguments to pass to rrdtool (must be passed similarly to exec @args)
 each flag + option must be its own item in the array.
 
 =back
+
+=head2 db_connect($dsn, $user, $pass, \%options)
+
+Connect to a database via Perl's DBI library.  The B<$dsn> is backend-specific.
+If specified, username and password credentials will be passed to the driver.
+The DBI global options B<RaiseError> and B<PrintError> are set internally by
+the framework, and cannot be overridden.  All other options are passed
+through as-is.
+
+The DBI handle is returned.  For most plugins this will not be an issue.
+For plugins that deal with multiple concurrent database connections, you
+must retain the handle and pass it to db_exec and db_query explicitly.
+
+=head2 db_query([$db, ], $sql)
+
+Run the given $sql query, which should return rows (i.e. a SELECT) against
+either the last connected database (via B<db_connect>) or the explicit $db
+handle.  The following cases are equivalent:
+
+    my $db = $plugin->db_connect($dsn, "username", "pw");
+    my @list1 = db_query("SELECT * FROM my_table");
+    my @list2 = db_query($db, "SELECT * FROM my_table");
+
+Context is important.  In list context, a list of hashrefs (each
+representing a single table row) is returned.  In scalar context, a
+reference to the list/array is returned instead.
+
+=head2 db_exec([$db, ], $sql)
+
+Run the given $sql query, which should not return rows (i.e. UPDATE, DELETE,
+etc.) against either the last connected database (via B<db_connect>) or the
+explicit $db handle.  The following cases are equivalent:
+
+    my $db = $plugin->db_connect($dsn, "username", "pw");
+    $plugin->db_exec("DELETE FROM my_table WHERE removable = 1");
+    $plugin->db_exec($db, "DELETE FROM my_table WHERE removable = 1");
+
+Returns true if the query succeeded, and undef/false if there were any
+errors encountered.  Note that if B<bail_on_db_failure> is still set (the
+default) plugin execution will be terminated by an error.  Also keep in mind
+that not affecting any rows is not the same as failure.
 
 =head1 AUTHOR
 

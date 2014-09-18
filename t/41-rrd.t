@@ -41,7 +41,7 @@ ok_plugin(0, "RRD OK", undef, "RRD settings can be overridden", sub {
 	SET rrdtool             => "t/tmp/rrdtool";
 	SET rrds                => "t/tmp";
 	SET rrdcached           => "unix:t/tmp/rrdcached.sock";
-	SET on_rrd_failure      => 1;
+	SET on_rrd_failure      => "WARNING";
 	SET bail_on_rrd_failure => 0;
 
 	CRITICAL "Bad overridden rrdtool setting: '$settings->{rrdtool}'."

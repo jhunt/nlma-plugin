@@ -1531,6 +1531,75 @@ be generated, but the script will not bail.
 
 B<RRD> has been available since v1.35
 
+=head2 DATABASE CONNECTIVITY
+
+The B<DB_*> functions allow plugins to connect to a variety of relational
+database backends (like PostgreSQL or MySQL) via a uniform, plugin-friendly
+interface.
+
+It starts with B<DB_CONNECT> which connects to the backend system, as
+designated by its DSN, and presents any required user credentials:
+
+    DB_CONNECT "dbi:mysql:dbname=whatever;host=$hostname",
+               $username, $password;
+
+If the connection fails, the framework will handle the messaging for the
+error and immediately bail out.
+
+Once connected, you can run queries via B<DB_EXEC> amd B<DB_QUERY>.  The
+former is used for destructive queries like INSERT / UPDATE / DELETE and
+friends.  The latter is used for SELECT queries, and it returns an array of
+hashes, each representing a single row in the database.
+Both will bail gracefully if any errors are encountered.
+
+    DB_CONNECT "dsn:...";
+    my @roles = DB_QUERY "SELECT * FROM roles";
+
+    for my $role (@roles) {
+        OK "Found role '$role'";
+    }
+
+Two global settings control the behavior of these functions:
+B<on_db_failure> and B<bail_on_db_failure>.
+
+B<bail_on_db_failure> is a boolean that governs whether or not the framework
+should bail out when an error is encountered, either in connecting, or in
+preparation / execution of SQL statements.  By default, it is set to "yes".
+If B<bail_on_db_failure> is off, functions that would normally bail on
+failure will instead return an undefined value.
+
+B<on_db_failure> sets the alert severity that should be triggered on
+failure.  It defaults to "CRITICAL", but can be set to a lesser severity
+like "WARNING" or even "OK".
+
+Here's an example of using these settings to better control the failure mode
+of a plugin:
+
+    SET bail_on_db_failure => "no";
+    SET on_db_failure => "WARNING";
+
+    DB_CONNECT OPTION->dsn, OPTION->user, OPTION->password
+        or BAIL("Failed to connect!");
+
+    DB_EXEC "DELETE FROM table1 WHERE removable = 1"
+        or WARNING "Failed to delete from table1";
+    DB_EXEC "DELETE FROM table2 WHERE removable = 1"
+        or WARNING "Failed to delete from table2";
+
+Becasuse the first DB_EXEC call doesn't bail, we can see both warnings if
+there were issues deleting from each table.
+
+Both B<DB_EXEC> and B<DB_QUERY> have a two-argument form, in which the first
+argument is the DBI handle that DB_CONNECT returns, and the second argument
+is the SQL statement to run.  This allows plugins to correlate betwen
+several different databases at once:
+
+    my $my = DB_CONNECT "dbi:mysql:...";
+    my $pg = DB_CONNECT "dbi:Pg:...";
+
+    my ($r) = DB_QUERY $my, "SELECT latest FROM some_table");
+    DB_EXEC $pg, "DELETE FROM another_table WHERE latest > $r->{latest}";
+
 =head2 FETCH SCRIPTS
 
 Fetch scripts are designed to pull bulk performance data from an application
