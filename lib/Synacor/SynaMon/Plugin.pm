@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Synacor::SynaMon::Plugin::Base;
 
-our $VERSION = "1.35";
+our $VERSION = "1.36";
 
 use Exporter;
 use base qw(Exporter);
@@ -1529,7 +1529,9 @@ execution will result bailing with an UNKNOWN alert. If RRDp is not present when
 B<RRD> is called from a feeder script making use of B<CONTEXT>, UNKNOWN alerts will
 be generated, but the script will not bail.
 
-B<RRD> has been available since v1.35
+B<RRD> has been available since v1.35.
+
+B<RRD create> has been available sinve v1.36.
 
 =head2 DATABASE CONNECTIVITY
 
@@ -1599,6 +1601,8 @@ several different databases at once:
 
     my ($r) = DB_QUERY $my, "SELECT latest FROM some_table");
     DB_EXEC $pg, "DELETE FROM another_table WHERE latest > $r->{latest}";
+
+The B<DB_*> functions are available as of version 1.36.
 
 =head2 FETCH SCRIPTS
 
