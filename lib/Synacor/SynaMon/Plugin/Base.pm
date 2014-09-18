@@ -1850,7 +1850,15 @@ sub _rrd_error
 	}
 }
 
-sub rrd
+sub _rrd_abspath
+{
+	my ($self, $file) = @_;
+	my $path = $file =~ m|^/| ? $file : $self->{settings}{rrds} . "/$file";
+	$path .= ".rrd" unless $path =~ /\.rrd$/;
+	return $path;
+}
+
+sub _rrd_command
 {
 	my ($self, $cmd, $file, @args) = @_;
 
@@ -1864,8 +1872,7 @@ sub rrd
 		$self->{rrdp_running} = 1;
 	}
 
-	my $path = $file =~ m|^/| ? $file : $self->{settings}{rrds} . "/$file";
-	$path .= ".rrd" unless $path =~ /\.rrd$/;
+	my $path = $self->_rrd_abspath($file);
 
 	my $data;
 	eval {
@@ -1897,6 +1904,41 @@ sub rrd
 		return undef;
 	};
 	return $data;
+}
+
+sub _rrd_create
+{
+	my ($self, $file, @args) = @_;
+	my $opts = {};
+	if (ref($args[0]) eq 'HASH') {
+		$opts = shift @args;
+	}
+
+	my $path = $self->_rrd_abspath($file);
+	if (-f $path) {
+		return 1 if !$opts->{preexisting} or $opts->{preexisting} =~ m/^ok$/i;
+
+		my $code = _nagios_code_for($opts->{preexisting}) || NAGIOS_CRITICAL;
+		$self->status($code, "RRD $file already exists");
+		return 0;
+	}
+
+	my ($dir) = ($path =~ m{(.*)/.*?$});
+	if ($dir && ! -d $dir) {
+		$self->debug("Creating parent directory '$dir'");
+		qx(mkdir -p $dir 2>/dev/null);
+	}
+	return _rrd_command($self, create => $file, @args);
+}
+
+sub rrd
+{
+	my ($self, $cmd, @rest) = @_;
+	if ($cmd eq 'create') {
+		return _rrd_create($self, @rest);
+	} else {
+		return _rrd_command($self, $cmd, @rest);
+	}
 }
 
 1;
@@ -2975,6 +3017,18 @@ name not ending in '.rrd' will also have it appended.
 
 Additional arguments to pass to rrdtool (must be passed similarly to exec @args),
 each flag + option must be its own item in the array.
+
+The B<create> $command is special; if the first @args value is a hashref and
+not a string, that hashref will be interpreted as a set of behavior
+modifiers:
+
+    rrd(create => "file.rrd", { preexisting => "WARNING" },
+                  "--start", "n-1yr", "DS:x:GAUGE:1800:U:U");
+
+The B<preexisting> modifier causes the framework to trigger an alarm of the
+given severity (WARNING, CRITICAL or UNKNOWN) if the RRD file already
+exists.  The value "OK" for B<preexisting> is interpreted as the default
+scenario where no alert will be raised.
 
 =back
 

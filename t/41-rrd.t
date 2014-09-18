@@ -5,9 +5,8 @@ use Test::MockModule;
 use Test::Deep;
 require "t/common.pl";
 
-my $TMP_RRD = "t/tmp/test.rrd";
-unlink $TMP_RRD if -f $TMP_RRD;
-system "rrdtool create $TMP_RRD --step 60  --start n-1yr DS:datum:GAUGE:1800:U:U RRA:AVERAGE:0.5:1:43200 RRA:AVERAGE:0.5:60:9480 RRA:MIN:0.5:60:9480 RRA:MAX:0.5:60:9480";
+qx(rm -rf t/tmp/*);
+system "rrdtool create t/tmp/test.rrd --step 60  --start n-1yr DS:datum:GAUGE:1800:U:U RRA:AVERAGE:0.5:1:43200 RRA:AVERAGE:0.5:60:9480 RRA:MIN:0.5:60:9480 RRA:MAX:0.5:60:9480";
 
 # Verify default settings
 ok_plugin(0, "RRD OK", undef, "Default RRD settings are set", sub {
@@ -163,6 +162,191 @@ ok_plugin(0, "RRD OK", undef, "RRD info returns scalar ref data", sub {
 	DONE;
 });
 
+ok_plugin(0, "RRD OK",
+	undef, "RRD create command", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+		!-f "t/tmp/simple.rrd" or UNKNOWN "RRD already exists!";
+
+		RRD create => "simple.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		-f "t/tmp/simple.rrd" or UNKNOWN "RRD not created! (-f)";
+		OK;
+		DONE;
+});
+
+ok_plugin(0, "RRD OK",
+	undef, "RRD create handles missing parent directories", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+		!-d "t/tmp/missing" or CRITICAL "parent dirs already exist!";
+
+		RRD create => "missing/parent/dirs.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		-f "t/tmp/missing/parent/dirs.rrd" or UNKNOWN "RRD not created! (-f)";
+		OK;
+		DONE;
+});
+
+ok_plugin(2, "RRD CRITICAL - ERROR: you must define at least one Round Robin Archive.",
+	undef, "RRD create handles bad definition", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+
+		RRD create => "baddef.rrd",
+		              "DS:datum:GAUGE:1800:U:U"; # NO RRAs!
+		-f "t/tmp/baddef.rrd" or UNKNOWN "RRD baddef.rrd created mistakenly";
+
+		OK;
+		DONE;
+});
+
+ok_plugin(2, "RRD CRITICAL - ERROR: creating '/root/test.rrd': Permission denied.",
+	undef, "RRD create handles bad perms on destination", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		RRD create => "/root/test.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+		-f "/root/test.rrd" or UNKNOWN "RRD /root/test.rrd created mistakenly";
+
+		OK;
+		DONE;
+});
+
+ok_plugin(2, "RRD CRITICAL - ERROR: creating 't/tmp/a.rrd/b.rrd': Not a directory.",
+	undef, "RRD create handles ENOTDIR parent dirs", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+
+		RRD create => "a.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+		-f "t/tmp/a.rrd" or UNKNOWN "RRD t/tmp/a.rrd NOT created";
+
+		RRD create => "a.rrd/b.rrd", # a.rrd is ENOTDIR!
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+		!-f "t/tmp/a.rrd/b.rrd" or UNKNOWN "RRD t/tmp/a.rrd/b.rrd created mistakenly";
+
+		OK;
+		DONE;
+});
+
+ok_plugin(3, "RRD UNKNOWN - RRD foobar.rrd already exists",
+	undef, "RRD create handles pre-existing files", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+
+		RRD create => "foobar.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+		-f "t/tmp/foobar.rrd" or UNKNOWN "RRD t/tmp/foobar.rrd NOT created";
+
+		RRD create => "foobar.rrd",
+		              { preexisting => "UNKNOWN" },
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		OK;
+		DONE;
+});
+
+ok_plugin(0, "RRD OK",
+	undef, "RRD create normally doesn't care about pre-existing files", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+
+		RRD create => "xyzzy.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		RRD create => "xyzzy.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		OK;
+		DONE;
+});
+
+ok_plugin(1, "RRD WARNING - RRD foo/bar/quux.rrd already exists",
+	undef, "RRD create can warn about pre-existing files", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+
+		RRD create => "foo/bar/quux.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		RRD create => "foo/bar/quux.rrd",
+		              { preexisting => "WARN" },
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		OK;
+		DONE;
+});
+
+ok_plugin(0, "RRD OK",
+	undef, "RRD create can explicitly not care about pre-existing files", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+
+		RRD create => "foo/xyzzy.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		RRD create => "foo/xyzzy.rrd",
+		              { preexisting => "ok" },
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		OK;
+		DONE;
+});
+
+ok_plugin(2, "RRD CRITICAL - RRD default.rrd already exists",
+	undef, "RRD create defaults to CRITICAL for unknown preexisting option", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "rrd";
+
+		SET rrds => "t/tmp";
+
+		RRD create => "default.rrd",
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		RRD create => "default.rrd",
+		              { preexisting => "Fall Over And Die" },
+		              "DS:datum:GAUGE:1800:U:U",
+		              "RRA:AVERAGE:0.5:1:43200";
+
+		OK;
+		DONE;
+});
+
+
 my $rrd = Test::MockModule->new("RRDp");
 $rrd->mock('cmd', sub (@) {} );
 $rrd->mock('read', sub () {
@@ -199,5 +383,5 @@ ok_plugin(0, "RRD_FETCH OK", undef, "RRD fetch returns expected datastructure", 
 	DONE;
 });
 
-unlink $TMP_RRD;
+qx(rm -rf t/tmp/* t/tmp/.rrd);
 done_testing;
