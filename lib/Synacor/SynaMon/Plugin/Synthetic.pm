@@ -189,6 +189,8 @@ push @FUNCTIONS, qw/
 	START_SYNTHETIC STOP_SYNTHETIC
 	SCREENSHOT CHECKBOX UNCHECKBOX
 	WAIT_FOR_PAGE FOCUS_FRAME
+	UPDATE_WINDOWS
+	STRICT_WINDOW_UPDATES RELAX_WINDOW_UPDATES
 /;
 
 no warnings 'once';
@@ -202,6 +204,10 @@ no warnings 'once';
 *UNCHECKBOX    = sub { $DRIVER->uncheck(@_) };
 *WAIT_FOR_PAGE = sub { $DRIVER->_wait_for_page(@_) };
 *FOCUS_FRAME   = sub { $DRIVER->frame(@_) };
+
+*UPDATE_WINDOWS         = sub { $DRIVER->update_windows(); };
+*RELAXED_WINDOW_UPDATES = sub { $DRIVER->window_tracking("noop"); };
+*STRICT_WINDOW_UPDATES  = sub { $DRIVER->window_tracking("strict"); };
 use warnings;
 
 our @EXPORT = @FUNCTIONS;
@@ -552,9 +558,7 @@ The keyed parameters are ua (user agent) and site (the website to test).
 
 Usage:
 
-    START_SYNTHETIC
-        ua   => 'linux - firefox',
-        site => 'www.google.com';
+    START_SYNTHETIC;
 
 =head2 STOP_SYNTHETIC
 
@@ -571,6 +575,20 @@ Usage:
     SCREENSHOT(CRITICAL "There was an errors")
         unless TEXT_OF "div.class1" =~ m/found\s+text/;
 
+=head2 UPDATE_WINDOWS
+
+Forciblly update the local window list, used to find, switch to and close
+windows/tabs.
+
+=head2 RELAXED_WINDOW_UPDATES
+
+Do not automatically update the window list on every post, IE only on select window functions.
+
+=head2 STRICT_WINDOW_UPDATES
+
+Re-enable automatically updating the local window list on every post command to the remote
+webdriver.
+
 =head1 WRITING A SYNTHETIC PLUGIN
 
 Here is a basic synthetic plugin, see Synacor::SynaMon::Plugin for details
@@ -584,12 +602,7 @@ of writing basic plugins.
         name    => 'example',
         summary => 'do the example';
 
-    OPTION 'host|H',
-        help => "host to connect to";
-
-    START; START_SYNTHETIC
-        ua   => 'linux - firefox',
-        site => OPTION->host;
+    START_SYNTHETIC;
 
     SCREENSHOT(CRITICAL "Missing element: 'dorp'")
         unless PRESENT 'div#dorp.longsynacorclassname';
