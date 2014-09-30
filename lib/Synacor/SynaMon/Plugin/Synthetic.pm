@@ -119,6 +119,10 @@ sub START_SYNTHETIC
 		connection_timeout => 5,
 	);
 
+	ON_TERMINATE sub {
+		STOP_SYNTHETIC() if $DRIVER;
+	};
+
 	$DRIVER->connect();
 
 	return $DRIVER;
@@ -150,11 +154,6 @@ sub STOP_SYNTHETIC
 	}
 	undef $DRIVER;
 	DONE;
-}
-
-END {
-	STOP_SYNTHETIC
-		if $DRIVER;
 }
 
 sub SCREENSHOT

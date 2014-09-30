@@ -513,10 +513,20 @@ sub terminate
 	$output .= " - $msg" if $msg;
 	$output = $self->check_perfdata($output);
 
+	for (@{$self->{term_handlers}}) {
+		$_->();
+	}
+
 	RRDp::end() if $self->{rrdp_running};
 
 	print "$output\n";
 	exit $status;
+}
+
+sub on_terminate
+{
+	my ($self, $sub) = @_;
+	push @{$self->{term_handlers}}, $sub;
 }
 
 sub bail
@@ -2246,6 +2256,12 @@ Shorthand methods exist that pass predetermined status codes:
 Exit appropriately and print out the summary message and any performance
 data we have collected so far.  If $status and $message are not given,
 they will be determined by calling B<check_status>.
+
+=head2 on_terminate($sub)
+
+Register a subroutine to execute upon program termination, for ensuring we clean
+up child processes or perform other activities before attempting to exit with
+a particular status code.
 
 =head2 check_status()
 

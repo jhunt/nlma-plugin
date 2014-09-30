@@ -17,6 +17,7 @@ our @EXPORT = qw/
 	OK WARNING CRITICAL UNKNOWN
 
 	START DONE
+	ON_TERMINATE
 
 	CHECK_VALUE TRACK_VALUE ANALYZE_THOLD
 
@@ -85,6 +86,7 @@ sub ANALYZE_THOLD { $plugin->analyze_thold(@_); }
 
 sub START { $plugin->start(@_); }
 sub DONE  { $plugin->done(@_); }
+sub ON_TERMINATE { $plugin->on_terminate(@_) };
 
 sub STAGE { $plugin->stage(@_); }
 sub START_TIMEOUT { $plugin->start_timeout(@_); }
@@ -261,6 +263,10 @@ Wrapper around B<Synacor::SynaMon::Plugin::start>.
 =head2 DONE
 
 Wrapper around B<Synacor::SynaMon::Plugin::done>.
+
+=head2 ON_TERMINATE
+
+Wrapper around B<Synacor::SynaMon::Plugin::on_terminate>.
 
 =head2 STAGE
 

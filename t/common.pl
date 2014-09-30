@@ -1,7 +1,10 @@
 use strict;
 use warnings;
+use Test::More;
 use Test::LongString;
 use POSIX qw(WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED);
+use Test::Fake::HTTPD;
+use File::Temp qw/tempfile/;
 
 sub TEST_ALL
 {
@@ -40,6 +43,7 @@ sub PLATFORM
 sub ok_plugin
 {
 	my ($exit, $summary, $perf, $message, $sub, $args, %opts) = @_;
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
 	$args = $args || [];
 	$opts{output} ||= "";
 
@@ -90,9 +94,48 @@ sub ok_plugin
 	}
 }
 
+sub ok_plugin_exec
+{
+	my ($exit, $summary, $perf, $message, $code, $args, %opts) = @_;
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+	$args = $args || [];
+	$opts{output} = "";
+
+	my ($e, $s, $p, @output);
+	my ($fh, $file) = tempfile("ok_plugin.XXXXX", DIR => "t/tmp/", UNLINK => 1);
+	print $fh $code . "\n";
+	close $fh;
+	chmod 0700, $file;
+	open my $cmd, "-|", qw/perl -I lib/, $file, @$args or fail "$message - Couldn't execute $file: $!";
+	@output = <$cmd>;
+	close $cmd;
+	my $rc = $?;
+	if (WIFEXITED($rc)) {
+		$e = WEXITSTATUS($rc);
+	} elsif (WIFSIGNALED($rc)) {
+		$e = WTERMSIG($rc);
+	} else {
+		$e = sprintf("0x%04x", $rc);
+	}
+
+	if ($opts{output} eq 'all') {
+		$s = join('', @output);
+		is($s, $summary, "$message: expected summary output");
+		is($e, $exit,    "$message: expect exit code $exit");
+	} else {
+		($s, $p) = map { s/^\s+//; s/\s$//; $_ } split /\|/, $output[0];
+		$p = "" unless $p;
+
+		is($s, $summary, "$message: expected summary output");
+		is($p, $perf,    "$message: expected perfdata output") if defined $perf;
+		is($e, $exit,    "$message: expect exit code $exit");
+	}
+}
+
 sub ok_plugin_help
 {
 	my ($expect, $message, $sub, $args) = @_;
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
 	pipe my ($parent, $child);
 	my $pid = fork;
 	my ($e, $output);
