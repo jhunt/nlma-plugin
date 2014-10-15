@@ -50,7 +50,7 @@ sub START_SYNTHETIC
 			"--webdriver-logfile=/tmp/phantomjs.$$.debug.log"
 		);
 	}
-	my @PHANTOM = qw|/usr/bin/phantomjs --ignore-ssl-errors=yes|;
+	my @PHANTOM = qw|/usr/bin/phantomjs --ignore-ssl-errors=yes --ssl-protocol=any|;
 	push @PHANTOM, @DEBUG_LOG;
 	BAIL(CRITICAL "$PHANTOM[0] does not exist")    unless -e $PHANTOM[0];
 	BAIL(CRITICAL "$PHANTOM[0] is not executable") unless -x $PHANTOM[0];
