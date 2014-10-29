@@ -1,0 +1,2 @@
+#LWP-Cookies-1.0
+Set-Cookie3: testcookie=testpersistence; path="/"; domain=127.0.0.1; path_spec; expires="2021-01-13 22:23:01Z"; version=0

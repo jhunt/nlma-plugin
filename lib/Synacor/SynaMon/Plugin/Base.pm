@@ -1210,13 +1210,22 @@ sub ssh
 	return $ssh;
 }
 
+sub _cookie_jar_path
+{
+	my ($self, $path, %options) = @_;
+	$path .= ".cookies" unless $path =~ m/\.cookies$/;
+	$self->state_file_path($path, %options);
+}
+
 sub mech
 {
 	my ($self, $options) = @_;
 
 	if (! $self->{mech} || $options->{recreate}) {
 		my $mech = WWW::Mechanize->new(autocheck => 0);
-		$mech->cookie_jar({});
+		$mech->cookie_jar($options->{cookie_jar} ?
+			HTTP::Cookies->new(file => $self->_cookie_jar_path($options->{cookie_jar}), autosave => 1)
+			: {});
 		$mech->agent($options->{UA} || "SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION");
 		$mech->timeout($options->{timeout} || $self->option->{timeout} || 15);
 		$self->{mech} = $mech;

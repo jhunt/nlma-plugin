@@ -237,4 +237,61 @@ ok_plugin(0, "HTTP OK - looks good", undef, "Redirect URI sets cookie, that is u
 	DONE;
 });
 
+subtest "Persistent cookies" => sub {
+	system "cp t/data/mon_cookietest.cookies t/tmp/mon_cookietest.cookies";
+	ok -f "t/tmp/mon_cookietest.cookies";
+
+	ok_plugin(0, "HTTP OK", undef, "persistent cookie jar loads in a cookie, uses it, and stores properly", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "HTTP";
+		START;
+
+		$ENV{MONITOR_STATE_FILE_DIR} = "t/tmp";
+		MECH({ cookie_jar => "cookietest" });
+		my $data;
+		(undef, $data) = HTTP_GET($httpd->endpoint."/thing/cookiechecker");
+		$data eq "I see you GET-ing that cookiechecker with testcookie=testpersistence!"
+			or CRITICAL "Did not get cookie from cookiejar.";
+
+		(undef, $data) = HTTP_GET($httpd->endpoint."/cookie/persistme");
+		$data eq "I see you GET-ing that set-cookie with testcookie=persistme!"
+			or CRITICAL "Did not set cookie into cookiejar.";
+
+		OK;
+		DONE;
+	});
+
+	open my $fh, "t/tmp/mon_cookietest.cookies";
+	local $/; my $data = <$fh>;
+	close $fh;
+
+	is $data, <<EOF, "Cookie file is correct";
+#LWP-Cookies-1.0
+Set-Cookie3: testcookie=persistme; path="/"; domain=127.0.0.1; path_spec; expires="2021-01-13 22:23:01Z"; version=0
+EOF
+
+	unlink "t/tmp/mon_cookietest.cookies";
+
+	ok ! -f "t/tmp/mon_cookietest.cookies", "Cookiejar file doesn't exist";
+	ok_plugin(0, "HTTP OK", undef, "persistent cookie jar is created if doesnt exist", sub {
+		use Synacor::SynaMon::Plugin qw/:easy/;
+		PLUGIN name => "HTTP";
+		START;
+
+		$ENV{MONITOR_STATE_FILE_DIR} = "t/tmp";
+		MECH({ cookie_jar => "cookietest" });
+
+		my $data;
+		(undef, $data) = HTTP_GET($httpd->endpoint."/cookie/persistme");
+		$data eq "I see you GET-ing that set-cookie with testcookie=persistme!"
+			or CRITICAL "Did not set cookie into cookiejar.";
+
+		OK;
+		DONE;
+	});
+
+	ok -f "t/tmp/mon_cookietest.cookies", "Cookiejar was created by the plugin framework";
+	unlink "t/tmp/mon_cookietest.cookies";
+};
+
 done_testing;
