@@ -146,7 +146,7 @@ is_string_nows(slurp(TEST_NSCA_OUT), "",
 ###################################################################
 # send_nsca - bad exit subchild
 
-ok_plugin(2, "FEEDER CRITICAL - sub-process exited with code 4", undef, "SEND_NSCA bin exits non-zero", sub {
+ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with code 4", undef, "SEND_NSCA bin exits non-zero", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
@@ -163,7 +163,7 @@ ok_plugin(2, "FEEDER CRITICAL - sub-process exited with code 4", undef, "SEND_NS
 	OK "good";
 });
 
-ok_plugin(2, "FEEDER CRITICAL - sub-process exited with code 4", undef, "SEND_NSCA bin exits non-zero (with DONE)", sub {
+ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with code 4", undef, "SEND_NSCA bin exits non-zero (with DONE)", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
@@ -181,7 +181,7 @@ ok_plugin(2, "FEEDER CRITICAL - sub-process exited with code 4", undef, "SEND_NS
 	DONE;
 }, ['-D']);
 
-ok_plugin(2, "FEEDER CRITICAL - sub-process killed by signal 15", undef, "SEND_NSCA bin killed", sub {
+ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process killed by signal 15", undef, "SEND_NSCA bin killed", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
@@ -201,7 +201,7 @@ ok_plugin(2, "FEEDER CRITICAL - sub-process killed by signal 15", undef, "SEND_N
 ###################################################################
 # send_nsca - bail after 1 line of input
 
-ok_plugin(2, "FEEDER CRITICAL - sub-process exited with code 2", undef, "SEND_NSCA / delayed broken pipe", sub {
+ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with code 2", undef, "SEND_NSCA / delayed broken pipe", sub {
 	use Synacor::SynaMon::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";

@@ -26,7 +26,7 @@ my $LOG;
 my %NSCA = (
 	chunk  => "/opt/synacor/monitor/bin/chunk",
 	bin    => "/usr/bin/send_nsca",
-	host   => "localhost",
+	hosts  => [map { s/:\d+$//; $_ } split(',', $ENV{MONITOR_FEEDER_TARGETS} || "localhost:5667")],
 	config => "/etc/icinga/send_nsca.cfg",
 	port   => "5667",
 	args   => "",
@@ -55,36 +55,39 @@ sub FLUSH_NSCA
 {
 	return unless @RESULTS;
 	my $chunk = "$NSCA{chunk} -L $NSCA{max}";
-	my $cmd = "$NSCA{bin} -H $NSCA{host} -c $NSCA{config} -p $NSCA{port} $NSCA{args}";
-	if ($NSCA{noop}) {
-		DEBUG "NOOP `$chunk -- $cmd`";
-		DEBUG "NOOP >> '$_\\n\\x17'\n" for @RESULTS;
-		return;
-	}
 
-	DEBUG "Executing `$chunk -- $cmd`";
-	-x $NSCA{bin} or UNKNOWN "$NSCA{bin}: $!";
+	for my $host (@{$NSCA{hosts}}) {
+		my $cmd = "$NSCA{bin} -H $host -c $NSCA{config} -p $NSCA{port} $NSCA{args}";
+		if ($NSCA{noop}) {
+			DEBUG "NOOP `$chunk -- $cmd`";
+			DEBUG "NOOP >> '$_\\n\\x17'\n" for @RESULTS;
+			next;
+		}
 
-	open my $pipe, "|-", "$chunk -- $cmd"
-		or BAIL "Exec failed: $!";
+		DEBUG "Executing `$chunk -- $cmd`";
+		-x $NSCA{bin} or UNKNOWN "$NSCA{bin}: $!";
 
-	for (@RESULTS) {
-		DEBUG "NSCA >> '$_\\n\\x17'\n";
-		print $pipe "$_\n\x17"
-			or BAIL "SEND_NSCA failed: $!";
-	}
-	close $pipe;
-	$rc = $?;
-	return if $rc == 0;
-	if (WIFEXITED($rc)) {
-		$rc = WEXITSTATUS($rc);
-		CRITICAL "sub-process exited with code $rc";
-	} elsif (WIFSIGNALED($rc)) {
-		$rc = WTERMSIG($rc);
-		CRITICAL "sub-process killed by signal $rc";
-	} else {
-		$rc = sprintf("0x%04x", $rc);
-		CRITICAL "sub-process terminated abnormally with code ($rc)";
+		open my $pipe, "|-", "$chunk -- $cmd"
+			or BAIL "SEND_NSCA($host) Exec failed: $!";
+
+		for (@RESULTS) {
+			DEBUG "NSCA >> '$_\\n\\x17'\n";
+			print $pipe "$_\n\x17"
+				or BAIL "SEND_NSCA($host) failed: $!";
+		}
+		close $pipe;
+		$rc = $?;
+		next if $rc == 0;
+		if (WIFEXITED($rc)) {
+			$rc = WEXITSTATUS($rc);
+			CRITICAL "SEND_NSCA($host) sub-process exited with code $rc";
+		} elsif (WIFSIGNALED($rc)) {
+			$rc = WTERMSIG($rc);
+			CRITICAL "SEND_NSCA($host) sub-process killed by signal $rc";
+		} else {
+			$rc = sprintf("0x%04x", $rc);
+			CRITICAL "SEND_NSCA($host) sub-process terminated abnormally with code ($rc)";
+		}
 	}
 }
 
@@ -333,7 +336,7 @@ Defaults to I</usr/bin/send_nsca>
 
 Hostname or IP address of the host to submit feeder results to.
 
-Defaults to I<localhost>
+Defaults to I<localhost:5667>
 
 =item B<config>
 
