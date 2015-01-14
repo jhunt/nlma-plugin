@@ -8,7 +8,7 @@ require "t/common.pl";
 
 ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'slurped as scalar';
 
@@ -20,7 +20,7 @@ ok_plugin(0, "SLURP OK - slurped as scalar", undef, "Output is scalar", sub {
 
 ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	use Test::Deep::NoTest;
 	PLUGIN name => 'SLURP';
 	START default => 'slurped as array';
@@ -36,7 +36,7 @@ ok_plugin(0, "SLURP OK - slurped as array", undef, "Output is array", sub {
 
 ok_plugin(0, "SLURP OK - undef input", undef, "Undef SLURP", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'undef input';
 
@@ -48,7 +48,7 @@ ok_plugin(0, "SLURP OK - undef input", undef, "Undef SLURP", sub {
 
 ok_plugin(0, "SLURP OK - null input", undef, "Null SLURP", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => 'null input';
 
@@ -60,7 +60,7 @@ ok_plugin(0, "SLURP OK - null input", undef, "Null SLURP", sub {
 
 ok_plugin(0, "SLURP OK - File not found", undef, "File not found", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'SLURP';
 	START default => "File not found";
 
@@ -72,7 +72,7 @@ ok_plugin(0, "SLURP OK - File not found", undef, "File not found", sub {
 
 ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "SLURP";
 	START default => "File unreadable";
 
@@ -87,7 +87,7 @@ ok_plugin(0, "SLURP OK - File unreadable", undef, "File unreadable", sub {
 $ENV{TEST_PLUGINS} = 1;
 $ENV{TEST_CHROOT}  = "./t/data/slurp";
 ok_plugin(0, "SLURP OK - failure is not OK", undef, "TEST_PLUGINS + TEST_CHROOT", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "SLURP";
 	START;
 	my $data = SLURP "/normal";
@@ -98,7 +98,7 @@ ok_plugin(0, "SLURP OK - failure is not OK", undef, "TEST_PLUGINS + TEST_CHROOT"
 
 $ENV{TEST_SLURP_FILE}  = "./t/data/slurp/normal";
 ok_plugin(0, "SLURP OK - failure is not OK", undef, "TEST_PLUGINS + TEST_SLURP_FILE", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "SLURP";
 	START;
 	my $data = SLURP "/normal";
@@ -109,7 +109,7 @@ ok_plugin(0, "SLURP OK - failure is not OK", undef, "TEST_PLUGINS + TEST_SLURP_F
 delete $ENV{TEST_SLURP_FILE};
 delete $ENV{TEST_PLUGINS};
 ok_plugin(0, "SLURP OK", undef, "TEST_CHROOT without TEST_PLUGINS", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "SLURP";
 	START;
 	my $data = SLURP "readable";

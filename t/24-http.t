@@ -64,7 +64,7 @@ my $httpd = run_http_server {
 # HTTP requests
 
 ok_plugin(0, "GET OK - no worries", undef, "basic HTTP GET is OK", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'GET';
 	START default => 'no worries';
 	HTTP_GET $httpd->endpoint."/thing/doo-dad";
@@ -72,7 +72,7 @@ ok_plugin(0, "GET OK - no worries", undef, "basic HTTP GET is OK", sub {
 });
 
 ok_plugin(0, "HTTP OK - request handler", undef, "_REQUEST delegates properly", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'HTTP';
 	START default => 'request handler';
 
@@ -93,7 +93,7 @@ ok_plugin(0, "HTTP OK - request handler", undef, "_REQUEST delegates properly", 
 
 
 ok_plugin(0, "HTTP OK - right response", undef, "Basic HTTP ops", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'HTTP';
 	START default => 'right response';
 
@@ -113,7 +113,7 @@ ok_plugin(0, "HTTP OK - right response", undef, "Basic HTTP ops", sub {
 });
 
 ok_plugin(0, "HTTP OK - handle lack of encoding header properly", undef, "Encoding", sub {
-	use Synacor::SynaMon::Plugin qw(:ewasy);
+	use NLMA::Plugin qw(:ewasy);
 	PLUGIN name => 'HTTP';
 	START  default => 'handle lack of encoding header properly';
 
@@ -132,7 +132,7 @@ ok_plugin(0, "HTTP OK - handle lack of encoding header properly", undef, "Encodi
 });
 
 ok_plugin(0, "HTTP OK - JSON", undef, "JSON HTTP ops", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'HTTP';
 	START default => 'JSON';
 
@@ -153,7 +153,7 @@ ok_plugin(0, "HTTP OK - JSON", undef, "JSON HTTP ops", sub {
 });
 
 ok_plugin(3, "HTTP UNKNOWN - HTTP_PUT called incorrectly; %DOLLAR%data not a scalar reference", undef, "PUT with bad data ref", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "oops... fell through to OK";
 
@@ -162,7 +162,7 @@ ok_plugin(3, "HTTP UNKNOWN - HTTP_PUT called incorrectly; %DOLLAR%data not a sca
 });
 
 ok_plugin(3, "HTTP UNKNOWN - HTTP_POST called incorrectly; %DOLLAR%data not a scalar reference", undef, "POST with bad data ref", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "oops... fell through to OK";
 
@@ -171,7 +171,7 @@ ok_plugin(3, "HTTP UNKNOWN - HTTP_POST called incorrectly; %DOLLAR%data not a sc
 });
 
 ok_plugin(0, "HTTP OK - looks good", undef, "POST with data", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "looks good";
 
@@ -184,7 +184,7 @@ ok_plugin(0, "HTTP OK - looks good", undef, "POST with data", sub {
 });
 
 ok_plugin(0, "HTTP OK - looks good", undef, "PUT with data", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "looks good";
 
@@ -197,7 +197,7 @@ ok_plugin(0, "HTTP OK - looks good", undef, "PUT with data", sub {
 });
 
 ok_plugin(0, "HTTP OK - looks good", undef, "POST without data", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "looks good";
 
@@ -210,7 +210,7 @@ ok_plugin(0, "HTTP OK - looks good", undef, "POST without data", sub {
 });
 
 ok_plugin(0, "HTTP OK - looks good", undef, "PUT without data", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "looks good";
 
@@ -223,7 +223,7 @@ ok_plugin(0, "HTTP OK - looks good", undef, "PUT without data", sub {
 });
 
 ok_plugin(0, "HTTP OK - looks good", undef, "Redirect URI sets cookie, that is used on redirection, and next request", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "HTTP";
 	START default => "looks good";
 
@@ -242,7 +242,7 @@ subtest "Persistent cookies" => sub {
 	ok -f "t/tmp/mon_cookietest.cookies";
 
 	ok_plugin(0, "HTTP OK", undef, "persistent cookie jar loads in a cookie, uses it, and stores properly", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "HTTP";
 		START;
 
@@ -274,7 +274,7 @@ EOF
 
 	ok ! -f "t/tmp/mon_cookietest.cookies", "Cookiejar file doesn't exist";
 	ok_plugin(0, "HTTP OK", undef, "persistent cookie jar is created if doesnt exist", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "HTTP";
 		START;
 

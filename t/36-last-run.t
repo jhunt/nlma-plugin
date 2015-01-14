@@ -6,7 +6,7 @@ use Net::SSH::Perl;
 require "t/common.pl";
 
 ok_plugin(0, "LAST_RUN_EXITED OK", undef, "normal exit code", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "LAST_RUN_EXITED";
 	RUN "ls t";
 	CRITICAL "LAST_RUN_EXITED: " . LAST_RUN_EXITED unless LAST_RUN_EXITED == 0;
@@ -14,7 +14,7 @@ ok_plugin(0, "LAST_RUN_EXITED OK", undef, "normal exit code", sub {
 });
 
 ok_plugin(0, "LAST_RUN_EXIT_REASON OK", undef, "normal exit reason", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "LAST_RUN_EXIT_REASON";
 	RUN "ls t";
 	CRITICAL "LAST_RUN_EXIT_REASON: " . LAST_RUN_EXIT_REASON

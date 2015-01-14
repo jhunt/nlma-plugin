@@ -7,7 +7,7 @@ require "t/common.pl";
 # option support
 
 ok_plugin(3, "OPTION UNKNOWN - Option spec drops%PIPE%D=s conflicts with built-in debug%PIPE%D option", undef, "override -D", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "OPTION";
 	OPTION "drops|D=s";
 	START default => "good";
@@ -15,7 +15,7 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec drops%PIPE%D=s conflicts with built-i
 });
 
 ok_plugin(3, "OPTION UNKNOWN - Option spec debug conflicts with built-in debug%PIPE%D option", undef, "override --debug", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "OPTION";
 	OPTION "debug";
 	START default => "good";
@@ -23,7 +23,7 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec debug conflicts with built-in debug%P
 });
 
 ok_plugin(3, "OPTION UNKNOWN - Option spec host%PIPE%h conflicts with built-in help%PIPE%h option", undef, "override -h", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "OPTION";
 	OPTION "host|h", help => 'host to connect to';
 	START default => "good";
@@ -31,7 +31,7 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec host%PIPE%h conflicts with built-in h
 });
 
 ok_plugin(3, "OPTION UNKNOWN - Option spec usage%PIPE%U conflicts with built-in usage%PIPE%? option", undef, "override -h", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "OPTION";
 	OPTION "usage|U", help => 'usage';
 	START default => "good";
@@ -39,7 +39,7 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec usage%PIPE%U conflicts with built-in 
 });
 
 ok_plugin(3, "OPTION UNKNOWN - Option spec what%PIPE%? conflicts with built-in usage%PIPE%? option", undef, "override -h", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "OPTION";
 	OPTION "what|?", help => 'what???';
 	START default => "good";
@@ -47,7 +47,7 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec what%PIPE%? conflicts with built-in u
 });
 
 ok_plugin(3, "OPTION UNKNOWN - Option spec noop conflicts with built-in noop option", undef, "override --noop", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "OPTION";
 	OPTION "noop";
 	START default => "good";
@@ -55,7 +55,7 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec noop conflicts with built-in noop opt
 });
 
 ok_plugin(3, "OPTION UNKNOWN - Option spec noperf conflicts with built-in noperf option", undef, "override --noperf", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "OPTION";
 	OPTION "noperf";
 	START default => "good";
@@ -63,7 +63,7 @@ ok_plugin(3, "OPTION UNKNOWN - Option spec noperf conflicts with built-in noperf
 });
 
 ok_plugin(0, "OPTION OK - done", undef, "option processing", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	use Test::Deep::NoTest;
 	use Data::Dumper;
 
@@ -122,7 +122,7 @@ Unknown option: v
 EOF
 ;
 	ok_plugin_help($expect, "Ensure lack of -v", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN(name => "OPTION", summary => "Test option deletion");
 		START default => 'done';
 		DONE;
@@ -137,7 +137,7 @@ Unknown option: V
 EOF
 ;
 	ok_plugin_help($expect, "Ensure lack of -V", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN(name => "OPTION", summary => "Test option deletion");
 		START default => 'done';
 		DONE;
@@ -152,7 +152,7 @@ Unknown option: verbose
 EOF
 ;
 	ok_plugin_help($expect, "Ensure lack of --verbose", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN(name => "OPTION", summary => "Test option deletion");
 		START default => 'done';
 		DONE;
@@ -167,7 +167,7 @@ Unknown option: version
 EOF
 ;
 	ok_plugin_help($expect, "Ensure lack of --version", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN(name => "OPTION", summary => "Test option deletion");
 		START default => 'done';
 		DONE;
@@ -182,7 +182,7 @@ Unknown option: extra-opts
 EOF
 ;
 	ok_plugin_help($expect, "Ensure lack of --extra-opts", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN(name => "OPTION", summary => "Test option deletion");
 		START default => 'done';
 		DONE;
@@ -198,7 +198,7 @@ Sub-option keys must be one of '(warn|crit|perf)'.
 EOF
 ;
 	ok_plugin_help($expect, "Ensure % parses suboptions properly", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN(name => "OPTION", summary => "Test % subkey parsing");
 		OPTION('check|C=%',
 			help => '% supports only warn,crit,perf keys');

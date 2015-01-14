@@ -6,7 +6,7 @@ require "t/common.pl";
 ###################################################################
 
 ok_plugin(0, "TIME OK", undef, "Basic time spec parsing", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "TIME";
 	START;
 	my %t;
@@ -48,7 +48,7 @@ ok_plugin(0, "TIME OK", undef, "Basic time spec parsing", sub {
 });
 
 ok_plugin(0, "TIME OK", undef, "undefined values", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "TIME";
 	START;
 
@@ -73,7 +73,7 @@ ok_plugin(0, "TIME OK", undef, "undefined values", sub {
 });
 
 ok_plugin(0, "TIME OK", undef, "TIME_THOLD handling", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "TIME";
 	START;
 

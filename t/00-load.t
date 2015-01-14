@@ -3,6 +3,6 @@
 use Test::More tests => 1;
 
 BEGIN {
-    use_ok( 'Synacor::SynaMon::Plugin' );
+    use_ok( 'NLMA::Plugin' );
 }
 

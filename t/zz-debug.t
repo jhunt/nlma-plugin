@@ -7,7 +7,7 @@ do "t/common.pl";
 # DEBUG support
 
 ok_plugin(0, "DEBUG OK - good", undef, "Debugging / Dumping", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "debug";
 	START;
 	DEBUG("this is a debug statement");
@@ -21,7 +21,7 @@ ok_plugin(0, "DEBUG> test debugging", undef, "debug processing", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START default => "done";
 
@@ -44,7 +44,7 @@ ok_plugin(0, $debug, undef, "multiline debug output", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START default => "done";
 
@@ -59,7 +59,7 @@ ok_plugin(0, "DEBUG> undef", undef, "debug undef handling", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START default => "done";
 
@@ -74,7 +74,7 @@ ok_plugin(0, 'DEBUG> $VAR1 = "test";', undef, "object dump", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START default => "done";
 
@@ -89,7 +89,7 @@ ok_plugin(0, "DEBUG OK", undef, "no trace without -D", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START;
 
@@ -105,7 +105,7 @@ ok_plugin(0, "DEBUG> debug output", undef, "no trace with just -D", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START;
 
@@ -122,7 +122,7 @@ ok_plugin(0, "DEBUG> debug output", undef, "no trace with just -DD", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START;
 
@@ -139,7 +139,7 @@ ok_plugin(0, "TRACE> trace output", undef, "start TRACE-ing at -DDD", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START;
 
@@ -155,7 +155,7 @@ ok_plugin(0, "TRACE> trace output", undef, "keep TRACE-ing past -DDDD", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START;
 
@@ -171,7 +171,7 @@ ok_plugin(0, 'TRACE> $VAR1 = "test";', undef, "object trace dump", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START default => "done";
 
@@ -196,7 +196,7 @@ ok_plugin(0, $debug, undef, "binary dumps", sub {
 	# any of the debug messages that START prints.
 	open STDERR, ">", "/dev/null";
 
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "DEBUG";
 	START default => "done";
 

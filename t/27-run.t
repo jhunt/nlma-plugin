@@ -16,7 +16,7 @@ sub new
 package main;
 
 ok_plugin(0, "RUN OK", undef, "simple run", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "ls t";
@@ -25,7 +25,7 @@ ok_plugin(0, "RUN OK", undef, "simple run", sub {
 });
 
 ok_plugin(3, "RUN UNKNOWN - /usr/bin/notacommand: no such file", undef, "bad path run", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "/usr/bin/notacommand";
@@ -34,7 +34,7 @@ ok_plugin(3, "RUN UNKNOWN - /usr/bin/notacommand: no such file", undef, "bad pat
 });
 
 ok_plugin(3, "RUN UNKNOWN - /etc/issue: not executable", undef, "non-exec path run", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "/etc/issue | test -f /etc/issue";
@@ -43,7 +43,7 @@ ok_plugin(3, "RUN UNKNOWN - /etc/issue: not executable", undef, "non-exec path r
 });
 
 ok_plugin(0, "RUN OK", undef, "exec path run", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "/bin/echo 'message here'";
@@ -52,7 +52,7 @@ ok_plugin(0, "RUN OK", undef, "exec path run", sub {
 });
 
 ok_plugin(2, "RUN CRITICAL - Command './t/run/exit_code 2' exited with code 2.", undef, "command non-zero exit", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "./t/run/exit_code 2";
@@ -63,7 +63,7 @@ ok_plugin(2, "RUN CRITICAL - Command './t/run/exit_code 2' exited with code 2.",
 $ENV{TEST_PLUGINS} = 1;
 $ENV{TEST_CHROOT}  = "./t/run";
 ok_plugin(2, "RUN CRITICAL - Command './t/run/exit_code 2' exited with code 2.", undef, "TEST_PLUGINS + TEST_CHROOT", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "/exit_code 2";
@@ -72,7 +72,7 @@ ok_plugin(2, "RUN CRITICAL - Command './t/run/exit_code 2' exited with code 2.",
 });
 delete $ENV{TEST_PLUGINS};
 ok_plugin(3, "RUN UNKNOWN - /exit_code: no such file", undef, "TEST_CHROOT without TEST_PLUGINS", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "/exit_code 0";
@@ -83,7 +83,7 @@ delete $ENV{TEST_PLUGINS};
 delete $ENV{TEST_CHROOT};
 
 ok_plugin(0, "RUN OK - failure is OK", undef, "failok", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	RUN "./t/run/exit_code 2", failok => 1;
@@ -92,7 +92,7 @@ ok_plugin(0, "RUN OK - failure is OK", undef, "failok", sub {
 });
 
 ok_plugin(0, "RUN OK - return list", undef, "list context for RUN call", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "RUN";
 	START;
 	my @lines = RUN q[/bin/sh -c 'echo "first"; echo "second"; echo "third"'];
@@ -110,7 +110,7 @@ ok_plugin(3,
 	undef,
 	"run via unsupported type fails",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "RUNVIA";
 		START;
 		my $ssh = My::Protocol->new;
@@ -125,7 +125,7 @@ ok_plugin(3,
 	undef,
 	"run via unsupported scalar fails",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => 'RUNVIA';
 		START;
 		RUN "ls", via => 'testing';
@@ -135,7 +135,7 @@ ok_plugin(3,
 
 # test RUN's default transport mechanism
 ok_plugin(0, "RUNVIA OK - ls worked", undef, "test default transport mechanism for RUN", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => 'RUNVIA';
 		START;
 		RUN "ls";
@@ -145,7 +145,7 @@ ok_plugin(0, "RUNVIA OK - ls worked", undef, "test default transport mechanism f
 
 # test explicit setting of default transport mechanism
 ok_plugin(0, "RUNVIA OK - explicit ls worked", undef, "test explicit 'shell' transport mechanism for RUN", sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => 'RUNVIA';
 		START;
 		RUN "ls", via => 'shell';
@@ -155,7 +155,7 @@ ok_plugin(0, "RUNVIA OK - explicit ls worked", undef, "test explicit 'shell' tra
 
 # test that _run_via_shell sets last_rc
 ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_rc properly", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "RUNVIA";
 		START;
 		RUN "test -f thisisanonexistentfilethatshouldntexistduringtestingormynameisgeoffthedumbass", failok => 1;
@@ -190,7 +190,7 @@ ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_r
 		undef,
 		"non-zero exit code triggers crit",
 		sub {
-			use Synacor::SynaMon::Plugin qw(:easy);
+			use NLMA::Plugin qw(:easy);
 			PLUGIN name => "SSHRUN";
 			START;
 			my $ssh = Net::SSH::Perl->new();
@@ -206,7 +206,7 @@ ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_r
 		undef,
 		"non-zero exit code with 'failok' enabled",
 		sub {
-			use Synacor::SynaMon::Plugin qw(:easy);
+			use NLMA::Plugin qw(:easy);
 			PLUGIN name => "SSHRUN";
 			START;
 			my $ssh = Net::SSH::Perl->new();
@@ -222,7 +222,7 @@ ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_r
 		undef,
 		"_run_via_ssh sets last_rc after running commands",
 		sub {
-			use Synacor::SynaMon::Plugin qw/:easy/;
+			use NLMA::Plugin qw/:easy/;
 			PLUGIN name => "SSHRUN";
 			START;
 			my $ssh = Net::SSH::Perl->new();
@@ -239,7 +239,7 @@ ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_r
 		undef,
 		"dies are caught/handled properly in run_via_ssh",
 		sub {
-			use Synacor::SynaMon::Plugin qw(:easy);
+			use NLMA::Plugin qw(:easy);
 			PLUGIN name => "SSHRUN";
 			START;
 			my $ssh = Net::SSH::Perl->new();
@@ -255,7 +255,7 @@ ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_r
 		undef,
 		"list context for RUN returns properly formatted data",
 		sub {
-			use Synacor::SynaMon::Plugin qw(:easy);
+			use NLMA::Plugin qw(:easy);
 			use Test::Deep;
 			PLUGIN name => "SSHRUN";
 			START;
@@ -273,7 +273,7 @@ ok_plugin(0, "RUNVIA OK - last exit 1", undef, "ensure run_via_shell sets last_r
 		undef,
 		"scalar context for RUN returns raw output",
 		sub {
-			use Synacor::SynaMon::Plugin qw(:easy);
+			use NLMA::Plugin qw(:easy);
 			use Test::Deep;
 			PLUGIN name => "SSHRUN";
 			START;

@@ -8,14 +8,14 @@ require "t/common.pl";
 my $MASTER = $$;
 ###################################################################
 
-my $plugin = Synacor::SynaMon::Plugin::Base->new;
-isa_ok($plugin, 'Synacor::SynaMon::Plugin::Base');
+my $plugin = NLMA::Plugin::Base->new;
+isa_ok($plugin, 'NLMA::Plugin::Base');
 
 ###################################################################
 
 
 ok_plugin(0, "SNMP OK - looks good", undef, "Basic SNMP usage", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;
@@ -32,7 +32,7 @@ ok_plugin(0, "SNMP OK - looks good", undef, "Basic SNMP usage", sub {
 });
 
 ok_plugin(1, "SNMP WARNING - connect failed", undef, "Failed SNMP connections", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;
@@ -47,19 +47,19 @@ ok_plugin(1, "SNMP WARNING - connect failed", undef, "Failed SNMP connections", 
 	DONE;
 });
 
-ok_plugin(3, "SNMP UNKNOWN - Unknown MIB: SYNACOR-UNKNOWN-MIB", undef, "Unknown MIB", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+ok_plugin(3, "SNMP UNKNOWN - Unknown MIB: SOME-RANDOM-UNKNOWN-MIB", undef, "Unknown MIB", sub {
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;
 
-	SNMP_MIB 'SYNACOR-UNKNOWN-MIB';
+	SNMP_MIB 'SOME-RANDOM-UNKNOWN-MIB';
 	OK "looks good";
 	DONE;
 });
 
 ok_plugin(0, "SNMP OK - sysName is 1.3.6.1.2.1.1.5", undef, "OID lookup", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;
@@ -70,7 +70,7 @@ ok_plugin(0, "SNMP OK - sysName is 1.3.6.1.2.1.1.5", undef, "OID lookup", sub {
 });
 
 ok_plugin(0, "SNMP OK - [sysName].0 is 1.3.6.1.2.1.1.5.0 [sysLocation].0 is 1.3.6.1.2.1.1.6.0", undef, "OIDS lookup", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;
@@ -88,7 +88,7 @@ ok_plugin(0, "SNMP OK - [sysName].0 is 1.3.6.1.2.1.1.5.0 [sysLocation].0 is 1.3.
 });
 
 ok_plugin(0, "SNMP OK - looks good", undef, "SNMP TREE usage", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;
@@ -110,7 +110,7 @@ ok_plugin(0, "SNMP OK - looks good", undef, "SNMP TREE usage", sub {
 });
 
 ok_plugin(0, "SNMP OK - looks good", undef, "SNMP_TABLE usage", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;
@@ -139,7 +139,7 @@ ok_plugin(0, "SNMP OK - looks good", undef, "SNMP_TABLE usage", sub {
 });
 
 ok_plugin(3, "SNMP UNKNOWN - SNMP::MIB::Compiler not installed; SNMP functionality disabled", undef, "SNMP::MIB::Compiler dependency", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	delete $INC{'SNMP/MIB/Compiler.pm'}; # don't try this at home, kids
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
@@ -151,7 +151,7 @@ ok_plugin(3, "SNMP UNKNOWN - SNMP::MIB::Compiler not installed; SNMP functionali
 });
 
 ok_plugin(3, "SNMP UNKNOWN - Net::SNMP not installed; SNMP functionality disabled", undef, "Net::SNMP dependency", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	delete $INC{'Net/SNMP.pm'}; # don't try this at home, kids
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
@@ -164,7 +164,7 @@ ok_plugin(3, "SNMP UNKNOWN - Net::SNMP not installed; SNMP functionality disable
 
 
 ok_plugin(0, "SNMP OK - up up(1) ethernetCsmacd(6) down:down:down! 1/other literal string UNKNOWN UNKNOWN", undef, "ENUM / TC lookups", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_MIBS} = "t/data/mibs";
 	PLUGIN name => 'SNMP';
 	START;

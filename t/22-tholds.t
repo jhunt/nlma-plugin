@@ -6,7 +6,7 @@ require "t/common.pl";
 ###################################################################
 
 ok_plugin(0, "THOLD OK - value is 4", "value=4;;", "Thresholds 4<5 && 4<8", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 4;
@@ -17,7 +17,7 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;", "Thresholds 4<5 && 4<8", sub 
 });
 
 ok_plugin(0, "THOLD OK - skipped check", undef, "skip_OK test", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 4;
@@ -29,7 +29,7 @@ ok_plugin(0, "THOLD OK - skipped check", undef, "skip_OK test", sub {
 });
 
 ok_plugin(1, "THOLD WARNING - value is 7", "value=7;6;8", "Thresholds 7>6 && 7<8", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
@@ -41,7 +41,7 @@ ok_plugin(1, "THOLD WARNING - value is 7", "value=7;6;8", "Thresholds 7>6 && 7<8
 });
 
 ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;6;8;0;99", "Thresholds 9>6 && 9>8", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
@@ -54,7 +54,7 @@ ok_plugin(2, "THOLD CRITICAL - value is 9", "value=9;6;8;0;99", "Thresholds 9>6 
 });
 
 ok_plugin(0, "THOLD OK - value is 4", "value=4;;", "Thresholds 5<6; no crit", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 4;
@@ -66,7 +66,7 @@ ok_plugin(0, "THOLD OK - value is 4", "value=4;;", "Thresholds 5<6; no crit", su
 });
 
 ok_plugin(1, "THOLD WARNING - value is 9", "value=9;;", "Thresholds 9>6; no crit", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 9;
@@ -77,7 +77,7 @@ ok_plugin(1, "THOLD WARNING - value is 9", "value=9;;", "Thresholds 9>6; no crit
 });
 
 ok_plugin(0, "THOLD OK - value is 7", "value=7;;", "Thresholds no warn; 7<8", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 7;
@@ -91,7 +91,7 @@ ok_plugin(0, "THOLD OK - value is 7", "value=7;;", "Thresholds no warn; 7<8", su
 # Nagios Threshold Format, in case we ever make
 # good on threats to ditch Nagios::Plugin
 ok_plugin(1, "THOLD WARNING - value is 42", undef, "Nagios Threshold Format", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 42;
@@ -102,7 +102,7 @@ ok_plugin(1, "THOLD WARNING - value is 42", undef, "Nagios Threshold Format", su
 });
 
 ok_plugin(0, "THOLD OK", undef, "ANALYZE_THOLD works properly", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "THOLD";
 	START;
 	my $val = 42;

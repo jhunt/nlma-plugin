@@ -6,8 +6,8 @@ require "t/common.pl";
 
 ###################################################################
 
-my $plugin = Synacor::SynaMon::Plugin::Base->new;
-isa_ok($plugin, 'Synacor::SynaMon::Plugin::Base');
+my $plugin = NLMA::Plugin::Base->new;
+isa_ok($plugin, 'NLMA::Plugin::Base');
 is($plugin->state_file_path("test.out"), "/var/tmp/mon_test.out", "Default state file path generation");
 
 is($plugin->state_file_path("test.out", in => "/tmp/other"),
@@ -22,7 +22,7 @@ is($plugin->state_file_path("test.out"), "/env/PRE_test.out", "Overrides state f
 unlink "t/data/tmp/mon_test.value" if -f "t/data/tmp/mon_test.value";
 
 ok_plugin(0, "STORE OK - good", undef, "Store/Retrieve", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "store";
@@ -41,7 +41,7 @@ ok_plugin(0, "STORE OK - good", undef, "Store/Retrieve", sub {
 
 unlink "t/data/tmp/mon_undef" if -f "t/data/tmp/mon_undef";
 ok_plugin(0, "STORE OK - no data stored", undef, "STORE(undef) is a noop", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "store";
@@ -56,7 +56,7 @@ ok_plugin(0, "STORE OK - no data stored", undef, "STORE(undef) is a noop", sub {
 ok(! -f "t/data/tmp/mon_undef", "STORE(undef) does not create a file");
 
 ok_plugin(3, "STORE UNKNOWN - Could not open 't/ENOENT/mon_test.fail.tmp' for writing", undef, "Store failure", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/ENOENT";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "store";
@@ -66,7 +66,7 @@ ok_plugin(3, "STORE UNKNOWN - Could not open 't/ENOENT/mon_test.fail.tmp' for wr
 });
 
 ok_plugin(0, "STORE OK - arrays work", undef, "Store and retrieve arrays", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "store";
@@ -89,7 +89,7 @@ ok_plugin(0, "STORE OK - arrays work", undef, "Store and retrieve arrays", sub {
 
 my $notice = "DEPRECATION NOTICE: RETRIEVE in list context is deprecated";
 ok_plugin(0, "RETRIEVE OK - deprecation ignored", undef, "Ignore deprecation notices for RETRIEVE in list context", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retrieve";
@@ -99,7 +99,7 @@ ok_plugin(0, "RETRIEVE OK - deprecation ignored", undef, "Ignore deprecation not
 	DONE;
 });
 ok_plugin(3, "RETRIEVE UNKNOWN - $notice", undef, "DEPRECATION of RETRIEVE in list context", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	$ENV{MONITOR_FAIL_ON_DEPRECATION} = 1;
@@ -112,7 +112,7 @@ ok_plugin(3, "RETRIEVE UNKNOWN - $notice", undef, "DEPRECATION of RETRIEVE in li
 
 $notice = "DEPRECATION NOTICE: STORE(ref) is deprecated as of v1.20; use 'as =%GT% yaml' or 'as =%GT% json'";
 ok_plugin(3, "STORE UNKNOWN - $notice", undef, "STORE(ref) deprecation notice", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	$ENV{MONITOR_FAIL_ON_DEPRECATION} = 1;
@@ -127,7 +127,7 @@ ok_plugin(3, "STORE UNKNOWN - $notice", undef, "STORE(ref) deprecation notice", 
 unlink "t/data/tmp/mon_retr.new" if -f "t/data/tmp/mon_retr.new";
 ok(! -f "t/data/tmp/mon_retr.new", "mon_retr.new should not exist");
 ok_plugin(0, "RETR OK - good", undef, "RETRIEVE touches a new file", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retr";
@@ -143,7 +143,7 @@ system("touch -d 2012-01-01 t/data/tmp/mon_retr.new");
 my @stat = stat("t/data/tmp/mon_retr.new");
 cmp_ok($stat[ 9], '<', time - 86400, "mon_retr.new is at least a day old (mtime)");
 ok_plugin(0, "RETR OK - touch files", undef, "RETRIEVE touches the file", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retr";
@@ -159,7 +159,7 @@ cmp_ok($stat[ 9], '>', time - 86400, "mon_retr.new is less than a day old (mtime
 unlink "t/data/tmp/mon_no_touch" if -f "t/data/tmp/mon_no_touch";
 ok(! -f "t/data/tmp/mon_no_touch", "mon_no_touch should not exist");
 ok_plugin(0, "RETR OK - dont touch files", undef, "RETRIEVE can be told not touch files", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retr";
@@ -173,7 +173,7 @@ ok(! -f "t/data/tmp/mon_no_touch", "mon_no_touch should still not exist");
 
 ok(! -e "t/ENOENT", "t/ENOENT directory should not exist");
 ok_plugin(0, "RETR OK - failed without touch", undef, "RETRIEVE handles bad parent dir", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/ENOENT";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retr";
@@ -187,7 +187,7 @@ ok(! -e "t/ENOENT", "t/ENOENT direct should still not exist");
 
 ok(! -e "t/ENOENT", "t/ENOENT directory should not exist");
 ok_plugin(0, "RETR OK - failed touch", undef, "RETRIEVE handles bad parent dir", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/ENOENT";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retr";
@@ -205,7 +205,7 @@ system("touch -d 2012-01-01 t/data/tmp/mon_state.perms");
 chmod 000, "t/data/tmp/mon_state.perms";
 cmp_ok($stat[ 9], '<', time - 86400, "mon_state.perms is at least a day old (mtime)");
 ok_plugin(0, "RETR OK - good", undef, "RETRIEVE (touch) handles bad permissions", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retr";
@@ -226,7 +226,7 @@ cmp_ok($stat[ 9], '>', time - 86400, "mon_state.perms is less than a day old (mt
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 
-	my $plugin = Synacor::SynaMon::Plugin::Base->new;
+	my $plugin = NLMA::Plugin::Base->new;
 	my ($data, $raw, $out);
 
 	$data = { key1 => "value1",
@@ -264,7 +264,7 @@ EOF
 };
 
 ok_plugin(3, "RETR UNKNOWN - Unknown format for RETRIEVE: XML", undef, "RETRIEVE as unknown format UNKNOWNS", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "retr";
@@ -277,7 +277,7 @@ ok_plugin(3, "RETR UNKNOWN - Unknown format for RETRIEVE: XML", undef, "RETRIEVE
 });
 
 ok_plugin(3, "STORE UNKNOWN - Unknown format for STORE: SQL", undef, "STORE as unknown format UNKNOWNS", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "store";
@@ -289,7 +289,7 @@ ok_plugin(3, "STORE UNKNOWN - Unknown format for STORE: SQL", undef, "STORE as u
 });
 
 ok_plugin(0, "BADFMT OK - good", undef, "RETRIEVE handles malformed JSON/YAML", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => "badfmt";
@@ -308,7 +308,7 @@ ok_plugin(0, "BADFMT OK - good", undef, "RETRIEVE handles malformed JSON/YAML", 
 ok_plugin(0, "STOREBULK OK - good", undef,
 	"STORE as data_archive: on_previous_data_missing ok suppresses alarm for missing data.",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
 		my $STORE_FILE = "store_bulk";
 		PLUGIN name => 'storebulk';
@@ -326,7 +326,7 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
 	"STORE as data_archive: default on_previous_data_missing returns a warning message.",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
 		my $STORE_FILE = "store_bulk";
 		PLUGIN name => 'storebulk';
@@ -343,7 +343,7 @@ ok_plugin(1, "STOREBULK WARNING - No previous data found.", undef,
 ok_plugin(3, "STOREBULK UNKNOWN - No previous data found.", undef,
 	"STORE as data_archive: on_previous_data_missing behaves properly when set to non-'ok' value",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
 		my $STORE_FILE = "store_bulk";
 		PLUGIN name => 'storebulk';
@@ -367,7 +367,7 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 	"STORE as data_archive trims old data and stores current properly",
 	sub {
 		use strict;
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		use Test::Deep::NoTest;
 		use JSON;
 		$ENV{"MONITOR_STATE_FILE_DIR"} = "t/data/tmp";
@@ -398,7 +398,7 @@ ok_plugin(0, "STOREBULK OK - good", undef,
 
 ok_plugin(0, "STATE_FILE_PATH OK", undef, "No special characters in path", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "state_file_path";
 	START;
 	my $should_be = "_hello_world_";
@@ -414,7 +414,7 @@ mkdir "/tmp/mpf-test" unless -d "/tmp/mpf-test";
 unlink "/tmp/mpf-test/mon_altpath" if -f "/tmp/mpf-test/mon_altpath";
 ok_plugin(0, "ALT_PATH OK", undef, "Alternate paths work", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "alt_path";
 	START;
 
@@ -433,7 +433,7 @@ ok_plugin(3, "ALT_PATH UNKNOWN - Tried to STORE into /etc (Framework Violation)"
 	"Failed attempt to STORE into an unsafe directory", sub {
 
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "alt_path";
 	START default => "failed by succeeding";
 
@@ -444,7 +444,7 @@ ok_plugin(3, "ALT_PATH UNKNOWN - Tried to RETRIEVE from /etc (Framework Violatio
 	"Failed attempt to STORE into an unsafe directory", sub {
 
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "alt_path";
 	START default => "failed by succeeding";
 
@@ -454,7 +454,7 @@ ok_plugin(3, "ALT_PATH UNKNOWN - Tried to RETRIEVE from /etc (Framework Violatio
 
 ok_plugin(0, "NOOP OK", undef, "Noop shouldn't store to state files", sub {
 	use strict;
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "NOOP";
 	START;
 

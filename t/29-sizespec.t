@@ -6,7 +6,7 @@ require "t/common.pl";
 ###################################################################
 
 ok_plugin(0, "BYTES OK", undef, "Basic size spec parsing", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "BYTES";
 	START;
 	my %t;
@@ -54,7 +54,7 @@ ok_plugin(0, "BYTES OK", undef, "Basic size spec parsing", sub {
 });
 
 ok_plugin(0, "BYTES OK", undef, "undefined values", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "BYTES";
 	START;
 
@@ -79,7 +79,7 @@ ok_plugin(0, "BYTES OK", undef, "undefined values", sub {
 });
 
 ok_plugin(0, "BYTES OK", undef, "BYTES_THOLD handling", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "BYTES";
 	START;
 

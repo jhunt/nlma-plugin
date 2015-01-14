@@ -1,7 +1,7 @@
-package Synacor::SynaMon::Plugin::Feeders;
+package NLMA::Plugin::Feeders;
 
-use Synacor::SynaMon::Plugin::Base;
-use Synacor::SynaMon::Plugin::Easy;
+use NLMA::Plugin::Base;
+use NLMA::Plugin::Easy;
 use POSIX qw/WEXITSTATUS WTERMSIG WIFEXITED WIFSIGNALED/;
 use Log::Log4perl;
 
@@ -19,18 +19,14 @@ our @EXPORT = qw/
 	LOG
 /;
 
-use constant HT_LOG_CONFIG => "/opt/synacor/monitor/etc/htlog.conf";
-
 my @RESULTS = ();
 my $LOG;
 my %NSCA = (
-	chunk  => "/opt/synacor/monitor/bin/chunk",
 	bin    => "/usr/bin/send_nsca",
 	hosts  => [map { s/:\d+$//; $_ } split(',', $ENV{MONITOR_FEEDER_TARGETS} || "localhost:5667")],
 	config => "/etc/icinga/send_nsca.cfg",
 	port   => "5667",
 	args   => "",
-	max    => 700,
 	noop   => 0,
 );
 
@@ -38,7 +34,7 @@ my %NSCA = (
 
 sub plugin
 {
-	$Synacor::SynaMon::Plugin::Easy::plugin;
+	$NLMA::Plugin::Easy::plugin;
 }
 
 sub SET_NSCA
@@ -54,20 +50,18 @@ sub SET_NSCA
 sub FLUSH_NSCA
 {
 	return unless @RESULTS;
-	my $chunk = "$NSCA{chunk} -L $NSCA{max}";
-
 	for my $host (@{$NSCA{hosts}}) {
 		my $cmd = "$NSCA{bin} -H $host -c $NSCA{config} -p $NSCA{port} $NSCA{args}";
 		if ($NSCA{noop}) {
-			DEBUG "NOOP `$chunk -- $cmd`";
+			DEBUG "NOOP `$cmd`";
 			DEBUG "NOOP >> '$_\\n\\x17'\n" for @RESULTS;
 			next;
 		}
 
-		DEBUG "Executing `$chunk -- $cmd`";
+		DEBUG "Executing `$cmd`";
 		-x $NSCA{bin} or UNKNOWN "$NSCA{bin}: $!";
 
-		open my $pipe, "|-", "$chunk -- $cmd"
+		open my $pipe, "|-", $cmd
 			or BAIL "SEND_NSCA($host) Exec failed: $!";
 
 		for (@RESULTS) {
@@ -102,7 +96,7 @@ sub SEND_NSCA
 		plugin->context('default');
 	}
 
-	$args{status} = $Synacor::SynaMon::Plugin::Base::STATUS_CODES{$args{status}};
+	$args{status} = $NLMA::Plugin::Base::STATUS_CODES{$args{status}};
 	$args{status} = 3 if !defined($args{status});
 
 	if (defined $args{service}) {
@@ -120,10 +114,10 @@ sub LOG
 		$ENV{HT_DEBUG} = "DEBUG";
 	}
 
-	my $service = $Synacor::SynaMon::Plugin::Easy::plugin->{name};
+	my $service = $NLMA::Plugin::Easy::plugin->{name};
 	DEBUG "Setting up Log4perl for $service";
 
-	my $config = $ENV{HT_LOG_CONFIG} || HT_LOG_CONFIG;
+	my $config = $ENV{NLMA_LOG_CONFIG} || plugin->{settings}{log_config};
 	if (-f $config) {
 		Log::Log4perl::init_and_watch($config, 'HUP');
 	} else {
@@ -190,11 +184,11 @@ sub CONTEXT
 {
 	my ($host, $svc) = @_;
 	my $key = $svc ? "$host/$svc" : $host;
-	$Synacor::SynaMon::Plugin::Easy::plugin->context($key);
+	$NLMA::Plugin::Easy::plugin->context($key);
 }
 
 END {
-	if ($Synacor::SynaMon::Plugin::MODE eq "feeder") {
+	if ($NLMA::Plugin::MODE eq "feeder") {
 		DEBUG "Flushing ".@RESULTS." NSCA results\n";
 		FLUSH_NSCA;
 	}
@@ -204,7 +198,7 @@ END {
 
 =head1 NAME
 
-Synacor::SynaMon::Plugin::Feeders - Framework for Feeder Plugins
+NLMA::Plugin::Feeders - Framework for Feeder Plugins
 
 =head1 DESCRIPTION
 
@@ -319,13 +313,6 @@ Configure the SEND_NSCA function, by specifying the following values:
 
 =over
 
-=item B<chunk>
-
-Absolute path to the chunk utility, for splitting input into appropriately-
-sized chunks for processing by multiple send_nsca processes.
-
-Defaults to I</opt/synacor/monitor/bin/chunk>
-
 =item B<bin>
 
 Absolute path to the send_nsca binary.
@@ -353,14 +340,6 @@ Defaults to I<5667>
 =item B<args>
 
 Extra arguments to pass to send_nsca.
-
-=item B<max>
-
-Maximum number of results to send to a send_nsca process before
-re-execing a new one.  This is to work around a bug in either send_nsca
-or the NSCA daemon.
-
-Defaults to I<700>.
 
 =item B<noop>
 

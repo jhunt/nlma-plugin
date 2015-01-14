@@ -7,14 +7,14 @@ require "t/common.pl";
 
 ###################################################################
 
-my $plugin = Synacor::SynaMon::Plugin::Base->new;
-isa_ok($plugin, 'Synacor::SynaMon::Plugin::Base');
+my $plugin = NLMA::Plugin::Base->new;
+isa_ok($plugin, 'NLMA::Plugin::Base');
 
 ###################################################################
 
 
 ok_plugin(1, "RATE WARNING - Need a store file to get previous data", undef, "Calculate rate without params", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -25,7 +25,7 @@ ok_plugin(1, "RATE WARNING - Need a store file to get previous data", undef, "Ca
 });
 
 ok_plugin(1, "RATE WARNING - Need data to parse", undef, "Calculate rate without stats", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -37,7 +37,7 @@ ok_plugin(1, "RATE WARNING - Need data to parse", undef, "Calculate rate without
 
 unlink "t/data/tmp/mon_dne_rate_data" if -f "t/data/tmp/mon_dne_rate_data";
 ok_plugin(1, "RATE WARNING - No historic data found; rate calculation deferred", undef, "Calculate rate without previous data", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/tmp";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -50,7 +50,7 @@ ok_plugin(1, "RATE WARNING - No historic data found; rate calculation deferred",
 });
 
 ok_plugin(1, "RATE WARNING - Service restart detected (values reset to near-zero)", undef, "Check for rollover", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -68,7 +68,7 @@ ok_plugin(1, "RATE WARNING - Service restart detected (values reset to near-zero
 
 OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat1: 10 stat2: 10 stat3: 20", undef, "Default params", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -86,7 +86,7 @@ ok_plugin(0, "RATE OK - stat1: 10 stat2: 10 stat3: 20", undef, "Default params",
 
 OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -105,7 +105,7 @@ ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1", sub {
 
 OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1, missing 1 stat", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -123,7 +123,7 @@ ok_plugin(0, "RATE OK - stat1: 10", undef, "Default params, only want 1, missing
 
 OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat2: 50", undef, "Default params, want 2, missing 1 stat", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -141,7 +141,7 @@ ok_plugin(0, "RATE OK - stat2: 50", undef, "Default params, want 2, missing 1 st
 
 OVERRIDE_TIME 300;
 ok_plugin(0, "RATE OK - stat2: 25", undef, "Resolution is a supported option", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -159,7 +159,7 @@ ok_plugin(0, "RATE OK - stat2: 25", undef, "Resolution is a supported option", s
 
 OVERRIDE_TIME 3600;
 ok_plugin(0, "RATE OK - stat2: 1", undef, "Resolution in hours is supported", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';
@@ -177,7 +177,7 @@ ok_plugin(0, "RATE OK - stat2: 1", undef, "Resolution in hours is supported", su
 
 OVERRIDE_TIME 300;
 ok_plugin(1, "RATE WARNING - Stale data detected; last sample was 5m ago", undef, "Check staleness", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_STATE_FILE_DIR} = "t/data/c_rate";
 	$ENV{MONITOR_STATE_FILE_PREFIX} = "mon";
 	PLUGIN name => 'rate';

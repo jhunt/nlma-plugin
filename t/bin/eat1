@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 $l = <STDIN>; chomp $l;
-print STDOUT "testing with bin/eat1\n";
 print STDERR "Line: '$l'\n";
 close STDIN;
 exit 2;

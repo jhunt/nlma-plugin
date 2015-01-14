@@ -7,6 +7,7 @@ use Test::LongString;
 use constant TEST_SEND_NSCA => "t/bin/send_nsca";
 use constant TEST_NSCA_OUT  => "t/tmp/nsca.out";
 use constant TEST_LOG_FILE  => "t/tmp/feeders";
+mkdir "t/tmp";
 
 sub slurp
 {
@@ -22,7 +23,7 @@ sub slurp
 # feeder plugins
 
 ok_plugin(0, "FEEDER OK - good", undef, "Basic Feeder Plugin", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	OK "good";
@@ -32,12 +33,11 @@ ok_plugin(0, "FEEDER OK - good", undef, "Basic Feeder Plugin", sub {
 # send_nsca - bad exec
 
 ok_plugin(3, "FEEDER UNKNOWN - t/bin/enoent: No such file or directory", undef, "SEND_NSCA / bad exec", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
 	SET_NSCA bin => "t/bin/enoent";
-	SET_NSCA chunk => "t/bin/chunk";
 	SEND_NSCA host     => "a-host",
 	          service  => "cpu",
 	          status   => "WARNING",
@@ -47,50 +47,14 @@ ok_plugin(3, "FEEDER UNKNOWN - t/bin/enoent: No such file or directory", undef, 
 });
 
 ###################################################################
-# send_nsca - one chunk
-
-unlink TEST_NSCA_OUT;
-ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA a few times", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
-	open STDERR, ">", "/dev/null";
-	PLUGIN name => "feeder";
-	START;
-	SET_NSCA chunk => "t/bin/chunk";
-	SET_NSCA bin    => TEST_SEND_NSCA,
-	         BOGUS  => "this is a bogus option",
-	         config => TEST_NSCA_OUT;
-
-	SEND_NSCA host     => "b-host",
-	          status   => "UP",
-	          output   => "its up!";
-
-	SEND_NSCA host     => "a-host",
-	          status   => "DOWN",
-	          output   => "its broke!";
-
-	SEND_NSCA host     => "a-host",
-	          service  => "cpu",
-	          status   => "CRITICAL",
-	          output   => "Kinda High...";
-
-	OK "sent";
-});
-is_string_nows(slurp(TEST_NSCA_OUT),
-	"b-host\t0\tits up!\n\x17".
-	"a-host\t1\tits broke!\n\x17".
-	"a-host\tcpu\t2\tKinda High...\n\x17",
-		"send_nsca output is correct");
-
-###################################################################
 # send_nsca - bad status vals
 
 unlink TEST_NSCA_OUT;
 ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA / bad status", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin    => TEST_SEND_NSCA,
 	         BOGUS  => "this is a bogus option",
 	         config => TEST_NSCA_OUT;
@@ -124,11 +88,10 @@ is_string_nows(slurp(TEST_NSCA_OUT),
 unlink TEST_NSCA_OUT;
 system("touch ".TEST_NSCA_OUT);
 ok_plugin(0, "FEEDER OK - sent", undef, "SEND_NSCA noop", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin    => TEST_SEND_NSCA,
 	         config => TEST_NSCA_OUT,
 	         noop   => "yes";
@@ -147,11 +110,10 @@ is_string_nows(slurp(TEST_NSCA_OUT), "",
 # send_nsca - bad exit subchild
 
 ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with code 4", undef, "SEND_NSCA bin exits non-zero", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin  => "t/bin/die",
 	         args => "--exit 4";
 
@@ -164,11 +126,10 @@ ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with cod
 });
 
 ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with code 4", undef, "SEND_NSCA bin exits non-zero (with DONE)", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin  => "t/bin/die",
 	         args => "--exit 4";
 
@@ -182,11 +143,10 @@ ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with cod
 }, ['-D']);
 
 ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process killed by signal 15", undef, "SEND_NSCA bin killed", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin  => "t/bin/die",
 	         args => "--signal TERM";
 
@@ -202,11 +162,10 @@ ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process killed by signa
 # send_nsca - bail after 1 line of input
 
 ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with code 2", undef, "SEND_NSCA / delayed broken pipe", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin   => "t/bin/eat1"; # exits 2 after reading a single line
 
 	SEND_NSCA host     => "a-host",
@@ -227,15 +186,14 @@ ok_plugin(2, "FEEDER CRITICAL - SEND_NSCA(localhost) sub-process exited with cod
 ###################################################################
 # LOGGING
 
-$ENV{HT_LOG_CONFIG} = "t/data/feederlog.conf";
+$ENV{NLMA_LOG_CONFIG} = "t/data/feederlog.conf";
 
 unlink TEST_LOG_FILE;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 
 	LOG->trace("this is a trace message");
 	LOG->debug("this is a debug message");
@@ -253,11 +211,10 @@ is_string_nows(slurp(TEST_LOG_FILE),
 
 unlink TEST_LOG_FILE;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 
 	LOG->trace("this is a trace message");
 	LOG->debug("this is a debug message");
@@ -274,11 +231,10 @@ like(slurp(TEST_LOG_FILE), qr/via --debug/m, "found evidence of --debug debuggin
 unlink TEST_LOG_FILE;
 $ENV{HT_DEBUG} = 1;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 
 	LOG->trace("this is a trace message");
 	LOG->debug("this is a debug message");
@@ -296,11 +252,10 @@ delete $ENV{HT_DEBUG};
 unlink TEST_LOG_FILE;
 $ENV{HT_TRACE} = 1;
 ok_plugin(0, "FEEDER OK - logged", undef, "Feeder Logs -D", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 
 	LOG->trace("this is a trace message");
 	LOG->debug("this is a debug message");
@@ -319,7 +274,7 @@ delete $ENV{HT_TRACE};
 # HOSTS FILE PARSING
 
 ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
@@ -373,7 +328,7 @@ ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing", sub {
 });
 
 ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing with extra fields", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
@@ -427,7 +382,7 @@ ok_plugin(0, "FEEDER OK", undef, "HOSTS file parsing with extra fields", sub {
 });
 
 ok_plugin(0, "FEEDER OK", undef, "dedupe", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	#open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
@@ -473,7 +428,7 @@ ok_plugin(0, "FEEDER OK", undef, "dedupe", sub {
 });
 
 ok_plugin(3, "FEEDER UNKNOWN - Failed to open /path/to/nowhere (or /path.alt/to/nowhere): No such file or directory", undef, "bad hosts file", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
@@ -484,7 +439,7 @@ ok_plugin(3, "FEEDER UNKNOWN - Failed to open /path/to/nowhere (or /path.alt/to/
 });
 
 ok_plugin(3, "FEEDER UNKNOWN - Failed to open /etc/icinga/defs/local/hosts.lst (or /etc/icinga/defs.old/local/hosts.lst): No such file or directory", undef, "bad hosts file", sub {
-	use Synacor::SynaMon::Plugin qw(:feeder);
+	use NLMA::Plugin qw(:feeder);
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
@@ -499,11 +454,10 @@ ok_plugin(3, "FEEDER UNKNOWN - Failed to open /etc/icinga/defs/local/hosts.lst (
 
 unlink TEST_NSCA_OUT;
 ok_plugin(0, "FEEDER OK - sent", undef, "CONTEXT works", sub {
-	use Synacor::SynaMon::Plugin qw/:feeder/;
+	use NLMA::Plugin qw/:feeder/;
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin    => TEST_SEND_NSCA,
 	         BOGUS  => "this is a bogus option",
 	         config => TEST_NSCA_OUT;
@@ -536,11 +490,10 @@ is_string_nows(slurp(TEST_NSCA_OUT),
 
 unlink TEST_NSCA_OUT;
 ok_plugin(0, "FEEDER OK - perfdata", "x=42;;", "CONTEXT handles perfdata", sub {
-	use Synacor::SynaMon::Plugin qw/:feeder/;
+	use NLMA::Plugin qw/:feeder/;
 	open STDERR, ">", "/dev/null";
 	PLUGIN name => "feeder";
 	START;
-	SET_NSCA chunk => "t/bin/chunk";
 	SET_NSCA bin    => TEST_SEND_NSCA,
 	         BOGUS  => "this is a bogus option",
 	         config => TEST_NSCA_OUT;

@@ -38,7 +38,7 @@ ok_plugin(0,
 	"debug on turns on debugging in ssh module",
 	sub {
 		open STDERR, ">", "/dev/null";
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "myhost:22", "myuser", "mypass", { ssh_opt => "asdf"};
@@ -56,7 +56,7 @@ ok_plugin(2,
 	undef,
 	"Net::SSH::Perl->new() returning false triggers crit",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "invalidhost", "myuser", "mypass", { ssh_opt => "asdf"};
@@ -70,7 +70,7 @@ ok_plugin(2,
 	undef,
 	"Net::SSH::Perl->login() returning false triggers crit",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "myhost", "myuser", "badpass", { ssh_opt => "asdf"};
@@ -84,7 +84,7 @@ ok_plugin(2,
 	undef,
 	"die during new()/login() triggers crit",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "badhost", "myuser", "badpass", { ssh_opt => "asdf"};
@@ -98,7 +98,7 @@ ok_plugin(0,
 	undef,
 	"Net::SSH::Perl->new() returning false using failok doesn't trigger crit",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "invalidhost", "myuser", "mypass", { ssh_opt => "asdf", failok => 1 };
@@ -112,7 +112,7 @@ ok_plugin(0,
 	undef,
 	"Net::SSH::Perl->login() returning false using failok doesn't trigger crit",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "myhost", "myuser", "badpass", { ssh_opt => "asdf", failok => 1 };
@@ -126,7 +126,7 @@ ok_plugin(0,
 	undef,
 	"die during new()/login() using failok doesn't trigger crit",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "badhost", "myuser", "badpass", { ssh_opt => "asdf", failok => 1 };
@@ -140,7 +140,7 @@ ok_plugin(0,
 	undef,
 	"identity_files default is set",
 	sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "myhost", "myuser", "mypass";
@@ -159,7 +159,7 @@ ok_plugin(0,
 	undef,
 	"identity_files forces arrayref",
 	sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "SSH";
 		START;
 		my $ssh = SSH "myhost", "myuser", "mypass", { identity_files => "myfile" };

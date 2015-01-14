@@ -1,9 +1,9 @@
-package Synacor::SynaMon::Plugin::Easy;
+package NLMA::Plugin::Easy;
 
 use strict;
 use warnings;
 
-use Synacor::SynaMon::Plugin::Base;
+use NLMA::Plugin::Base;
 
 use Exporter;
 use base qw(Exporter);
@@ -66,7 +66,7 @@ our @EXPORT = qw/
 
 our $plugin;
 
-sub PLUGIN  { $plugin = Synacor::SynaMon::Plugin::Base->new(@_); }
+sub PLUGIN  { $plugin = NLMA::Plugin::Base->new(@_); }
 sub OPTION  { $plugin->option(@_); }
 
 sub SET { $plugin->set(@_); }
@@ -175,14 +175,14 @@ sub DB_EXEC      { $plugin->db_exec(@_); }
 
 END {
 	$plugin->finalize("END block") if $plugin;
-	$plugin->done if $plugin && !$Synacor::SynaMon::Plugin::Base::ALL_DONE;
+	$plugin->done if $plugin && !$NLMA::Plugin::Base::ALL_DONE;
 }
 
 1;
 
 =head1 NAME
 
-Synacor::SynaMon::Plugin::Easy - Simple Plugin API
+NLMA::Plugin::Easy - Simple Plugin API
 
 =head1 DESCRIPTION
 
@@ -197,7 +197,7 @@ In general, procedures map directly to methods in the B<Plugin> package,
 except that the procedural varieties are in upper case.  For example,
 B<STORE(...)> is the same as B<$plugin->store(...)>.
 
-See B<Synacor::SynaMon::Plugin> for in-depth documentation.
+See B<NLMA::Plugin> for in-depth documentation.
 
 =head1 METHODS
 
@@ -206,185 +206,185 @@ See B<Synacor::SynaMon::Plugin> for in-depth documentation.
 Sets up the global plugin context.  This B<must> be called first, as
 soon as possible.  None of the other functions will work otherwise.
 
-Arguments are identical to B<Synacor::SynaMon::Plugin::new>
+Arguments are identical to B<NLMA::Plugin::new>
 
 =head2 SET
 
-Wrapper around B<Synacor::SynaMon::Plugin::set>.
+Wrapper around B<NLMA::Plugin::set>.
 
 =head2 OPTION
 
-Wrapper around B<Synacor::SynaMon::Plugin::option>.
+Wrapper around B<NLMA::Plugin::option>.
 
 =head2 STATUS
 
-Wrapper around B<Synacor::SynaMon::Plugin::status>.
+Wrapper around B<NLMA::Plugin::status>.
 
 =head2 BAIL
 
-Wrapper around B<Synacor::SynaMon::Plugin::bail>.
+Wrapper around B<NLMA::Plugin::bail>.
 
 =head2 EVALUATE
 
-Wrapper around B<Synacor::SynaMon::Plugin::evaluate>.
+Wrapper around B<NLMA::Plugin::evaluate>.
 
 =head2 OK
 
-Wrapper around B<Synacor::SynaMon::Plugin::OK>.
+Wrapper around B<NLMA::Plugin::OK>.
 
 =head2 WARNING
 
-Wrapper around B<Synacor::SynaMon::Plugin::WARNING>.
+Wrapper around B<NLMA::Plugin::WARNING>.
 
 =head2 CRITICAL
 
-Wrapper around B<Synacor::SynaMon::Plugin::CRITICAL>.
+Wrapper around B<NLMA::Plugin::CRITICAL>.
 
 =head2 UNKNOWN
 
-Wrapper around B<Synacor::SynaMon::Plugin::UNKNOWN>.
+Wrapper around B<NLMA::Plugin::UNKNOWN>.
 
 =head2 ANALYZE_THOLD
 
-Wrapper around B<Synacor::SynaMon::Plugin::analyze_thold>.
+Wrapper around B<NLMA::Plugin::analyze_thold>.
 
 =head2 CHECK_VALUE
 
-Wrapper around B<Synacor::SynaMon::Plugin::check_value>.
+Wrapper around B<NLMA::Plugin::check_value>.
 
 =head2 TRACK_VALUE
 
-Wrapper around B<Synacor::SynaMon::Plugin::track_value>.
+Wrapper around B<NLMA::Plugin::track_value>.
 
 =head2 START
 
-Wrapper around B<Synacor::SynaMon::Plugin::start>.
+Wrapper around B<NLMA::Plugin::start>.
 
 =head2 DONE
 
-Wrapper around B<Synacor::SynaMon::Plugin::done>.
+Wrapper around B<NLMA::Plugin::done>.
 
 =head2 ON_TERMINATE
 
-Wrapper around B<Synacor::SynaMon::Plugin::on_terminate>.
+Wrapper around B<NLMA::Plugin::on_terminate>.
 
 =head2 STAGE
 
-Wrapper around B<Synacor::SynaMon::Plugin::stage>.
+Wrapper around B<NLMA::Plugin::stage>.
 
 =head2 START_TIMEOUT
 
-Wrapper around B<Synacor::SynaMon::Plugin::start_timer>.
+Wrapper around B<NLMA::Plugin::start_timer>.
 
 =head2 STOP_TIMEOUT
 
-Wrapper around B<Synacor::SynaMon::Plugin::stop_timer>.
+Wrapper around B<NLMA::Plugin::stop_timer>.
 
 =head2 STAGE_TIME
 
-Wrapper around B<Synacor::SynaMon::Plugin::stage_time>.
+Wrapper around B<NLMA::Plugin::stage_time>.
 
 =head2 TOTAL_TIME
 
-Wrapper around B<Synacor::SynaMon::Plugin::total_time>.
+Wrapper around B<NLMA::Plugin::total_time>.
 
 =head2 SLURP
 
-Wrapper around B<Synacor::SynaMon::Plugin::slurp>.
+Wrapper around B<NLMA::Plugin::slurp>.
 
 =head2 STORE
 
-Wrapper around B<Synacor::SynaMon::Plugin::store>.
+Wrapper around B<NLMA::Plugin::store>.
 
 =head2 RETRIEVE
 
-Wrapper around B<Synacor::SynaMon::Plugin::retrieve>.
+Wrapper around B<NLMA::Plugin::retrieve>.
 
 =head2 CREDENTIALS
 
-Wrapper around B<Synacor::SynaMon::Plugin::credentials>.
+Wrapper around B<NLMA::Plugin::credentials>.
 
 =head2 CRED_KEYS
 
-Wrapper around B<Synacor::SynaMon::Plugin::cred_keys>.
+Wrapper around B<NLMA::Plugin::cred_keys>.
 
 =head2 STATE_FILE_PATH
 
-Wrapper around B<Synacor::SynaMon::Plugin::state_file_path>.
+Wrapper around B<NLMA::Plugin::state_file_path>.
 
 Introduced in 1.09
 
 =head2 RUN
 
-Wrapper around B<Synacor::SynaMon::Plugin::run>.
+Wrapper around B<NLMA::Plugin::run>.
 
 =head2 LAST_RUN_EXITED
 
-Wrapper around B<Synacor::SynaMon::Plugin::last_run_exited>.
+Wrapper around B<NLMA::Plugin::last_run_exited>.
 
 =head2 LAST_RUN_EXIT_REASON
 
-Wrapper around B<Synacor::SynaMon::Plugin::last_run_exit_reason>.
+Wrapper around B<NLMA::Plugin::last_run_exit_reason>.
 
 =head2 SSH
 
-Wrapper around B<Synacor::SynaMon::Plugin::ssh>.
+Wrapper around B<NLMA::Plugin::ssh>.
 
 =head2 DEBUG
 
-Wrapper around B<Synacor::SynaMon::Plugin::debug>.
+Wrapper around B<NLMA::Plugin::debug>.
 
 =head2 DUMP
 
-Wrapper around B<Synacor::SynaMon::Plugin::dump>.
+Wrapper around B<NLMA::Plugin::dump>.
 
 =head2 NOOP
 
-Wrapper around B<Synacor::SynaMon::Plugin::noop>.
+Wrapper around B<NLMA::Plugin::noop>.
 
 =head2 TRACE
 
-Wrapper around B<Synacor::SynaMon::Plugin::trace>.
+Wrapper around B<NLMA::Plugin::trace>.
 
 =head2 TDUMP
 
-Wrapper around B<Synacor::SynaMon::Plugin::trace_dump>.
+Wrapper around B<NLMA::Plugin::trace_dump>.
 
 =head2 MECH
 
-Wrapper around B<Synacor::SynaMon::Plugin::mech>.
+Wrapper around B<NLMA::Plugin::mech>.
 
 =head2 HTTP_REQUEST
 
-Wrapper around B<Synacor::SynaMon::Plugin::http_request>.
+Wrapper around B<NLMA::Plugin::http_request>.
 
 =head2 HTTP_GET
 
-Wrapper around B<Synacor::SynaMon::Plugin::http_get>.
+Wrapper around B<NLMA::Plugin::http_get>.
 
 =head2 HTTP_PUT
 
-Wrapper around B<Synacor::SynaMon::Plugin::http_put>.
+Wrapper around B<NLMA::Plugin::http_put>.
 
 =head2 HTTP_POST
 
-Wrapper around B<Synacor::SynaMon::Plugin::http_post>.
+Wrapper around B<NLMA::Plugin::http_post>.
 
 =head2 SUBMIT_FORM
 
-Wrapper around B<Synacor::SynaMon::Plugin::submit_form>.
+Wrapper around B<NLMA::Plugin::submit_form>.
 
 =head2 JSON_DECODE
 
-Wrapper around B<Synacor::SynaMon::Plugin::json_decode>.
+Wrapper around B<NLMA::Plugin::json_decode>.
 
 =head2 PARSE_BYTES
 
-Wrapper around B<Synacor::SynaMon::Plugin::parse_bytes>.
+Wrapper around B<NLMA::Plugin::parse_bytes>.
 
 =head2 FORMAT_BYTES
 
-Wrapper around B<Synacor::SynaMon::Plugin::format_bytes>.
+Wrapper around B<NLMA::Plugin::format_bytes>.
 
 =head2 BYTES_THOLD
 
@@ -395,11 +395,11 @@ Otherwise, the threshold string will remain as-is.
 
 =head2 PARSE_TIME
 
-Wrapper around B<Synacor::SynaMon::Plugin::parse_time>.
+Wrapper around B<NLMA::Plugin::parse_time>.
 
 =head2 FORMAT_TIME
 
-Wrapper around B<Synacor::SynaMon::Plugin::format_time>.
+Wrapper around B<NLMA::Plugin::format_time>.
 
 =head2 TIME_THOLD
 
@@ -410,83 +410,83 @@ Otherwise, the threshold string will remain as-is.
 
 =head2 JOLOKIA_CONNECT
 
-Wrapper around B<Synacor::SynaMon::Plugin::jolokia_connect>.
+Wrapper around B<NLMA::Plugin::jolokia_connect>.
 
 =head2 JOLOKIA_READ
 
-Wrapper around B<Synacor::SynaMon::Plugin::jolokia_read>.
+Wrapper around B<NLMA::Plugin::jolokia_read>.
 
 =head2 JOLOKIA_SEARCH
 
-Wrapper around B<Synacor::SynaMon::Plugin::jolokia_search>.
+Wrapper around B<NLMA::Plugin::jolokia_search>.
 
 =head2 SAR
 
-Wrapper around B<Synacor::SynaMon::Plugin::sar>.
+Wrapper around B<NLMA::Plugin::sar>.
 
 =head2 DEVNAME
 
-Wrapper around B<Synacor::SynaMon::Plugin::devname>.
+Wrapper around B<NLMA::Plugin::devname>.
 
 =head2 CALC_RATE
 
-Wrapper around B<Synacor::SynaMon::Plugin::calculate_rate>.
+Wrapper around B<NLMA::Plugin::calculate_rate>.
 
 =head2 SNMP_MIB
 
-Wrapper around B<Synacor::SynaMon::Plugin::snmp_mib>.
+Wrapper around B<NLMA::Plugin::snmp_mib>.
 
 =head2 SNMP_SESSION
 
-Wrapper around B<Synacor::SynaMon::Plugin::snmp_session>.
+Wrapper around B<NLMA::Plugin::snmp_session>.
 
 =head2 SNMP_GET
 
-Wrapper around B<Synacor::SynaMon::Plugin::snmp_get>.
+Wrapper around B<NLMA::Plugin::snmp_get>.
 
 =head2 SNMP_TREE
 
-Wrapper around B<Synacor::SynaMon::Plugin::snmp_tree>.
+Wrapper around B<NLMA::Plugin::snmp_tree>.
 
 =head2 SNMP_TABLE
 
-Wrapper around B<Synacor::SynaMon::Plugin::snmp_table>.
+Wrapper around B<NLMA::Plugin::snmp_table>.
 
 =head2 OID
 
-Wrapper around B<Synacor::SynaMon::Plugin::oid>.
+Wrapper around B<NLMA::Plugin::oid>.
 
 =head2 OIDS
 
-Wrapper around B<Synacor::SynaMon::Plugin::oids>.
+Wrapper around B<NLMA::Plugin::oids>.
 
 =head2 SNMP_ENUM
 
-Wrapper around B<Synacor::SynaMon::Plugin::snmp_enum>.
+Wrapper around B<NLMA::Plugin::snmp_enum>.
 
 =head2 SNMP_TC
 
-Wrapper around B<Synacor::SynaMon::Plugin::snmp_tc>.
+Wrapper around B<NLMA::Plugin::snmp_tc>.
 
 =head2 RRD
 
-Wrapper around B<Synacor::SynaMon::Plugin::rrd>.
+Wrapper around B<NLMA::Plugin::rrd>.
 
 =head2 DB_CONNECT
 
-Wrapper around B<Synacor::SynaMon::Plugin::db_connect>.
+Wrapper around B<NLMA::Plugin::db_connect>.
 
 =head2 DB_QUERY
 
-Wrapper around B<Synacor::SynaMon::Plugin::db_query>.
+Wrapper around B<NLMA::Plugin::db_query>.
 
 =head2 DB_EXEC
 
-Wrapper around B<Synacor::SynaMon::Plugin::db_exec>.
+Wrapper around B<NLMA::Plugin::db_exec>.
 
 =head1 AUTHOR
 
-James Hunt, C<< <jhunt at synacor.com> >>
+James Hunt, C<< <jhunt@synacor.com> >>
 
 =cut
 

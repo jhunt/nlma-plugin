@@ -15,7 +15,7 @@ chmod 0664, "t/data/creds.insecure";
 delete $ENV{MONITOR_CRED_STORE};
 
 ok_plugin(0, "CREDS OK - good", undef, "Credentials OK", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
@@ -46,7 +46,7 @@ ok_plugin(0, "CREDS OK - good", undef, "Credentials OK", sub {
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Credentials not found for 'unknown'", undef, "Non-existent key", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
@@ -55,7 +55,7 @@ ok_plugin(3, "CREDS UNKNOWN - Credentials not found for 'unknown'", undef, "Non-
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Credentials not found for 'fail1', 'fail2', 'fail3'", undef, "Non-existent key (multi)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
@@ -64,7 +64,7 @@ ok_plugin(3, "CREDS UNKNOWN - Credentials not found for 'fail1', 'fail2', 'fail3
 });
 
 ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silently)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	SET ignore_credstore_failures => 1;
@@ -78,7 +78,7 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Non-existent key (fail silent
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Corrupt credentials key 'corrupt'", undef, "Bad key", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
@@ -87,7 +87,7 @@ ok_plugin(3, "CREDS UNKNOWN - Corrupt credentials key 'corrupt'", undef, "Bad ke
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Corrupt credentials key 'corrupt'", undef, "Bad key (early)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	START;
@@ -99,7 +99,7 @@ ok_plugin(3, "CREDS UNKNOWN - Corrupt credentials key 'corrupt'", undef, "Bad ke
 });
 
 ok_plugin(0, "CREDS OK - failed silently", undef, "Bad key (fail silently)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds";
 	PLUGIN name => "creds";
 	SET ignore_credstore_failures => 1;
@@ -113,7 +113,7 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Bad key (fail silently)", sub
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Could not find credentials file", undef, "Credentials file missing", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.DNE";
 	PLUGIN name => "creds";
 	START;
@@ -122,7 +122,7 @@ ok_plugin(3, "CREDS UNKNOWN - Could not find credentials file", undef, "Credenti
 });
 
 ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file missing (fail silently)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.DNE";
 	PLUGIN name => "creds";
 	SET ignore_credstore_failures => 1;
@@ -136,7 +136,7 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file missing (fai
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Could not read credentials file", undef, "Credentials file unreadable", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.perms";
 	PLUGIN name => "creds";
 	START;
@@ -145,7 +145,7 @@ ok_plugin(3, "CREDS UNKNOWN - Could not read credentials file", undef, "Credenti
 });
 
 ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file unreadable (fail silently)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.perms";
 	PLUGIN name => "creds";
 	SET ignore_credstore_failures => 1;
@@ -159,7 +159,7 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Credentials file unreadable (
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Insecure credentials file; mode is 0664 (not 0400)", undef, "Creds file insecure", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.insecure";
 	PLUGIN name => "creds";
 	START;
@@ -168,7 +168,7 @@ ok_plugin(3, "CREDS UNKNOWN - Insecure credentials file; mode is 0664 (not 0400)
 });
 
 ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file insecure (fail silently)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.insecure";
 	PLUGIN name => "creds";
 	SET ignore_credstore_failures => 1;
@@ -182,7 +182,7 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file insecure (fail sil
 });
 
 ok_plugin(3, "CREDS UNKNOWN - Corrupted credentials file", undef, "Creds file corrupted", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.corrupt";
 	PLUGIN name => "creds";
 	START;
@@ -191,7 +191,7 @@ ok_plugin(3, "CREDS UNKNOWN - Corrupted credentials file", undef, "Creds file co
 });
 
 ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail silently)", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	$ENV{MONITOR_CRED_STORE} = "t/data/creds.corrupt";
 	PLUGIN name => "creds";
 	SET ignore_credstore_failures => 1;
@@ -239,7 +239,7 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 	my @pwent = getpwnam(getpwuid($>));
 	my $HOME = $pwent[7];
 
-	my $plugin = Synacor::SynaMon::Plugin::Base->new;
+	my $plugin = NLMA::Plugin::Base->new;
 
 	delete $ENV{SUDO_USER};
 	is($plugin->_credstore_path, "$HOME/.creds",
@@ -263,20 +263,20 @@ ok_plugin(0, "CREDS OK - failed silently", undef, "Creds file corrupted (fail si
 }
 
 {
-	my $plugin = Synacor::SynaMon::Plugin::Base->new;
+	my $plugin = NLMA::Plugin::Base->new;
 
-	cmp_deeply([$plugin->cred_keys("TYPE", "role01.dc.synacor.com")],
-		["TYPE/role01.dc.synacor.com",
+	cmp_deeply([$plugin->cred_keys("TYPE", "role01.dc.example.com")],
+		["TYPE/role01.dc.example.com",
 		 "TYPE/dc/role",
 		 "TYPE/dc/*",
 		 "TYPE/*/role",
 		 "TYPE" ],
 		"Basic role / cluster key breakdown");
 
-	cmp_deeply([$plugin->cred_keys("LDAP", "test23.svcs.atl.synacor.com")],
-		["LDAP/test23.svcs.atl.synacor.com",
-		 "LDAP/svcs.atl/test",
-		 "LDAP/svcs.atl/*",
+	cmp_deeply([$plugin->cred_keys("LDAP", "test23.svcs.dc.example.com")],
+		["LDAP/test23.svcs.dc.example.com",
+		 "LDAP/svcs.dc/test",
+		 "LDAP/svcs.dc/*",
 		 "LDAP/*/test",
 		 "LDAP" ],
 		"Generate LDAP credentials keys");

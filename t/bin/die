@@ -14,7 +14,6 @@ GetOptions(\%OPTIONS,
 	'config|c=s',
 );
 
-print "t/bin/die - read all of STDIN and then exit or die\n";
 while (<STDIN>) { }
 
 if (exists $OPTIONS{signal}) {

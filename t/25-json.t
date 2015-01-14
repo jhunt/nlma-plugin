@@ -7,7 +7,7 @@ require "t/common.pl";
 # JSON decoding
 
 ok_plugin(0, "JSON OK - decoded normal", undef, "basic JSON decoding", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'JSON';
 	START default => 'decoded normal';
 
@@ -20,7 +20,7 @@ ok_plugin(0, "JSON OK - decoded normal", undef, "basic JSON decoding", sub {
 });
 
 ok_plugin(0, "JSON OK - decoded null", undef, "null JSON", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'JSON';
 	START default => 'decoded null';
 
@@ -30,7 +30,7 @@ ok_plugin(0, "JSON OK - decoded null", undef, "null JSON", sub {
 });
 
 ok_plugin(0, "JSON OK - decoded undef", undef, "undef JSON", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'JSON';
 	START default => 'decoded undef';
 
@@ -40,7 +40,7 @@ ok_plugin(0, "JSON OK - decoded undef", undef, "undef JSON", sub {
 });
 
 ok_plugin(0, "JSON OK - jsonp", undef, "jsonp decode", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => 'JSON';
 	START default => 'jsonp';
 

@@ -1,8 +1,8 @@
-package Synacor::SynaMon::Plugin;
+package NLMA::Plugin;
 
 use strict;
 use warnings;
-use Synacor::SynaMon::Plugin::Base;
+use NLMA::Plugin::Base;
 
 our $VERSION = "1.38";
 
@@ -22,28 +22,18 @@ sub import {
 		delete $tags{':feeder'};
 		$MODE = "feeder";
 
-		use Synacor::SynaMon::Plugin::Feeders;
-		Synacor::SynaMon::Plugin::Feeders->export_to_level(1);
+		use NLMA::Plugin::Feeders;
+		NLMA::Plugin::Feeders->export_to_level(1);
 
-		use Synacor::SynaMon::Plugin::Easy;
-		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
-
-	} elsif (exists $tags{':synthetic'}) {
-		delete $tags{':synthetic'};
-		$MODE = "synthetic";
-
-		use Synacor::SynaMon::Plugin::Easy;
-		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
-
-		use Synacor::SynaMon::Plugin::Synthetic;
-		Synacor::SynaMon::Plugin::Synthetic->export_to_level(1);
+		use NLMA::Plugin::Easy;
+		NLMA::Plugin::Easy->export_to_level(1);
 
 	} elsif (exists $tags{':easy'}) {
 		delete $tags{':easy'};
 		$MODE = "plugin";
 
-		use Synacor::SynaMon::Plugin::Easy;
-		Synacor::SynaMon::Plugin::Easy->export_to_level(1);
+		use NLMA::Plugin::Easy;
+		NLMA::Plugin::Easy->export_to_level(1);
 	}
 
 	my @vcheck = grep { $_ =~ m/^\d+(.\d+)?$/ } @_;
@@ -58,30 +48,30 @@ sub import {
 
 =head1 NAME
 
-Synacor::SynaMon::Plugin - Check Plugin Framework
+NLMA::Plugin - Check Plugin Framework
 
 =head1 DESCRIPTION
 
 Almost all check plugins (at least the ones worth writing) do a lot of the same
 things for set up, teardown and status reporting.  Rather than force check writers
-to constantly re-invent or re-discover these idioms, B<Synacor::SynaMon::Plugin>
+to constantly re-invent or re-discover these idioms, B<NLMA::Plugin>
 abstracts these common idioms away.
 
 By using the framework, check writers can get working monitoring checks faster
 with less effort, without sacrificing supportability, clarity or robustness.
 
-All check plugins should include B<Synacor::SynaMon::Plugin> to get access
+All check plugins should include B<NLMA::Plugin> to get access
 to the framework.
 
 To access the OO interface:
 
   #!/usr/bin/perl
-  use Synacor::SynaMon::Plugin;
+  use NLMA::Plugin;
 
 To use the procedural (B<easy>) interface:
 
   #!/usr/bin/perl
-  use Synacor::SynaMon::Plugin qw(:easy);
+  use NLMA::Plugin qw(:easy);
 
 =head1 VERSIONING
 
@@ -94,7 +84,7 @@ required version number to the list of things to import in your 'use' call.
 For example, to require framework version 1.56 or later:
 
   #!/usr/bin/perl
-  use Synacor::SynaMon::Plugin qw(:easy 1.56)
+  use NLMA::Plugin qw(:easy 1.56)
 
 This documentation should define, for each function, what version of the framework
 that function first appeared in.
@@ -124,7 +114,7 @@ B<DEPRECATED FEATURES LIST>, at the end of this document.
 To get started, let's look at an example plugin that checks the age of a file:
 
   #!/usr/bin/perl
-  use Synacor::SynaMon::Plugin qw(:easy)
+  use NLMA::Plugin qw(:easy)
 
   PLUGIN name => 'check_file_age';
 
@@ -170,8 +160,8 @@ that the framework provides, what they do, and how to use them.  They
 are grouped based on their purpose.
 
 For developers who wish to understand the framework at a lower level,
-take a look at B<Synacor::SynaMon::Plugin::Base> and
-B<Synacor::SynaMon::Plugin::Easy>.
+take a look at B<NLMA::Plugin::Base> and
+B<NLMA::Plugin::Easy>.
 
 =head1 PLUGIN SETUP AND OPTIONS
 
@@ -617,9 +607,9 @@ the B<samples> and optional B<slice> parameters:
     # the same, more explicit
     my $sar = SAR "-n DEV", samples => 10, slice => 60;
 
-The B<slice> parameter indicates how many seconds each sample covers.  At
-Synacor, this is currently 60s, which is the default value.  You should only
-override this value if you know what you are doing and why.
+The B<slice> parameter indicates how many seconds each sample covers.
+This defaults to 60s.  You should only override this value if you know what
+you are doing and why.
 
 The framework does not currently allow you to analyze more than a 24-hour
 period, but it will handle the midnight boundary, when sadc(1) switches from
@@ -998,14 +988,14 @@ Another function, B<CRED_KEYS> makes it easy to generate a list of credentials
 keys that can be overridden at the server role level, cluster level and host
 level:
 
-  my $host = "role01.atl.synacor.com";
+  my $host = "role01.dc.example.com";
   my ($u, $p) = CREDENTIALS( CRED_KEYS("LDAP", $host) );
 
 This code searches for the following keys in the credstore:
 
 =over 8
 
-=item LDAP/role01.atl.synacor.com
+=item LDAP/role01.dc.example.com
 
 =item LDAP/atl/role
 
@@ -1149,7 +1139,7 @@ final hashref argument) to influence how the request is made:
 =item UA
 
 User Agent string to set for the outgoing request.  Defaults to
-"SynacorMonitoring/$VERSION".
+"NLMA::Plugin/$VERSION".
 
 =item timeout
 
@@ -1214,7 +1204,7 @@ Remote JMX up in a RESTful, HTTP API.  This proxy is called B<Jolokia>.
 To use JMX, your plugin will need to call B<JOLOKIA_CONNECT> with the proper
 target host and port:
 
-    JOLOKIA_CONNECT host => "mq01.appfoo.synacor.com",
+    JOLOKIA_CONNECT host => "mq01.appfoo.example.com",
                     port => 1105;
 
 You can optionally sepcify a B<creds> parameter to JOLOKIA_CONNECT for
@@ -1243,8 +1233,8 @@ expression, by way of B<JOLOKIA_SEARCH>:
    # get *ALL* the beans!
    @beans = JOLOKIA_SEARCH;
 
-   # or, just get the ones for com.synacor.*
-   @beans = JOLOKIA_SEARCH '^com.synacor.';
+   # or, just get the ones for com.example.*
+   @beans = JOLOKIA_SEARCH '^com.example.';
 
 These two functions are designed to work together seamlessly, so that you
 can do this:
@@ -1490,7 +1480,7 @@ The following settings can be used to adjust B<RRD>'s behavior:
 
 =item B<rrds>
 
-Sets the base directory for finding RRD files. Defaults to B</opt/synacor/monitor/rrd>.
+Sets the base directory for finding RRD files. Defaults to B</srv/monitor/rrd>.
 
 =item B<rrdtool>
 
@@ -1722,6 +1712,6 @@ check plugin state files.
 
 =head1 AUTHOR
 
-James Hunt C<< jhunt@synacor.com >>
+James Hunt C<< <jhunt@synacor.com> >>
 
 =cut

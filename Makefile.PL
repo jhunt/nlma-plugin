@@ -3,10 +3,10 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    NAME                => 'Synacor::SynaMon::Plugin',
+    NAME                => 'NLMA::Plugin',
     AUTHOR              => q{James Hunt <jhunt@synacor.com>},
-    VERSION_FROM        => 'lib/Synacor/SynaMon/Plugin.pm',
-    ABSTRACT_FROM       => 'lib/Synacor/SynaMon/Plugin.pm',
+    VERSION_FROM        => 'lib/NLMA/Plugin.pm',
+    ABSTRACT_FROM       => 'lib/NLMA/Plugin.pm',
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
       : ()),
@@ -15,6 +15,6 @@ WriteMakefile(
         'Test::More' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean               => { FILES => 'Synacor-SynaMon-Plugin-*' },
+    clean               => { FILES => 'NLMA-Plugin-*' },
     INSTALLVENDORLIB    => $ENV{INSTALLVENDORLIB},
 );

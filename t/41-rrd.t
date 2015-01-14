@@ -10,15 +10,15 @@ system "rrdtool create t/tmp/test.rrd --step 60  --start n-1yr DS:datum:GAUGE:18
 
 # Verify default settings
 ok_plugin(0, "RRD OK", undef, "Default RRD settings are set", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
-	my $settings = $Synacor::SynaMon::Plugin::Easy::plugin->{settings};
+	my $settings = $NLMA::Plugin::Easy::plugin->{settings};
 
 	CRITICAL "Bad default rrdtool setting: '$settings->{rrdtool}'."
 		unless $settings->{rrdtool} eq "/usr/bin/rrdtool";
 	CRITICAL "Bad default rrds setting: '$settings->{rrds}'."
-		unless $settings->{rrds} eq "/opt/synacor/monitor/rrd";
+		unless $settings->{rrds} eq "/srv/monitor/rrd";
 	CRITICAL "Bad default rrdcached setting: '$settings->{rrdcached}'."
 		unless $settings->{rrdcached} eq "unix:/var/run/rrdcached/rrdcached.sock";
 	CRITICAL "Bad default on_rrd_failure setting: '$settings->{on_rrd_failure}'."
@@ -32,10 +32,10 @@ ok_plugin(0, "RRD OK", undef, "Default RRD settings are set", sub {
 
 # Verify settings can be overridden
 ok_plugin(0, "RRD OK", undef, "RRD settings can be overridden", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
-	my $settings = $Synacor::SynaMon::Plugin::Easy::plugin->{settings};
+	my $settings = $NLMA::Plugin::Easy::plugin->{settings};
 
 	SET rrdtool             => "t/tmp/rrdtool";
 	SET rrds                => "t/tmp";
@@ -60,7 +60,7 @@ ok_plugin(0, "RRD OK", undef, "RRD settings can be overridden", sub {
 
 # Verify RRD works under nominal circumstances
 ok_plugin(0, "RRD OK", undef, "RRD can fetch data", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
 	SET rrds      => "t/tmp";
@@ -75,7 +75,7 @@ ok_plugin(0, "RRD OK", undef, "RRD can fetch data", sub {
 
 # Verify RRD calls set up the RRDCACHED_ADDRESS env variable
 ok_plugin(0, "RRD OK", undef, "RRD sets RRDCACHED_ADDRESS environment variable", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
 	SET rrds      => "t/tmp";
@@ -91,7 +91,7 @@ ok_plugin(0, "RRD OK", undef, "RRD sets RRDCACHED_ADDRESS environment variable",
 
 # Verify Multiple RRD calls don't cause problems. (RRDp will croak)
 ok_plugin(0, "RRD OK", undef, "multiple RRD calls don't cause failure", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
 	SET rrds      => "t/tmp";
@@ -108,7 +108,7 @@ ok_plugin(0, "RRD OK", undef, "multiple RRD calls don't cause failure", sub {
 ok_plugin(2, "RRD CRITICAL - ERROR: opening 't/tmp/norrdhere.rrd': No such file or directory.",
 	undef,
 	"RRD errors are handled appropriately", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -123,7 +123,7 @@ ok_plugin(2, "RRD CRITICAL - ERROR: opening 't/tmp/norrdhere.rrd': No such file 
 ok_plugin(2,
 	"RRD CRITICAL - ERROR: opening 't/tmp/norrdhere.rrd': No such file or directory. Second message",
 	undef, "RRD fail_bail = 0 allows continued execution", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds                => "t/tmp";
@@ -138,7 +138,7 @@ ok_plugin(2,
 # Customizing on_failure affects status messages
 ok_plugin(1, "RRD WARNING - ERROR: opening 't/tmp/norrdhere.rrd': No such file or directory.",
 	undef, "RRD on_failure adjusts status properly", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds           => "t/tmp";
@@ -151,7 +151,7 @@ ok_plugin(1, "RRD WARNING - ERROR: opening 't/tmp/norrdhere.rrd': No such file o
 });
 
 ok_plugin(0, "RRD OK", undef, "RRD info returns scalar ref data", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "rrd";
 
 	SET rrds => "t/tmp";
@@ -164,7 +164,7 @@ ok_plugin(0, "RRD OK", undef, "RRD info returns scalar ref data", sub {
 
 ok_plugin(0, "RRD OK",
 	undef, "RRD create command", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -181,7 +181,7 @@ ok_plugin(0, "RRD OK",
 
 ok_plugin(0, "RRD OK",
 	undef, "RRD create handles missing parent directories", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -198,7 +198,7 @@ ok_plugin(0, "RRD OK",
 
 ok_plugin(2, "RRD CRITICAL - ERROR: you must define at least one Round Robin Archive.",
 	undef, "RRD create handles bad definition", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -213,7 +213,7 @@ ok_plugin(2, "RRD CRITICAL - ERROR: you must define at least one Round Robin Arc
 
 ok_plugin(2, "RRD CRITICAL - ERROR: creating '/root/test.rrd': Permission denied.",
 	undef, "RRD create handles bad perms on destination", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		RRD create => "/root/test.rrd",
@@ -227,7 +227,7 @@ ok_plugin(2, "RRD CRITICAL - ERROR: creating '/root/test.rrd': Permission denied
 
 ok_plugin(2, "RRD CRITICAL - ERROR: creating 't/tmp/a.rrd/b.rrd': Not a directory.",
 	undef, "RRD create handles ENOTDIR parent dirs", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -248,7 +248,7 @@ ok_plugin(2, "RRD CRITICAL - ERROR: creating 't/tmp/a.rrd/b.rrd': Not a director
 
 ok_plugin(3, "RRD UNKNOWN - RRD foobar.rrd already exists",
 	undef, "RRD create handles pre-existing files", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -269,7 +269,7 @@ ok_plugin(3, "RRD UNKNOWN - RRD foobar.rrd already exists",
 
 ok_plugin(0, "RRD OK",
 	undef, "RRD create normally doesn't care about pre-existing files", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -288,7 +288,7 @@ ok_plugin(0, "RRD OK",
 
 ok_plugin(1, "RRD WARNING - RRD foo/bar/quux.rrd already exists",
 	undef, "RRD create can warn about pre-existing files", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -308,7 +308,7 @@ ok_plugin(1, "RRD WARNING - RRD foo/bar/quux.rrd already exists",
 
 ok_plugin(0, "RRD OK",
 	undef, "RRD create can explicitly not care about pre-existing files", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -328,7 +328,7 @@ ok_plugin(0, "RRD OK",
 
 ok_plugin(2, "RRD CRITICAL - RRD default.rrd already exists",
 	undef, "RRD create defaults to CRITICAL for unknown preexisting option", sub {
-		use Synacor::SynaMon::Plugin qw/:easy/;
+		use NLMA::Plugin qw/:easy/;
 		PLUGIN name => "rrd";
 
 		SET rrds => "t/tmp";
@@ -365,7 +365,7 @@ EOF
 	return \$str;
 });
 ok_plugin(0, "RRD_FETCH OK", undef, "RRD fetch returns expected datastructure", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "rrd_fetch";
 
 	SET rrds => "t/tmp";

@@ -1,9 +1,9 @@
-package Synacor::SynaMon::Plugin::Base;
+package NLMA::Plugin::Base;
 
 use warnings;
 use strict;
 
-use Synacor::SynaMon::Plugin ();
+use NLMA::Plugin ();
 use Nagios::Plugin qw();
 use base qw(Nagios::Plugin);
 
@@ -112,7 +112,11 @@ sub new
 
 			signals                   => 'perl',
 
-			rrds                      => "/opt/synacor/monitor/rrd",
+			snmp_mibs                 => "/usr/share/snmp/mibs/",
+
+			log_config                => "/etc/nlma/plugin.logger.conf",
+
+			rrds                      => "/srv/monitor/rrd",
 			rrdtool                   => "/usr/bin/rrdtool",
 			rrdcached                 => "unix:/var/run/rrdcached/rrdcached.sock",
 			on_rrd_failure            => NAGIOS_CRITICAL,
@@ -127,7 +131,7 @@ sub new
 	# HAHA! Take that Nagios::Plugin for trying to be helpful!
 	# PEWPEWPEW! Options-be-gone!
 	my @new_args;
-	foreach my $arg (@{$self->{legacy}{opts}{_args}})
+	for my $arg (@{$self->{legacy}{opts}{_args}})
 	{
 		push (@new_args, $arg) if ($arg->{spec} !~ /(verbose|version|extra-opts)/);
 	}
@@ -136,7 +140,28 @@ sub new
 	# ITM-2948 - reset global default timeout to 45s
 	$self->{legacy}{opts}{timeout} = 45;
 
-	bless($self, $class)->context('default');
+	$self = bless($self, $class)->context('default');
+
+	if ($options{config}) {
+		if (!-f $options{config}) {
+			print "UNKNOWN: failed to read NLMA::Plugin configuration from '$options{config}': $!\n";
+			exit 3;
+		}
+
+	} else {
+		$options{config} = $ENV{NLMA_PLUGIN_CONFIG} || "/etc/nlma/plugin.yml";
+		delete $options{config} unless -f $options{config};
+	}
+
+	if ($options{config}) {
+		my $SETTINGS = LoadFile($options{config}) or do {
+			print "UNKNOWN: failed to read NLMA::Plugin configuration from '$options{config}': $!\n";
+			exit 3;
+		};
+		$self->set($_ => $SETTINGS->{$_}) for keys %{$SETTINGS || {}};
+	}
+
+	$self;
 }
 
 sub context
@@ -164,7 +189,7 @@ sub context
 
 sub mode
 {
-	$Synacor::SynaMon::Plugin::MODE;
+	$NLMA::Plugin::MODE;
 }
 
 sub set
@@ -356,12 +381,12 @@ sub _reformat_hash_option
 	my %opt = ();
 	my $allowed_keys = '(warn|crit|perf)';
 
-	foreach my $instance (@instances) {
+	for my $instance (@instances) {
 		my ($name, $rest) = split(/:/, $instance, 2);
 		my $values = { warn => undef, crit => undef, perf => $name};
 		if ($rest) {
 			my @vals = split(/,/, $rest);
-			foreach my $val (@vals) {
+			for my $val (@vals) {
 				my ($key, $value) = split(/=/, $val);
 				return "$name:$val\nSub-option keys must be one of '$allowed_keys'."
 					unless $key =~ /^$allowed_keys$/;
@@ -402,7 +427,7 @@ sub getopts
 	open STDERR, ">&STDOUT";
 	$self->{legacy}->getopts;
 	$self->{legacy}->opts->{_attr}{usage} = $self->usage ;
-	foreach my $hash_opt (@percent_style_opts) {
+	for my $hash_opt (@percent_style_opts) {
 		my $processed_opt = _reformat_hash_option(@{$self->{legacy}->opts->{$hash_opt}});
 		if (ref($processed_opt) eq "HASH") {
 			$self->{legacy}->opts->{$hash_opt} = $processed_opt;
@@ -883,7 +908,7 @@ sub _process_bulk_data
 	my $data_history = $self->retrieve($path, as => 'json');
 	$self->status($status, "No previous data found.") if ($status && ! defined $data_history);
 
-	foreach my $time (sort keys %{$data_history}) {
+	for my $time (sort keys %{$data_history}) {
 		$self->debug("Testing $time against $age_limit");
 		if ($time < time - $age_limit) {
 			$self->debug("Deleting datapoint for $time. Too old. (>= $age_limit)");
@@ -1024,7 +1049,11 @@ sub cred_keys
 	} else {
 		$hostname =~ m/^([a-z]+)[^\.]*\.(.*)/;
 		my ($role, $cluster) = ($1, $2);
-		$cluster =~ s/\.synacor\.com$//;
+		if ($self->{settings}{domain}) {
+			$cluster =~ s/\.\Q$self->{settings}{domain}\E$//;
+		} else {
+			$cluster =~ s/(\.[^.]+){2}$//;
+		}
 
 		@keys = (
 			"$type/$hostname",       # host-specific
@@ -1226,7 +1255,7 @@ sub mech
 		$mech->cookie_jar($options->{cookie_jar} ?
 			HTTP::Cookies->new(file => $self->_cookie_jar_path($options->{cookie_jar}), autosave => 1)
 			: {});
-		$mech->agent($options->{UA} || "SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION");
+		$mech->agent($options->{UA} || "NLMA::Plugin/$NLMA::Plugin::VERSION");
 		$mech->timeout($options->{timeout} || $self->option->{timeout} || 15);
 		$self->{mech} = $mech;
 	}
@@ -1555,7 +1584,7 @@ sub _get_sar
 sub sar
 {
 	my ($self, $args, %opts) = @_;
-	$opts{slice}   ||= 60; # Synacor uses 1m sadc intervals
+	$opts{slice}   ||= 60; # 1m sadc intervals
 	$opts{samples} ||= 1;  # By default, only care about the last sample
 	$opts{logs}    ||= "/var/log/sa";
 	my $span = $opts{samples} * $opts{slice};
@@ -1731,7 +1760,7 @@ sub _snmp_init
 	find(sub {
 		return unless -d;
 		push @paths, $File::Find::name;
-	}, $ENV{MONITOR_MIBS} || '/opt/synacor/monitor/lib/snmp');
+	}, $ENV{MONITOR_MIBS} || $self->{settings}{snmp_mibs});
 	$self->trace("Looking for SNMP MIBs in $_") for @paths;
 	$self->{mibc}->add_path(@paths);
 	$self->{mibc}->add_extension('', '.my', '.mib', '.txt');
@@ -2096,11 +2125,11 @@ sub rrd
 
 =head1 NAME
 
-Synacor::SynaMon::Plugin::Base - Monitoring Plugin::Base Framework
+NLMA::Plugin::Base - Monitoring Plugin::Base Framework
 
 =head1 DESCRIPTION
 
-B<Synacor::SynaMon::Plugin::Base> defines a custom object layer that wraps the standard
+B<NLMA::Plugin::Base> defines a custom object layer that wraps the standard
 B<Nagios::Plugin> library and exports some additional convenience methods.  Most of
 the logic makes writing monitoring check plugins easier, more straightforward and
 less error-prone.
@@ -2128,7 +2157,7 @@ to alter behavior for feeder plugins.
 
 =head2 set
 
-Set one or more behavior-modifying settings.  See Synacor::Synamon::Plugin(3)
+Set one or more behavior-modifying settings.  See NLMA::Plugin(3)
 for a full list of settings, legal values and their purpose.
 
 =head2 option
@@ -2180,7 +2209,7 @@ when this option is called in B<Retrieve> mode. Subsequent calls of
 B<--parameter_name> would result in additional keys being added to the hashref
 to be returned by this option.
 
-See B<Synacor::SynaMon::Plugin> for extensive examples of how to use the specs.
+See B<NLMA::Plugin> for extensive examples of how to use the specs.
 
 'B<=%>' style option specs have been available since version 1.16.
 
@@ -2571,11 +2600,11 @@ status if any of the following problems are encountered:
 
 Generate a list of credstore keys, based on the $type and $hostname
 given.  These keys will become increasingly more generic.  For example,
-the following list will be generated for md01.atl.synacor.com, type POP:
+the following list will be generated for role01.dc.example.com, type POP:
 
 =over 8
 
-=item POP/md01.atl.synacor.com
+=item POP/role01.dc.example.com
 
 =item POP/atl/md
 
@@ -2778,7 +2807,7 @@ Force creation of a new WWW::Mechanize object.
 =item UA
 
 User Agent string to use when connecting to web servers.
-Defaults to C<SynacorMonitoring/$Synacor::SynaMon::Plugin::VERSION>
+Defaults to C<NLMA::Plugin/$NLMA::Plugin::VERSION>
 
 =item timeout
 
@@ -2936,13 +2965,13 @@ This function is aware of its calling context, and will return a list of
 MBeans in list context, and a hashref in scalar context.  This allows the
 following idiomatic practice:
 
-    for my $bean (JOLOKIA_SEARCH(m/com.synacor./)) {
+    for my $bean (JOLOKIA_SEARCH(m/com.example./)) {
         # do something with the beans
     }
 
     # and
 
-    my $data = JOLOKIA_READ( JOLOKIA_SEARCH( m/com.synacor./ ) );
+    my $data = JOLOKIA_READ( JOLOKIA_SEARCH( m/com.example./ ) );
 
 It is an error to call B<jolokia_search> before calling B<jolokia_connect>,
 and the plugin will bail out with an UNKNOWN.
@@ -3232,6 +3261,6 @@ that not affecting any rows is not the same as failure.
 
 =head1 AUTHOR
 
-James Hunt, C<< <jhunt at synacor.com> >>
+James Hunt, C<< <jhunt@synacor.com> >>
 
 =cut

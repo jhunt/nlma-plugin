@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use Synacor::SynaMon::Plugin qw(:easy);
+use NLMA::Plugin qw(:easy);
 
 PLUGIN(name => "STDERRTEST");
 

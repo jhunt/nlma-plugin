@@ -6,7 +6,7 @@ require "t/common.pl";
 ###################################################################
 
 ok_plugin(0, "TIMEOUT OK - no timeout", undef, "No Timeout", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	START_TIMEOUT 1, "timeout triggered";
@@ -16,7 +16,7 @@ ok_plugin(0, "TIMEOUT OK - no timeout", undef, "No Timeout", sub {
 });
 
 ok_plugin(2, "Timed out after 1s: running check", undef, "Timeout / default stage", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	START_TIMEOUT 1;
@@ -26,7 +26,7 @@ ok_plugin(2, "Timed out after 1s: running check", undef, "Timeout / default stag
 });
 
 ok_plugin(2, "Timed out after 1s: init", undef, "Timeout / start_timeout keeps stage name", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	STAGE "init";
@@ -37,7 +37,7 @@ ok_plugin(2, "Timed out after 1s: init", undef, "Timeout / start_timeout keeps s
 });
 
 ok_plugin(2, "Timed out after 1s: in first stage", undef, "Timeout / stage1", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	START_TIMEOUT 1, "in first stage";
@@ -47,7 +47,7 @@ ok_plugin(2, "Timed out after 1s: in first stage", undef, "Timeout / stage1", su
 });
 
 ok_plugin(2, "Timed out after 2s: stage 2", undef, "Timeout / stage2", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	START_TIMEOUT 2, "stage 1";
@@ -59,7 +59,7 @@ ok_plugin(2, "Timed out after 2s: stage 2", undef, "Timeout / stage2", sub {
 });
 
 ok_plugin(1, "Timed out after 1s: warning!", undef, "Timeout / warnings", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	SET on_timeout => "WARN";
@@ -70,7 +70,7 @@ ok_plugin(1, "Timed out after 1s: warning!", undef, "Timeout / warnings", sub {
 });
 
 ok_plugin(3, "Timed out after 1s: unknown!", undef, "Timeout / unknowns", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	SET on_timeout => "unknowledgeableitdoesntmatterwhatgoesafterUNK...";
@@ -81,7 +81,7 @@ ok_plugin(3, "Timed out after 1s: unknown!", undef, "Timeout / unknowns", sub {
 });
 
 ok_plugin(2, "Timed out after 1s: re-CRIT!", undef, "Timeout / successive SET calls", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	SET on_timeout => "unknown";
@@ -96,7 +96,7 @@ ok_plugin(2, "Timed out after 1s: re-CRIT!", undef, "Timeout / successive SET ca
 ###################################################################
 
 ok_plugin(0, "TIMEOUT OK - no timeout", undef, "POSIX: No Timeout", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	SET signals => 'posix';
@@ -107,7 +107,7 @@ ok_plugin(0, "TIMEOUT OK - no timeout", undef, "POSIX: No Timeout", sub {
 });
 
 ok_plugin(2, "Timed out after 1s: running check", undef, "POSIX: Timeout", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	SET signals => 'posix';
@@ -118,7 +118,7 @@ ok_plugin(2, "Timed out after 1s: running check", undef, "POSIX: Timeout", sub {
 });
 
 ok_plugin(2, "Timed out after 1s: init", undef, "POSIX: Timeout / start_timeout keeps stage name", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	SET signals => 'posix';
@@ -130,7 +130,7 @@ ok_plugin(2, "Timed out after 1s: init", undef, "POSIX: Timeout / start_timeout 
 });
 
 ok_plugin(1, "Timed out after 1s: warning!", undef, "POSIX: Timeout / warnings", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "timeout";
 	START;
 	SET signals => 'posix';
@@ -152,7 +152,7 @@ sub within
 }
 
 ok_plugin(0, "TIME OK - all good", undef, "Timers / STAGE_TIME vs TOTAL_TIME", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "time";
 	START;
 	sleep 1;
@@ -172,7 +172,7 @@ ok_plugin(0, "TIME OK - all good", undef, "Timers / STAGE_TIME vs TOTAL_TIME", s
 });
 
 ok_plugin(0, "TIME OK - all good", undef, "Timers / start_timeout should reset STAGE_TIME", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "time";
 	START;
 	sleep 1;
@@ -198,7 +198,7 @@ ok_plugin(2,
 	undef,
 	"Time out kills child processes",
 	sub {
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "RUN";
 		START;
 		START_TIMEOUT 1;

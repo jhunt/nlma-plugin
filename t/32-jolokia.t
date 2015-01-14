@@ -17,7 +17,7 @@ plan skip_all => 'set TEST_ALL to enable Jolokia/JMX tests' unless TEST_ALL();
 ###################################################################
 
 ok_plugin(3, "JOLO UNKNOWN - Check appears to be broken; JOLOKIA_READ called before JOLOKIA_CONNECT", undef, "Jolokia call sequence tests", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_READ "java.lang:type=Memory";
@@ -26,7 +26,7 @@ ok_plugin(3, "JOLO UNKNOWN - Check appears to be broken; JOLOKIA_READ called bef
 });
 
 ok_plugin(3, "JOLO UNKNOWN - Check appears to be broken; JOLOKIA_SEARCH called before JOLOKIA_CONNECT", undef, "Jolokia call sequence tests", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_SEARCH qr/Match/;
@@ -82,7 +82,7 @@ $ENV{MONITOR_CRED_STORE} = "t/data/jolokia/creds";
 system("chmod 0400 $ENV{MONITOR_CRED_STORE}");
 
 ok_plugin(0, "JOLO OK", undef, "Jolokia connection is ok", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever',
@@ -92,7 +92,7 @@ ok_plugin(0, "JOLO OK", undef, "Jolokia connection is ok", sub {
 });
 
 ok_plugin(2, "JOLO CRITICAL - No 'host' specified for Jolokia/JMX connection", undef, "Need a 'host' for JOLOKIA_CONNECT", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT port => 12345;
@@ -101,7 +101,7 @@ ok_plugin(2, "JOLO CRITICAL - No 'host' specified for Jolokia/JMX connection", u
 });
 
 ok_plugin(2, "JOLO CRITICAL - No 'port' specified for Jolokia/JMX connection", undef, "Need a 'port' for JOLOKIA_CONNECT", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever';
@@ -110,7 +110,7 @@ ok_plugin(2, "JOLO CRITICAL - No 'port' specified for Jolokia/JMX connection", u
 });
 
 ok_plugin(0, "JOLO OK", undef, "Missing 'host' is okay under ignore_jolokia_failures", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	SET ignore_jolokia_failures => 'yes';
@@ -120,7 +120,7 @@ ok_plugin(0, "JOLO OK", undef, "Missing 'host' is okay under ignore_jolokia_fail
 });
 
 ok_plugin(0, "JOLO OK", undef, "Missing 'port' is okay under ignore_jolokia_failures", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	SET ignore_jolokia_failures => 'yes';
@@ -130,7 +130,7 @@ ok_plugin(0, "JOLO OK", undef, "Missing 'port' is okay under ignore_jolokia_fail
 });
 
 ok_plugin(3, "JOLO UNKNOWN - Credentials not found for 'hahahahahah-i-dont-think-so'", undef, "JOLOKIA_CONNECT with bad creds keys", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	SET ignore_jolokia_failures => 'yes';
@@ -143,7 +143,7 @@ ok_plugin(3, "JOLO UNKNOWN - Credentials not found for 'hahahahahah-i-dont-think
 
 
 ok_plugin(0, "JOLO OK - Found 54 beans", undef, "MBean search via JOLOKIA_SEARCH", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever',
@@ -154,7 +154,7 @@ ok_plugin(0, "JOLO OK - Found 54 beans", undef, "MBean search via JOLOKIA_SEARCH
 });
 
 ok_plugin(0, "JOLO OK - We got the same data for both searches", undef, "JOLOKIA_SEARCH caches bean list", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	use Test::Deep qw/deep_diag cmp_details/;
 	PLUGIN name => "JOLO";
 	START;
@@ -175,7 +175,7 @@ ok_plugin(0, "JOLO OK - We got the same data for both searches", undef, "JOLOKIA
 });
 
 ok_plugin(0, "JOLO OK - Found 5 beans", undef, "MBean search with regex", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever',
@@ -186,7 +186,7 @@ ok_plugin(0, "JOLO OK - Found 5 beans", undef, "MBean search with regex", sub {
 });
 
 ok_plugin(0, "JOLO OK - Found 0 beans", undef, "MBean search with no match", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever',
@@ -197,7 +197,7 @@ ok_plugin(0, "JOLO OK - Found 0 beans", undef, "MBean search with no match", sub
 });
 
 ok_plugin(0, "JOLO OK", undef, "Retrieve data via JOLOKIA_READ", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever',
@@ -207,7 +207,7 @@ ok_plugin(0, "JOLO OK", undef, "Retrieve data via JOLOKIA_READ", sub {
 	# response for any 'read' request for only one bean
 	my $data = JOLOKIA_READ('a-bean');
 
-	my $MBEAN = 'com.synacor.primetime.services.assets:name=com.synacor.primetime.services.assets.AssetBrowseService,type=AssetBrowseService';
+	my $MBEAN = 'com.example.thing:name=com.example.thing.AssetBrowseService,type=AssetBrowseService';
 
 	CRITICAL "Missing '$MBEAN' bean"
 		unless $data->{$MBEAN};
@@ -218,7 +218,7 @@ ok_plugin(0, "JOLO OK", undef, "Retrieve data via JOLOKIA_READ", sub {
 });
 
 ok_plugin(0, "JOLO OK", undef, "Retrieve MULTIPLE via JOLOKIA_READ", sub {
-	use Synacor::SynaMon::Plugin qw(:easy);
+	use NLMA::Plugin qw(:easy);
 	PLUGIN name => "JOLO";
 	START;
 	JOLOKIA_CONNECT host => 'whatever',

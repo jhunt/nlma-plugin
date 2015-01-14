@@ -6,10 +6,10 @@ use Test::Deep;
 require "t/common.pl";
 
 ok_plugin(0, "DB OK", undef, "Default DB settings", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 
-	my $settings = $Synacor::SynaMon::Plugin::Easy::plugin->{settings};
+	my $settings = $NLMA::Plugin::Easy::plugin->{settings};
 
 	CRITICAL "Bad default on_db_failure setting: '$settings->{on_db_failure}'."
 		unless $settings->{on_db_failure} == 2;
@@ -21,10 +21,10 @@ ok_plugin(0, "DB OK", undef, "Default DB settings", sub {
 });
 
 ok_plugin(0, "DB OK", undef, "DB settings can be overridden", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 
-	my $settings = $Synacor::SynaMon::Plugin::Easy::plugin->{settings};
+	my $settings = $NLMA::Plugin::Easy::plugin->{settings};
 
 	SET on_db_failure      => "WARNING";
 	SET bail_on_db_failure => 0;
@@ -39,7 +39,7 @@ ok_plugin(0, "DB OK", undef, "DB settings can be overridden", sub {
 });
 
 ok_plugin(2, "DB CRITICAL - Can't connect to MySQL server on '127.86.86.86' (111); dbi:mysql:database=foo;host=127.86.86.86;port=8686 as username with a password", undef, "Bad connection = bail by default", sub {
-	use Synacor::SynaMon::Plugin qw/:eay/;
+	use NLMA::Plugin qw/:eay/;
 	PLUGIN name => "db";
 
 	DB_CONNECT "dbi:mysql:database=foo;host=127.86.86.86;port=8686", "username", "password";
@@ -50,7 +50,7 @@ ok_plugin(2, "DB CRITICAL - Can't connect to MySQL server on '127.86.86.86' (111
 });
 
 ok_plugin(1, "DB WARNING - Can't connect to MySQL server on '127.86.86.86' (111); dbi:mysql:database=foo;host=127.86.86.86;port=8686 as username with a password", undef, "on_db_failure controls BAIL status", sub {
-	use Synacor::SynaMon::Plugin qw/:eay/;
+	use NLMA::Plugin qw/:eay/;
 	PLUGIN name => "db";
 
 	SET on_db_failure => 'WARNING';
@@ -63,7 +63,7 @@ ok_plugin(1, "DB WARNING - Can't connect to MySQL server on '127.86.86.86' (111)
 });
 
 ok_plugin(1, "DB WARNING - connect failed", undef, "bail_on_db_failure is honored", sub {
-	use Synacor::SynaMon::Plugin qw/:eay/;
+	use NLMA::Plugin qw/:eay/;
 	PLUGIN name => "db";
 
 	SET bail_on_db_failure => 'no';
@@ -95,7 +95,7 @@ EOF};
 }
 
 ok_plugin(0, "DB OK - 5 days in the week", undef, "General DB_QUERY", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 	db_setup 1;
 
@@ -106,7 +106,7 @@ ok_plugin(0, "DB OK - 5 days in the week", undef, "General DB_QUERY", sub {
 });
 
 ok_plugin(0, "DB OK - 5 days in the week (list version)", undef, "General DB_QUERY", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 	db_setup 2;
 
@@ -117,7 +117,7 @@ ok_plugin(0, "DB OK - 5 days in the week (list version)", undef, "General DB_QUE
 });
 
 ok_plugin(0, "DB OK - Friday is a weekend now", undef, "General DB_QUERY", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 	db_setup 3;
 
@@ -136,7 +136,7 @@ ok_plugin(0, "DB OK - Friday is a weekend now", undef, "General DB_QUERY", sub {
 });
 
 ok_plugin(2, "DB CRITICAL - Error near %QUOT%ALL%QUOT%: syntax error, while parsing %QUOT%UPDATE ALL THE THINGS%QUOT%", undef, "Syntax error in SQL", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 	db_setup 4;
 
@@ -149,7 +149,7 @@ ok_plugin(2, "DB CRITICAL - Error near %QUOT%ALL%QUOT%: syntax error, while pars
 });
 
 ok_plugin(1, "DB WARNING - Error near %QUOT%ALL%QUOT%: syntax error, while parsing %QUOT%UPDATE ALL THE THINGS%QUOT%", undef, "Syntax error in SQL (WARNING only)", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 	db_setup 5;
 
@@ -164,7 +164,7 @@ ok_plugin(1, "DB WARNING - Error near %QUOT%ALL%QUOT%: syntax error, while parsi
 });
 
 ok_plugin(2, "DB CRITICAL - Error no such table: weeeeeeeeekdays, while parsing %QUOT%DELETE FROM weeeeeeeeekdays%QUOT%", undef, "Semantic error in SQL", sub {
-	use Synacor::SynaMon::Plugin qw/:easy/;
+	use NLMA::Plugin qw/:easy/;
 	PLUGIN name => "db";
 	db_setup 4;
 

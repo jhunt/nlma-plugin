@@ -42,7 +42,7 @@ EOF
 
 	sub help_plugin
 	{
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "help", version => "1.4",
 			summary => "This is the help test-driver check plugin.  It is useless.";
 
@@ -119,7 +119,7 @@ EOF
 
 	sub help_plugin_no_default
 	{
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN name => "help", version => "1.4",
 			summary => "This is the help test-driver check plugin.  It is useless.";
 
@@ -165,7 +165,7 @@ Unknown option: asdf
 EOF
 	sub help_plugin_usage
 	{
-		use Synacor::SynaMon::Plugin qw(:easy);
+		use NLMA::Plugin qw(:easy);
 		PLUGIN(name => "usage", version => "1.4",
 			summary => "This is the usage test-driver check plugin. It is uselesser.");
 		OPTION("required|R=s",
